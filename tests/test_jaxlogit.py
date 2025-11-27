@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import jax
 import jax.numpy as jnp
+import pickle
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
@@ -13,8 +14,7 @@ from jaxlogit.mixed_logit import (
 
 SEED = 0
 
-@pytest.fixture
-def simple_data():
+def make_simple_data():
     N = 6  # individuals
     J = 3  # alternatives
     K = 2  # variables
@@ -32,10 +32,14 @@ def simple_data():
     weights = np.ones(N * J)
     return X, y, ids, alts, avail, panels, weights
 
+@pytest.fixture
+def simple_data():
+    return make_simple_data()
+
 
 def test_mixed_logit_fit(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
-    print(X)
+    # print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
@@ -59,43 +63,49 @@ def test_mixed_logit_fit(simple_data):
         skip_std_errs=True,
     )
 
-    print("    Message: {}".format(model.estimation_message))
-    print("    Iterations: {}".format(model.total_iter))
-    print("    Function evaluations: {}".format(model.total_fun_eval))
-    print("Estimation time= {:.1f} seconds".format(model.estim_time_sec))
-    print("-" * 75)
-    print("{:19} {:>13} {:>13} {:>13} {:>13}".format("Coefficient", "Estimate", "Std.Err.", "z-val", "P>|z|"))
-    print("-" * 75)
-    fmt = "{:19} {:13.7f} {:13.7f} {:13.7f} {:13.3g} {:3}"
-    for i in range(len(model.coeff_)):
-        signif = ""
-        if model.pvalues[i] < 0.001:
-            signif = "***"
-        elif model.pvalues[i] < 0.01:
-            signif = "**"
-        elif model.pvalues[i] < 0.05:
-            signif = "*"
-        elif model.pvalues[i] < 0.1:
-            signif = "."
-        print(
-            fmt.format(
-                model.coeff_names[i][:19],
-                model.coeff_[i],
-                model.stderr[i],
-                model.zvalues[i],
-                model.pvalues[i],
-                signif,
-            )
-        )
-    print("-" * 75)
-    print("Significance:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
-    print("")
-    print("Log-Likelihood= {:.3f}".format(model.loglikelihood))
-    print("AIC= {:.3f}".format(model.aic))
-    print("BIC= {:.3f}".format(model.bic))
 
     assert result is not None
     assert "fun" in result
+
+ 
+
+def test_mixed_logit_fit_against_previous_results(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    # print(X)
+
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {varnames[0]: "n"}
+    fixedvars = {}
+    result = model.fit(
+        X=X,
+        y=y,
+        varnames=varnames,
+        ids=ids,
+        alts=alts,
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        randvars=randvars,
+        fixedvars=fixedvars,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+
+    with open("tests/simple_data_output.pkl", "rb") as f:
+        previous_model = pickle.load(f)
+    
+    print(previous_model)
+    assert list(model.coeff_names) == list(previous_model.coeff_names)
+    assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_))
+    assert list(model.stderr) == pytest.approx(list(previous_model.stderr))
+    assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues))
+    # assert list(model.loglikelihood) == pytest.approx(previous_model.loglikelihood)
+    # could also add model.loglikelihood, model.aic and model.bic
+
 
 
 def test_loglike_individual_and_total(simple_data):
@@ -307,3 +317,38 @@ def test_transform_rand_betas_jit():
     )
     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
     assert out.shape == (N, Kr, R)
+
+def save_simple_data_output():
+    X, y, ids, alts, avail, panels, weights = make_simple_data()
+    # print(X)
+
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {varnames[0]: "n"}
+    fixedvars = {}
+    result = model.fit(
+        X=X,
+        y=y,
+        varnames=varnames,
+        ids=ids,
+        alts=alts,
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        randvars=randvars,
+        fixedvars=fixedvars,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+
+    with open("tests/simple_data_output.pkl", "wb") as f:
+        pickle.dump(model, f)
+
+def main():
+    save_simple_data_output()
+
+if __name__ == "__main__":
+    main()
