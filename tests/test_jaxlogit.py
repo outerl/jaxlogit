@@ -71,7 +71,7 @@ def test_mixed_logit_fit(simple_data):
 
 def test_mixed_logit_fit_against_previous_results(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
-    print(X)
+    # print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
