@@ -11,12 +11,14 @@ from jaxlogit.mixed_logit import (
     probability_individual,
 )
 
+SEED = 0
 
 @pytest.fixture
 def simple_data():
     N = 6  # individuals
     J = 3  # alternatives
     K = 2  # variables
+    np.random.seed(SEED)
     X = np.random.randn(N * J, K)
     # y = np.random.randint(0, 2, size=(N * J,))
     y = np.zeros((N, J))
@@ -33,6 +35,8 @@ def simple_data():
 
 def test_mixed_logit_fit(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
+    print(X)
+
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
     model = MixedLogit()
@@ -54,6 +58,42 @@ def test_mixed_logit_fit(simple_data):
         init_coeff=None,
         skip_std_errs=True,
     )
+
+    print("    Message: {}".format(model.estimation_message))
+    print("    Iterations: {}".format(model.total_iter))
+    print("    Function evaluations: {}".format(model.total_fun_eval))
+    print("Estimation time= {:.1f} seconds".format(model.estim_time_sec))
+    print("-" * 75)
+    print("{:19} {:>13} {:>13} {:>13} {:>13}".format("Coefficient", "Estimate", "Std.Err.", "z-val", "P>|z|"))
+    print("-" * 75)
+    fmt = "{:19} {:13.7f} {:13.7f} {:13.7f} {:13.3g} {:3}"
+    for i in range(len(model.coeff_)):
+        signif = ""
+        if model.pvalues[i] < 0.001:
+            signif = "***"
+        elif model.pvalues[i] < 0.01:
+            signif = "**"
+        elif model.pvalues[i] < 0.05:
+            signif = "*"
+        elif model.pvalues[i] < 0.1:
+            signif = "."
+        print(
+            fmt.format(
+                model.coeff_names[i][:19],
+                model.coeff_[i],
+                model.stderr[i],
+                model.zvalues[i],
+                model.pvalues[i],
+                signif,
+            )
+        )
+    print("-" * 75)
+    print("Significance:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
+    print("")
+    print("Log-Likelihood= {:.3f}".format(model.loglikelihood))
+    print("AIC= {:.3f}".format(model.aic))
+    print("BIC= {:.3f}".format(model.bic))
+
     assert result is not None
     assert "fun" in result
 
