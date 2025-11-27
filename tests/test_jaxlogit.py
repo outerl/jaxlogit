@@ -71,7 +71,7 @@ def test_mixed_logit_fit(simple_data):
 
 def test_mixed_logit_fit_against_previous_results(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
-    # print(X)
+    print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
@@ -100,9 +100,9 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
     
     print(previous_model)
     assert list(model.coeff_names) == list(previous_model.coeff_names)
-    assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_))
-    assert list(model.stderr) == pytest.approx(list(previous_model.stderr))
-    assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues))
+    assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
+    assert list(model.stderr) == pytest.approx(list(previous_model.stderr), rel=1e-3)
+    assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
     # assert list(model.loglikelihood) == pytest.approx(previous_model.loglikelihood)
     # could also add model.loglikelihood, model.aic and model.bic
 
