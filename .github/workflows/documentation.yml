@@ -26,7 +26,6 @@ jobs:
 
     - name: Compile library
       run: |
-        python setup.py build_ext -j 4 --inplace
         python -m uv pip install .
 
     - name: Check history of versions
