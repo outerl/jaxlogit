@@ -21,8 +21,8 @@ jobs:
         sudo apt install -y latexmk texlive-xetex fonts-freefont-otf xindy
         pip install uv
         python -m uv pip install wheel openmatrix pytest
-        python -m uv pip install -r requirements.txt
-        python -m uv pip install -r docs/requirements-docs.txt
+        # python -m uv pip install -r requirements.txt
+        # python -m uv pip install -r docs/requirements-docs.txt
 
     - name: Compile library
       run: |
