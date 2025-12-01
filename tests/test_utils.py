@@ -34,17 +34,19 @@ def test_wide_to_long():
 
 def test_lrtest():
     """
-    Ensures a correct result of the lrtest. The comparison values were 
+    Ensures a correct result of the lrtest. The comparison values were
     obtained from comparison with lrtest in R's lmtest package
     Adapted from xlogit tests
     """
     general = MixedLogit()
-    general.loglikelihood = 1312    
-    restricted = MixedLogit()    
-    restricted.loglikelihood = -1305    
-    general.loglikelihood = -1312    
-    general.coeff_ = np.zeros(4)    
+    general.loglikelihood = 1312
+    restricted = MixedLogit()
+    restricted.loglikelihood = -1305
+    general.loglikelihood = -1312
+    general.coeff_ = np.zeros(4)
     restricted.coeff_ = np.zeros(2)
-    
+
     obtained = lrtest(general, restricted)
     expected = {'pval': 0.0009118819655545164, 'chisq': 14, 'degfree': 2}
+    for key in obtained:
+        assert obtained[key] == expected[key]

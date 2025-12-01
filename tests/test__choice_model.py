@@ -53,7 +53,7 @@ def test__validate_inputs():
 
 def test__format_choice_var():
     """
-    Ensures that the variable y is properly formatted as needed by internal 
+    Ensures that the variable y is properly formatted as needed by internal
     procedures regardless of the input data type.
     Adapted from xlogit tests
     """
@@ -86,4 +86,3 @@ def test__robust_covariance():
     sum_sq_diff = np.sum(np.power(robust_cov-test_robust_cov,2))
 
     assert sum_sq_diff == approx(0)
-    
