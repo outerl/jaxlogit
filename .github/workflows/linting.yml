@@ -1,4 +1,4 @@
-name: Adds Linting
+name: linting
 
 on: push
 
@@ -26,4 +26,4 @@ jobs:
           python -m uv pip install ruff==0.9.10
 
       - name: Lint with ruff
-        run: ruff check .
+        run: ruff check --output-format=github .
