@@ -67,7 +67,7 @@ def test_mixed_logit_fit(simple_data):
     assert result is not None
     assert "fun" in result
 
- 
+
 
 def test_mixed_logit_fit_against_previous_results(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
@@ -78,7 +78,7 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
-    result = model.fit(
+    model.fit(
         X=X,
         y=y,
         varnames=varnames,
@@ -97,7 +97,7 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
 
     with open("tests/simple_data_output.pkl", "rb") as f:
         previous_model = pickle.load(f)
-    
+
     print(previous_model)
     # assert list(model.coeff_names) == list(previous_model.coeff_names)
     assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
@@ -353,7 +353,7 @@ def save_simple_data_output():
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
-    result = model.fit(
+    model.fit(
         X=X,
         y=y,
         varnames=varnames,

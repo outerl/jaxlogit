@@ -433,7 +433,7 @@ class MixedLogit(ChoiceModel):
 
             randvars: dict
                 Names (keys) and mixing distributions (values) of variables that have random parameters as coefficients.
-                Possible mixing distributions are: ``'n'``: normal, ``'ln'``: lognormal, ``'t'``: triangular, 
+                Possible mixing distributions are: ``'n'``: normal, ``'ln'``: lognormal, ``'t'``: triangular,
                 ``'tn'``: truncated normal
 
             weights: array-like, shape (n_samples,), default=None
@@ -459,16 +459,16 @@ class MixedLogit(ChoiceModel):
 
             halton: bool, default=True
                 Whether the estimation uses halton draws.
-                
+
             halton_opts: dict, default=None
                 Options for generation of halton draws. The dictionary accepts the following options (keys):
 
                     shuffle: bool, default=False
                         Whether the Halton draws should be shuffled
-                    
+
                     drop: int, default=100
                         Number of initial Halton draws to discard to minimize correlations between Halton sequences
-                    
+
                     primes: list
                         List of primes to be used as base for generation of Halton sequences.
 
@@ -477,7 +477,7 @@ class MixedLogit(ChoiceModel):
 
                     ftol: float, default=1e-10
                         Tolerance for objective function (log-likelihood)
-                    
+
                     gtol: float, default=1e-5
                         Tolerance for gradient function.
 
@@ -499,14 +499,14 @@ class MixedLogit(ChoiceModel):
             force_positive_chol_diag:bool, default=True
 
 
-            hessian_by_row: bool, default=True  
-                whether to calculate the hessian row by row in a for loop to save 
+            hessian_by_row: bool, default=True
+                whether to calculate the hessian row by row in a for loop to save
                 memory at the expense of runtime
 
             finite_diff_hessian: bool, default=False
                 Whether the hessian should be computed using finite difference.
                 If true, this will stay within memory limits.
-                    
+
             batch_size: int, default=None
                 Size of batches used to avoid GPU memory overflow.
 
