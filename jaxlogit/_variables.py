@@ -7,7 +7,7 @@ class Variables:
     #TODO: add class logic
     """
     def __init__(self, Xdf, Xdr, draws, mask, values_for_mask, mask_chol, values_for_chol_mask,
-                 rand_idx_norm, rand_idx_truncnorm, draws_idx_norm, draws_idx_truncnorm, 
+                 rand_idx_norm, rand_idx_truncnorm, draws_idx_norm, draws_idx_truncnorm,
                  fixed_idx, idx_ln_dist, rand_idx_stddev, rand_idx_chol):
         self.Xdf = Xdf
         self.Xdr = Xdr
