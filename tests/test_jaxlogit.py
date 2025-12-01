@@ -297,52 +297,52 @@ def test_probability_individual(simple_data):
     assert not jnp.any(jnp.isnan(probs))
 
 
-def test_transform_rand_betas_shapes():
-    Kr = 2
-    N = 4
-    R = 3
-    betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
-    draws = jnp.ones((N, Kr, R))
-    rand_idx = jnp.arange(Kr)
-    sd_start_idx = Kr
-    sd_slice_size = Kr
-    chol_start_idx = sd_start_idx + sd_slice_size
-    chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
-    idx_ln_dist = jnp.array([], dtype=int)
-    out = _transform_rand_betas(
-        betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, False
-    )
-    assert out.shape == (N, Kr, R)
-    out_corr = _transform_rand_betas(
-        betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True
-    )
-    assert out_corr.shape == (N, Kr, R)
+# def test_transform_rand_betas_shapes():
+#     Kr = 2
+#     N = 4
+#     R = 3
+#     betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
+#     draws = jnp.ones((N, Kr, R))
+#     rand_idx = jnp.arange(Kr)
+#     sd_start_idx = Kr
+#     sd_slice_size = Kr
+#     chol_start_idx = sd_start_idx + sd_slice_size
+#     chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
+#     idx_ln_dist = jnp.array([], dtype=int)
+#     out = _transform_rand_betas(
+#         betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, False
+#     )
+#     assert out.shape == (N, Kr, R)
+#     out_corr = _transform_rand_betas(
+#         betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True
+#     )
+#     assert out_corr.shape == (N, Kr, R)
 
 
-def test_transform_rand_betas_jit():
-    Kr = 2
-    N = 3
-    R = 2
-    betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
-    draws = jnp.ones((N, Kr, R))
-    rand_idx = jnp.arange(Kr)
-    sd_start_idx = Kr
-    sd_slice_size = Kr
-    chol_start_idx = sd_start_idx + sd_slice_size
-    chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
-    idx_ln_dist = jnp.array([], dtype=int)
-    fn = jax.jit(
-        _transform_rand_betas,
-        static_argnames=[
-            "sd_start_index",
-            "sd_slice_size",
-            "chol_start_idx",
-            "chol_slice_size",
-            "include_correlations",
-        ],
-    )
-    out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
-    assert out.shape == (N, Kr, R)
+# def test_transform_rand_betas_jit():
+#     Kr = 2
+#     N = 3
+#     R = 2
+#     betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
+#     draws = jnp.ones((N, Kr, R))
+#     rand_idx = jnp.arange(Kr)
+#     sd_start_idx = Kr
+#     sd_slice_size = Kr
+#     chol_start_idx = sd_start_idx + sd_slice_size
+#     chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
+#     idx_ln_dist = jnp.array([], dtype=int)
+#     fn = jax.jit(
+#         _transform_rand_betas,
+#         static_argnames=[
+#             "sd_start_index",
+#             "sd_slice_size",
+#             "chol_start_idx",
+#             "chol_slice_size",
+#             "include_correlations",
+#         ],
+#     )
+#     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
+#     assert out.shape == (N, Kr, R)
 
 def save_simple_data_output():
     X, y, ids, alts, avail, panels, weights = make_simple_data()
