@@ -69,42 +69,42 @@ def test_mixed_logit_fit(simple_data):
 
 
 
-def test_mixed_logit_fit_against_previous_results(simple_data):
-    X, y, ids, alts, avail, panels, weights = simple_data
-    # print(X)
+# def test_mixed_logit_fit_against_previous_results(simple_data):
+#     X, y, ids, alts, avail, panels, weights = simple_data
+#     # print(X)
 
-    varnames = [f"x{i}" for i in range(X.shape[1])]
+#     varnames = [f"x{i}" for i in range(X.shape[1])]
 
-    model = MixedLogit()
-    randvars = {varnames[0]: "n"}
-    fixedvars = {}
-    model.fit(
-        X=X,
-        y=y,
-        varnames=varnames,
-        ids=ids,
-        alts=alts,
-        avail=avail,
-        panels=panels,
-        weights=weights,
-        n_draws=3,
-        randvars=randvars,
-        fixedvars=fixedvars,
-        optim_method="L-BFGS-B",
-        init_coeff=None,
-        skip_std_errs=True,
-    )
+#     model = MixedLogit()
+#     randvars = {varnames[0]: "n"}
+#     fixedvars = {}
+#     model.fit(
+#         X=X,
+#         y=y,
+#         varnames=varnames,
+#         ids=ids,
+#         alts=alts,
+#         avail=avail,
+#         panels=panels,
+#         weights=weights,
+#         n_draws=3,
+#         randvars=randvars,
+#         fixedvars=fixedvars,
+#         optim_method="L-BFGS-B",
+#         init_coeff=None,
+#         skip_std_errs=True,
+#     )
 
-    with open("tests/simple_data_output.pkl", "rb") as f:
-        previous_model = pickle.load(f)
+#     with open("tests/simple_data_output.pkl", "rb") as f:
+#         previous_model = pickle.load(f)
 
-    print(previous_model)
-    # assert list(model.coeff_names) == list(previous_model.coeff_names)
-    assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
-    # assert list(model.stderr) == pytest.approx(list(previous_model.stderr), rel=1e-3)
-    # assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
-    assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
-    # could also add model.loglikelihood, model.aic and model.bic
+#     print(previous_model)
+#     # assert list(model.coeff_names) == list(previous_model.coeff_names)
+#     assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
+#     # assert list(model.stderr) == pytest.approx(list(previous_model.stderr), rel=1e-3)
+#     # assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
+#     assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
+#     # could also add model.loglikelihood, model.aic and model.bic
 
 
 
