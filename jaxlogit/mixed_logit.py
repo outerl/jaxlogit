@@ -201,7 +201,6 @@ class MixedLogit(ChoiceModel):
 
     def set_variable_indexes(self, include_correlations):
         """Find and save indexes of types of random variables.
-        
         """
         ### WIP
         # want idx_norml, idx_trunc for mean into betas.
@@ -335,13 +334,13 @@ class MixedLogit(ChoiceModel):
 
 
         (
-            rand_idx_norm, 
-            rand_idx_truncnorm, 
-            rand_idx_stddev, 
+            rand_idx_norm,
+            rand_idx_truncnorm,
+            rand_idx_stddev,
             rand_idx_chol,
-            draws_idx_norm, 
-            draws_idx_truncnorm, 
-            sd_start_idx, 
+            draws_idx_norm,
+            draws_idx_truncnorm,
+            sd_start_idx,
             sd_slice_size
         ) = self.set_variable_indexes(include_correlations)
 
@@ -350,14 +349,14 @@ class MixedLogit(ChoiceModel):
         idx_ln_dist = jnp.array([i for i, x in enumerate(self._rvdist) if x == "ln"], dtype=jnp.int32)
 
 
-        
+
         # Mask fixed coefficients and set up array with values for the loglikelihood function
         mask = None
         values_for_mask = None
         # separate mask for fixing values of cholesky coeffs after softplus transformation
         mask_chol = []
         values_for_chol_mask = []
-        
+
         if fixedvars is not None:
             mask, values_for_mask = self.set_fixed_variable_indicies(mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas)
 
@@ -370,7 +369,7 @@ class MixedLogit(ChoiceModel):
         # segment_sum (product of probabilities over panels)
         num_panels = 0 if panels is None else int(jnp.max(panels)) + 1
 
-        
+
         if not predict_mode:
             # This here is estimation specific - we compute the difference between the chosen and non-chosen
             # alternatives because we only need the probability of the chosen alternative in the log-likelihood
