@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import jax
 import jax.numpy as jnp
+import pickle
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
@@ -11,12 +12,13 @@ from jaxlogit.mixed_logit import (
     probability_individual,
 )
 
+SEED = 0
 
-@pytest.fixture
-def simple_data():
+def make_simple_data():
     N = 6  # individuals
     J = 3  # alternatives
     K = 2  # variables
+    np.random.seed(SEED)
     X = np.random.randn(N * J, K)
     # y = np.random.randint(0, 2, size=(N * J,))
     y = np.zeros((N, J))
@@ -30,9 +32,15 @@ def simple_data():
     weights = np.ones(N * J)
     return X, y, ids, alts, avail, panels, weights
 
+@pytest.fixture
+def simple_data():
+    return make_simple_data()
+
 
 def test_mixed_logit_fit(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
+    # print(X)
+
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
     model = MixedLogit()
@@ -54,8 +62,50 @@ def test_mixed_logit_fit(simple_data):
         init_coeff=None,
         skip_std_errs=True,
     )
+
+
     assert result is not None
     assert "fun" in result
+
+ 
+
+def test_mixed_logit_fit_against_previous_results(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    # print(X)
+
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {varnames[0]: "n"}
+    fixedvars = {}
+    result = model.fit(
+        X=X,
+        y=y,
+        varnames=varnames,
+        ids=ids,
+        alts=alts,
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        randvars=randvars,
+        fixedvars=fixedvars,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+
+    with open("tests/simple_data_output.pkl", "rb") as f:
+        previous_model = pickle.load(f)
+    
+    print(previous_model)
+    # assert list(model.coeff_names) == list(previous_model.coeff_names)
+    assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
+    # assert list(model.stderr) == pytest.approx(list(previous_model.stderr), rel=1e-3)
+    # assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
+    assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
+    # could also add model.loglikelihood, model.aic and model.bic
+
 
 
 def test_loglike_individual_and_total(simple_data):
@@ -78,20 +128,25 @@ def test_loglike_individual_and_total(simple_data):
         betas,
         Xdf,
         Xdr,
-        panels_,
+        panels,
         draws,
-        weights_,
-        avail_,
-        scale_d,
+        weights,
+        avail,
         mask,
         values_for_mask,
-        rvidx,
-        rand_idx,
+        mask_chol,
+        values_for_chol_mask,
+        rand_idx_norm,
+        rand_idx_truncnorm,
+        draws_idx_norm,
+        draws_idx_truncnorm,
         fixed_idx,
         num_panels,
         idx_ln_dist,
         coef_names,
-    ) = model.data_prep_for_fit(
+        rand_idx_stddev,
+        rand_idx_chol,
+    ) = model.data_prep(
         X=df[varnames],
         y=df["choice"],
         varnames=varnames,
@@ -111,19 +166,24 @@ def test_loglike_individual_and_total(simple_data):
         betas,
         Xdf,
         Xdr,
-        panels_,
+        panels,
         draws,
-        weights_,
-        avail_,
-        scale_d,
+        weights,
+        avail,
         mask,
         values_for_mask,
-        rvidx,
-        rand_idx,
+        mask_chol,
+        values_for_chol_mask,
+        rand_idx_norm,
+        rand_idx_truncnorm,
+        draws_idx_norm,
+        draws_idx_truncnorm,
         fixed_idx,
         num_panels,
         idx_ln_dist,
         False,
+        rand_idx_stddev,
+        rand_idx_chol,
     )
     assert ll_indiv.shape[0] == num_panels
     assert not jnp.any(jnp.isnan(ll_indiv))
@@ -132,19 +192,25 @@ def test_loglike_individual_and_total(simple_data):
         betas,
         Xdf,
         Xdr,
-        panels_,
+        panels,
         draws,
-        weights_,
-        avail_,
-        scale_d,
+        weights,
+        avail,
         mask,
         values_for_mask,
-        rvidx,
-        rand_idx,
+        mask_chol,
+        values_for_chol_mask,
+        rand_idx_norm,
+        rand_idx_truncnorm,
+        draws_idx_norm,
+        draws_idx_truncnorm,
         fixed_idx,
         num_panels,
         idx_ln_dist,
         False,
+        rand_idx_stddev,
+        rand_idx_chol,
+        0,
     )
     assert np.isscalar(nll) or (isinstance(nll, jnp.ndarray) and nll.shape == ())
     assert np.allclose(-nll, jnp.sum(ll_indiv), atol=1e-5)
@@ -170,20 +236,25 @@ def test_probability_individual(simple_data):
         betas,
         Xdf,
         Xdr,
-        panels_,
+        panels,
         draws,
-        weights_,
-        avail_,
-        scale_d,
+        weights,
+        avail,
         mask,
         values_for_mask,
-        rvidx,
-        rand_idx,
+        mask_chol,
+        values_for_chol_mask,
+        rand_idx_norm,
+        rand_idx_truncnorm,
+        draws_idx_norm,
+        draws_idx_truncnorm,
         fixed_idx,
         num_panels,
         idx_ln_dist,
         coef_names,
-    ) = model.data_prep_for_fit(
+        rand_idx_stddev,
+        rand_idx_chol,
+    ) = model.data_prep(
         X=df[varnames],
         y=df["choice"],
         varnames=varnames,
@@ -203,19 +274,24 @@ def test_probability_individual(simple_data):
         betas,
         Xdf,
         Xdr,
-        panels_,
+        panels,
         draws,
-        weights_,
-        avail_,
-        scale_d,
+        weights,
+        avail,
         mask,
         values_for_mask,
-        rvidx,
-        rand_idx,
+        mask_chol,
+        values_for_chol_mask,
+        rand_idx_norm,
+        rand_idx_truncnorm,
+        draws_idx_norm,
+        draws_idx_truncnorm,
         fixed_idx,
         num_panels,
         idx_ln_dist,
         False,
+        rand_idx_stddev,
+        rand_idx_chol,
     )
     assert probs.shape[0] == Xdf.shape[0]
     assert not jnp.any(jnp.isnan(probs))
@@ -267,3 +343,38 @@ def test_transform_rand_betas_jit():
     )
     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
     assert out.shape == (N, Kr, R)
+
+def save_simple_data_output():
+    X, y, ids, alts, avail, panels, weights = make_simple_data()
+    # print(X)
+
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {varnames[0]: "n"}
+    fixedvars = {}
+    result = model.fit(
+        X=X,
+        y=y,
+        varnames=varnames,
+        ids=ids,
+        alts=alts,
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        randvars=randvars,
+        fixedvars=fixedvars,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+
+    with open("tests/simple_data_output.pkl", "wb") as f:
+        pickle.dump(model, f)
+
+def main():
+    save_simple_data_output()
+
+if __name__ == "__main__":
+    main()
