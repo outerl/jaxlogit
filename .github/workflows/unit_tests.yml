@@ -1,4 +1,4 @@
-name: Tests on all platforms with linting
+name: Tests on all platforms
 
 # TODO: change from push to pull request
 on: [push]

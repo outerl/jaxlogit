@@ -1,12 +1,12 @@
 import pytest
 import numpy as np
-import jax
+# import jax
 import jax.numpy as jnp
 import pickle
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
-    _transform_rand_betas,
+    # _transform_rand_betas,
     loglike_individual,
     neg_loglike,
     probability_individual,
