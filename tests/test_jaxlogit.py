@@ -14,6 +14,7 @@ from jaxlogit.mixed_logit import (
 
 @pytest.fixture
 def simple_data():
+    # testing linting
     N = 6  # individuals
     J = 3  # alternatives
     K = 2  # variables
