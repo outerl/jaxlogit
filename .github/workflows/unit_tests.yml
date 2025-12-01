@@ -1,0 +1,43 @@
+name: Tests on all platforms with linting
+
+# TODO: change from push to pull request
+on: [push]
+
+testing:
+    # needs: linting
+    runs-on: ${{ matrix.os}}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python-version }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        os: [windows-latest, ubuntu-latest]
+
+      max-parallel: 20
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set Python environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip uv
+        python -m uv pip install -e .[dev]
+
+    # - name: Download spatialite on Linux
+    #   if: matrix.os == 'ubuntu-latest'
+    #   run: |
+    #     sudo apt update
+    #     sudo apt install libsqlite3-mod-spatialite
+    #     sudo apt install -y libspatialite-dev
+    #     pip3 install spatialite
+    #     sudo ln -s /usr/lib/x86_64-linux-gnu/mod_spatialite.so /usr/lib/x86_64-linux-gnu/mod_spatialite
+
+    # - name: Download spatialite on Windows
+    #   if: matrix.os == 'windows-latest'
+    #   run:  python tests/setup_windows_spatialite.py
+
+    - name: Runs test
+      run: pytest tests/ --durations=50 --dist=loadscope -n 4 --random-order --verbose
