@@ -4,11 +4,7 @@ import pytest
 from pytest import approx
 
 from jaxlogit.mixed_logit import (
-    MixedLogit,
-    # _transform_rand_betas,
-    loglike_individual,
-    neg_loglike,
-    probability_individual,
+    MixedLogit
 )
 
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
@@ -59,15 +55,14 @@ def test__format_choice_var():
     """
     Ensures that the variable y is properly formatted as needed by internal 
     procedures regardless of the input data type.
-
     Adapted from xlogit tests
     """
     model = MixedLogit()
     expected = np.array([1, 0, 0, 1, 1, 0])
-    
+
     y1 = np.array([1, 1, 2, 2, 1, 1])
     assert np.array_equal(model._format_choice_var(y1, alts), expected)
-    
+
     y2 = np.array(['a', 'a', 'b', 'b', 'a', 'a'])
     alts2 = np.array(['a', 'b', 'a', 'b', 'a', 'b',])
     assert np.array_equal(model._format_choice_var(y2, alts2), expected)
@@ -91,3 +86,4 @@ def test__robust_covariance():
     sum_sq_diff = np.sum(np.power(robust_cov-test_robust_cov,2))
 
     assert sum_sq_diff == approx(0)
+    
