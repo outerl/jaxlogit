@@ -46,6 +46,8 @@ def wide_to_long(dataframe, id_col, alt_list, alt_name, varying=None, sep="_", a
     varying = varying if varying is not None else []
 
     # Validations
+    if dataframe is None or id_col is None or alt_list is None or alt_name is None:
+        raise ValueError("Dataframe, id_col, alt_list, and alt_name cannot be None")
     if any(col in varying for col in dataframe.columns):
         raise ValueError("varying can't be identical to a column name")
     if alt_name in dataframe.columns:
@@ -85,10 +87,10 @@ def lrtest(general_model, restricted_model):
 
     Parameters
     ----------
-    general_model : xlogit Model
+    general_model : jaxlogit Model
         Fitted model that contains all parameters (unrestricted)
 
-    restricted_model : xlogit Model
+    restricted_model : jaxlogit Model
         Fitted model with less parameters than ``general_model``.
 
     Returns
@@ -104,9 +106,7 @@ def lrtest(general_model, restricted_model):
     return {"pval": chi2.sf(stat, df=degfreedom), "chisq": stat, "degfree": degfreedom}
 
 
-def get_panel_aware_batch_indices(
-    panel_ids: jnp.ndarray, n_batches: int
-) -> list[tuple[int, int, int]]:
+def get_panel_aware_batch_indices(panel_ids: jnp.ndarray, n_batches: int) -> list[tuple[int, int, int]]:
     """
     Calculates batch indices ensuring that panels are not split across batches.
 
