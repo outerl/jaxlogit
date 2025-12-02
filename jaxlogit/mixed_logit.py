@@ -200,9 +200,7 @@ class MixedLogit(ChoiceModel):
         )
 
     def set_variable_indexes(self, include_correlations):
-        """Find and save indexes of types of random variables.
-        
-        """
+        """Find and save indexes of types of random variables."""
         ### WIP
         # want idx_norml, idx_trunc for mean into betas.
         # rvidx = jnp.array(self._rvidx, dtype=bool)
@@ -231,9 +229,20 @@ class MixedLogit(ChoiceModel):
             [k for k, dist in enumerate(self._rvdist) if dist == "n_trunc"], dtype=jnp.int32
         )
 
-        return rand_idx_norm, rand_idx_truncnorm, rand_idx_stddev, rand_idx_chol, draws_idx_norm, draws_idx_truncnorm, sd_start_idx, sd_slice_size
+        return (
+            rand_idx_norm,
+            rand_idx_truncnorm,
+            rand_idx_stddev,
+            rand_idx_chol,
+            draws_idx_norm,
+            draws_idx_truncnorm,
+            sd_start_idx,
+            sd_slice_size,
+        )
 
-    def set_fixed_variable_indicies(self, mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas):
+    def set_fixed_variable_indicies(
+        self, mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
+    ):
         mask = np.zeros(len(fixedvars), dtype=np.int32)
         values_for_mask = np.zeros(len(fixedvars), dtype=np.int32)
         for i, (k, v) in enumerate(fixedvars.items()):
@@ -333,33 +342,32 @@ class MixedLogit(ChoiceModel):
             include_correlations=include_correlations,
         )
 
-
         (
-            rand_idx_norm, 
-            rand_idx_truncnorm, 
-            rand_idx_stddev, 
+            rand_idx_norm,
+            rand_idx_truncnorm,
+            rand_idx_stddev,
             rand_idx_chol,
-            draws_idx_norm, 
-            draws_idx_truncnorm, 
-            sd_start_idx, 
-            sd_slice_size
+            draws_idx_norm,
+            draws_idx_truncnorm,
+            sd_start_idx,
+            sd_slice_size,
         ) = self.set_variable_indexes(include_correlations)
 
         # Set up index into _rvdist for lognormal distributions. This is used to apply the lognormal transformation
         # to the random betas
         idx_ln_dist = jnp.array([i for i, x in enumerate(self._rvdist) if x == "ln"], dtype=jnp.int32)
 
-
-        
         # Mask fixed coefficients and set up array with values for the loglikelihood function
         mask = None
         values_for_mask = None
         # separate mask for fixing values of cholesky coeffs after softplus transformation
         mask_chol = []
         values_for_chol_mask = []
-        
+
         if fixedvars is not None:
-            mask, values_for_mask = self.set_fixed_variable_indicies(mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas)
+            mask, values_for_mask = self.set_fixed_variable_indicies(
+                mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
+            )
 
         if (fixedvars is None) or (len(mask_chol) == 0):
             mask_chol = None
@@ -370,7 +378,6 @@ class MixedLogit(ChoiceModel):
         # segment_sum (product of probabilities over panels)
         num_panels = 0 if panels is None else int(jnp.max(panels)) + 1
 
-        
         if not predict_mode:
             # This here is estimation specific - we compute the difference between the chosen and non-chosen
             # alternatives because we only need the probability of the chosen alternative in the log-likelihood
@@ -1010,7 +1017,6 @@ def neg_loglike_grad_batched(
     rand_idx_chol,
     batch_size,
 ):
-
     if panels is None:
         # Simple case: no panels, just batch observations
         n_obs = Xdf.shape[0]
@@ -1066,8 +1072,8 @@ def neg_loglike_grad_batched(
         #    + f", acc: {loglik:.3f}, {grad_loglik}, {num_panels_counter})."
         # )
 
-
     return -loglik, -grad_loglik  # is this right 0 both -1?
+
 
 def loglike_individual_sum(
     betas,
