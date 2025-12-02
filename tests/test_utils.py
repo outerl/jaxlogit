@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
-from jaxlogit.utils import wide_to_long
-from jaxlogit.utils import lrtest
+from jaxlogit.utils import wide_to_long, lrtest, get_panel_aware_batch_indices
 from jaxlogit.mixed_logit import MixedLogit
+import jax.numpy as jnp
 import pytest
 
 
@@ -66,3 +66,46 @@ def test_lrtest():
     expected = {"pval": 0.0009118819655545164, "chisq": 14, "degfree": 2}
     for key in obtained:
         assert obtained[key] == expected[key]
+
+
+def test_lrtest_validation():
+    general = MixedLogit()
+    general.loglikelihood = 1312
+    restricted = MixedLogit()
+    restricted.loglikelihood = -1305
+    general.loglikelihood = -1312
+    general.coeff_ = np.zeros(2)
+    restricted.coeff_ = np.zeros(4)
+
+    with pytest.raises(ValueError):
+        lrtest(general, restricted)
+
+
+@pytest.fixture
+def panelsAndBatches():
+    panels = jnp.arange(1, 6)
+    batch_size = 5
+    num_batches = int(np.ceil(len(panels) / batch_size))
+    return (panels, num_batches)
+
+
+def test_get_panel_aware_batch_indices_validate(panelsAndBatches):
+    (panels, num_batches) = panelsAndBatches
+    with pytest.raises(ValueError):
+        get_panel_aware_batch_indices(panels, 0)
+        get_panel_aware_batch_indices(panels, -1)
+        get_panel_aware_batch_indices(None, num_batches)
+
+
+def test_get_panel_aware_batch_indices(panelsAndBatches):
+    (panels, num_batches) = panelsAndBatches
+
+    # Edge cases:
+    expected = [
+        (np.zeros(1, dtype=np.int32), np.array(2, dtype=np.int32), 2),
+        (np.array(2, dtype=np.int32), np.array(4, dtype=np.int32), 2),
+    ]
+    assert expected == get_panel_aware_batch_indices(jnp.arange(1, 5), 2)
+
+    expected = [(np.zeros(1, dtype=np.int32), np.array(5, dtype=np.int32), 5)]
+    assert expected == get_panel_aware_batch_indices(panels, num_batches)
