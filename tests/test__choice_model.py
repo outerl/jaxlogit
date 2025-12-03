@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
+from jaxlogit._choice_model import *
 import numpy as np
 import pytest
 from pytest import approx
-
-from jaxlogit.mixed_logit import (
-    MixedLogit
-)
+from jaxlogit.mixed_logit import MixedLogit
 
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
 y = np.array([0, 1, 0, 1, 0, 1])
@@ -13,6 +10,41 @@ ids = np.array([1, 1, 2, 2, 3, 3])
 alts = np.array([1, 2, 1, 2, 1, 2])
 varnames = ["a", "b"]
 N, J, K = 3, 2, 2
+
+
+@pytest.fixture
+def setup():
+    choiceModel = ChoiceModel()
+    return choiceModel
+
+
+def test__reset_attributes(setup):
+    choiceModel = setup
+    choiceModel.coeff_names = varnames
+    choiceModel.coeff_ = {"key": 1}
+    choiceModel.stderr = 10
+    choiceModel.zvalues = 0.1
+    choiceModel.pvalues = 0.2
+    choiceModel.loglikelihood = 0.5
+    choiceModel.total_fun_eval = 5
+    choiceModel._reset_attributes()
+    assert choiceModel.coeff_names is None
+    assert choiceModel.coeff_ is None
+    assert choiceModel.stderr is None
+    assert choiceModel.zvalues is None
+    assert choiceModel.pvalues is None
+    assert choiceModel.loglikelihood is None
+    assert 0 == choiceModel.total_fun_eval
+
+
+def test__setup_design_matrix_smoke_test():
+    choiceModel = ChoiceModel()
+    choiceModel.alternatives = np.sort(np.unique(alts))
+    choiceModel._varnames = varnames
+    # return X, np.array(varnames)
+    obtained = choiceModel._setup_design_matrix(X)
+    assert obtained[0].shape == (3, 2, 2)
+    assert varnames == list(obtained[1])
 
 
 def test__setup_design_matrix():
@@ -25,6 +57,20 @@ def test__setup_design_matrix():
     X_, Xnames_ = model._setup_design_matrix(X)
     assert X_.shape == (3, 2, 2)
     assert list(Xnames_) == ["a", "b"]
+
+
+def test__check_long_format_consistency(setup):
+    choiceModel = setup
+    with pytest.raises(ValueError):
+        choiceModel._check_long_format_consistency(None, alts)
+    with pytest.raises(ValueError):
+        choiceModel._check_long_format_consistency(ids, None)
+    choiceModel._check_long_format_consistency(np.unique(ids), np.unique(alts))
+    with pytest.raises(ValueError):
+        choiceModel._check_long_format_consistency(np.unique(ids), alts)
+    with pytest.raises(ValueError):
+        choiceModel._check_long_format_consistency([1, 2, 3, 4, 5], [1, 2, 3])
+    choiceModel._check_long_format_consistency(ids, alts)
 
 
 def test__validate_inputs():
@@ -51,6 +97,7 @@ def test__validate_inputs():
     with pytest.raises(ValueError):  # y dimensions
         validate(X, np.array([]), alts, varnames=None, ids=ids, weights=None)
 
+
 def test__format_choice_var():
     """
     Ensures that the variable y is properly formatted as needed by internal
@@ -63,9 +110,19 @@ def test__format_choice_var():
     y1 = np.array([1, 1, 2, 2, 1, 1])
     assert np.array_equal(model._format_choice_var(y1, alts), expected)
 
-    y2 = np.array(['a', 'a', 'b', 'b', 'a', 'a'])
-    alts2 = np.array(['a', 'b', 'a', 'b', 'a', 'b',])
+    y2 = np.array(["a", "a", "b", "b", "a", "a"])
+    alts2 = np.array(
+        [
+            "a",
+            "b",
+            "a",
+            "b",
+            "a",
+            "b",
+        ]
+    )
     assert np.array_equal(model._format_choice_var(y2, alts2), expected)
+
 
 def test__robust_covariance():
     """
@@ -74,8 +131,8 @@ def test__robust_covariance():
 
     Adapted from xlogit tests
     """
-    hess_inv = np.array([[1, .5], [.5, 4]])
-    grad_n = np.array([[0, 0], [.05, .05], [-0.05, -0.05]])
+    hess_inv = np.array([[1, 0.5], [0.5, 4]])
+    grad_n = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
 
     robust_cov = np.array([[0.016875, 0.050625], [0.050625, 0.151875]])
 
@@ -83,6 +140,6 @@ def test__robust_covariance():
 
     test_robust_cov = model._robust_covariance(hess_inv, grad_n)
 
-    sum_sq_diff = np.sum(np.power(robust_cov-test_robust_cov,2))
+    sum_sq_diff = np.sum(np.power(robust_cov - test_robust_cov, 2))
 
     assert sum_sq_diff == approx(0)

@@ -32,6 +32,7 @@ class ChoiceModel(ABC):  # noqa: B024
         self.loglikelihood = None
         self.total_fun_eval = 0
 
+    # TODO: refactor to be more generic
     def _as_array(
         self,
         X,
@@ -43,7 +44,7 @@ class ChoiceModel(ABC):  # noqa: B024
         panels,
         avail,
     ):
-        """ Returns given parameters as np arrays if they exist """
+        """Returns given parameters as np arrays if they exist"""
         X = np.asarray(X)
         y = np.asarray(y)
         varnames = np.asarray(varnames) if varnames is not None else None
@@ -145,6 +146,8 @@ class ChoiceModel(ABC):  # noqa: B024
 
         It raises an error if the array of alternative indexes is incomplete
         """
+        if ids is None or alts is None:
+            raise ValueError("no inputs can be None")
         uq_alts, idx = np.unique(alts, return_index=True)
         uq_alts = uq_alts[np.argsort(idx)]
         expected_alts = np.tile(uq_alts, int(len(ids) / len(uq_alts)))
