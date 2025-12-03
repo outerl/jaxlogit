@@ -1,5 +1,6 @@
 from jaxlogit._choice_model import ChoiceModel
 import numpy as np
+import pandas as pd
 import pytest
 from pytest import approx
 from jaxlogit.mixed_logit import MixedLogit
@@ -72,6 +73,23 @@ def test__check_long_format_consistency(setup):
     with pytest.raises(ValueError):
         choiceModel._check_long_format_consistency([1, 2, 3, 4, 5], [1, 2, 3])
     choiceModel._check_long_format_consistency(ids, alts)
+
+
+def test__format_choice_var_y(setup):
+    choiceModel = setup
+
+    y = np.asarray(pd.Series([1, 0, 0, 1]))
+    assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
+
+    y = np.array([1, 0, 0, 1])
+    assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
+
+    y = np.array([1, 0, 1, 0])
+    assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
+
+    with pytest.raises(ValueError):
+        y = np.array([1, 0, 1, 0, 0])
+        assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
 
 
 def test__validate_inputs():
