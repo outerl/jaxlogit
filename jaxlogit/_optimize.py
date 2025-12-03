@@ -109,6 +109,8 @@ def gradient(funct, x, *args):
     # Finite differences, lowest memory usage but slowest
     eps = 1e-6
     n = x.size
+    if n == 0:
+        raise ValueError("x must have at least one dimension")
     grad_shape = funct(x, *args).size
     grad = jnp.zeros((grad_shape, n))
     for i in range(n):

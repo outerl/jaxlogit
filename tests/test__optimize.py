@@ -6,7 +6,8 @@ import jax.numpy as jnp
 import pytest
 
 
-# TODO: test hessian input validation
+# TODO: minimise tests once mixed_logit is osrted out
+# TODO: test input validation for hessian, gradient
 def test_hessian_no_finite_diff():
     def test_function(x, a, b, c, force_positive_chol_diag, num_panels):
         return a ** x[0] + b ** x[1] + a / c + x[2] ** 5
@@ -52,3 +53,30 @@ def test_gradient():
     expected = expected.at[0, 0].set(1.9073486)
     expected = expected.at[0, 1].set(0.715255)
     assert expected == pytest.approx(gradient(test_function, x, *args))
+
+
+def test_gradient_no_args():
+    def test_function(x):
+        return x[0] ** x[1] * x[2]
+
+    args = ()
+    x = jnp.array([0.1, 0.1, 0.1])
+
+    expected = jnp.zeros((1, 3))
+    expected = expected.at[0, 0].set(0.078231096)
+    expected = expected.at[0, 1].set(-0.1825392246)
+    expected = expected.at[0, 2].set(0.7897615432)
+    assert expected == pytest.approx(gradient(test_function, x, *args))
+
+
+def test_gradient_empty_x():
+    def test_function(x, a, b):
+        return a / b
+
+    a = 1.55
+    b = 5.99
+    args = (a, b)
+    x = jnp.array([])
+
+    with pytest.raises(ValueError):
+        gradient(test_function, x, *args)
