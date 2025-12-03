@@ -45,15 +45,7 @@ class ChoiceModel(ABC):  # noqa: B024
         avail,
     ):
         """Returns given parameters as np arrays if they exist"""
-        X = np.asarray(X)
-        y = np.asarray(y)
-        varnames = np.asarray(varnames) if varnames is not None else None
-        alts = np.asarray(alts) if alts is not None else None
-        ids = np.asarray(ids) if ids is not None else None
-        weights = np.asarray(weights) if weights is not None else None
-        panels = np.asarray(panels) if panels is not None else None
-        avail = np.asarray(avail) if avail is not None else None
-        return (
+        toTransform = (
             X,
             y,
             varnames,
@@ -63,6 +55,10 @@ class ChoiceModel(ABC):  # noqa: B024
             panels,
             avail,
         )
+        transformed = []
+        for array in toTransform:
+            transformed.append(np.asarray(array) if array is not None else None)
+        return tuple(transformed)
 
     def _pre_fit(self, alts, varnames, maxiter):
         self._reset_attributes()
