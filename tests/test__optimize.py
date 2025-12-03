@@ -1,6 +1,5 @@
 from jaxlogit._optimize import hessian, gradient
 import numpy as np
-import pandas as pd
 import jax as jax
 import jax.numpy as jnp
 import pytest
