@@ -65,7 +65,8 @@ def test__check_long_format_consistency(setup):
         choiceModel._check_long_format_consistency(None, alts)
     with pytest.raises(ValueError):
         choiceModel._check_long_format_consistency(ids, None)
-    choiceModel._check_long_format_consistency(np.unique(ids), np.unique(alts))
+    with pytest.raises(ValueError):
+        choiceModel._check_long_format_consistency(np.unique(ids), np.unique(alts))
     with pytest.raises(ValueError):
         choiceModel._check_long_format_consistency(np.unique(ids), alts)
     with pytest.raises(ValueError):

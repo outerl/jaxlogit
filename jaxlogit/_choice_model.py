@@ -154,7 +154,7 @@ class ChoiceModel(ABC):  # noqa: B024
         if not np.array_equal(alts, expected_alts):
             raise ValueError(f"inconsistent alts values in long format, expected {expected_alts}, got {uq_alts}")
         _, obs_by_id = np.unique(ids, return_counts=True)
-        if not np.all(obs_by_id / len(uq_alts)):  # Multiple of J
+        if not np.all(obs_by_id % len(uq_alts) == 0):  # Multiple of J
             raise ValueError("inconsistent alts and ids values in long format")
 
     def _format_choice_var(self, y, alts):
