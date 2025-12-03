@@ -1,11 +1,14 @@
 import pytest
 import numpy as np
+
 # import jax
 import jax.numpy as jnp
 import pickle
 
+
 from jaxlogit.mixed_logit import (
     MixedLogit,
+    ConfigData,
     # _transform_rand_betas,
     loglike_individual,
     neg_loglike,
@@ -13,6 +16,7 @@ from jaxlogit.mixed_logit import (
 )
 
 SEED = 0
+
 
 def make_simple_data():
     N = 6  # individuals
@@ -27,10 +31,12 @@ def make_simple_data():
     y = y.reshape(-1)
     ids = np.repeat(np.arange(N), J)
     alts = np.tile(np.arange(J), N)
+    print(f"{J=}, {N=}, {alts=}")
     avail = np.ones((N * J,))
     panels = np.repeat(np.arange(N), J)
     weights = np.ones(N * J)
     return X, y, ids, alts, avail, panels, weights
+
 
 @pytest.fixture
 def simple_data():
@@ -39,6 +45,7 @@ def simple_data():
 
 def test_mixed_logit_fit(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
+    print(f"{weights=}")
     # print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
@@ -46,27 +53,20 @@ def test_mixed_logit_fit(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
-    result = model.fit(
-        X=X,
-        y=y,
-        varnames=varnames,
-        ids=ids,
-        alts=alts,
+    config = ConfigData(
         avail=avail,
         panels=panels,
         weights=weights,
         n_draws=3,
-        randvars=randvars,
         fixedvars=fixedvars,
         optim_method="L-BFGS-B",
         init_coeff=None,
         skip_std_errs=True,
     )
-
+    result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
     assert result is not None
     assert "fun" in result
-
 
 
 # def test_mixed_logit_fit_against_previous_results(simple_data):
@@ -107,7 +107,6 @@ def test_mixed_logit_fit(simple_data):
 #     # could also add model.loglikelihood, model.aic and model.bic
 
 
-
 def test_loglike_individual_and_total(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
@@ -123,7 +122,17 @@ def test_loglike_individual_and_total(simple_data):
 
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
+
     fixedvars = {}
+    config = ConfigData(
+        avail=np.array(df["avail"]),  #
+        panels=np.array(df["person_id_contiguous"]),  #
+        weights=np.array(df["weight"]),  #
+        n_draws=3,  #
+        fixedvars=fixedvars,  #
+        init_coeff=None,  #
+        include_correlations=False,  #
+    )
     (
         betas,
         Xdf,
@@ -146,21 +155,7 @@ def test_loglike_individual_and_total(simple_data):
         coef_names,
         rand_idx_stddev,
         rand_idx_chol,
-    ) = model.data_prep(
-        X=df[varnames],
-        y=df["choice"],
-        varnames=varnames,
-        ids=df["custom_id"],
-        alts=df["alt"],
-        avail=df["avail"],
-        panels=df["person_id_contiguous"],
-        weights=df["weight"],
-        n_draws=3,
-        randvars=randvars,
-        fixedvars=fixedvars,
-        init_coeff=None,
-        include_correlations=False,
-    )
+    ) = model.data_prep(df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config)
 
     ll_indiv = loglike_individual(
         betas,
@@ -232,6 +227,15 @@ def test_probability_individual(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
+    config = ConfigData(
+        avail=np.array(df["avail"]),  #
+        panels=np.array(df["person_id_contiguous"]),  #
+        weights=np.array(df["weight"]),  #
+        n_draws=3,  #
+        fixedvars=fixedvars,  #
+        init_coeff=None,  #
+        include_correlations=False,  #
+    )
     (
         betas,
         Xdf,
@@ -254,21 +258,7 @@ def test_probability_individual(simple_data):
         coef_names,
         rand_idx_stddev,
         rand_idx_chol,
-    ) = model.data_prep(
-        X=df[varnames],
-        y=df["choice"],
-        varnames=varnames,
-        ids=df["custom_id"],
-        alts=df["alt"],
-        avail=df["avail"],
-        panels=df["person_id_contiguous"],
-        weights=df["weight"],
-        n_draws=3,
-        randvars=randvars,
-        fixedvars=fixedvars,
-        init_coeff=None,
-        include_correlations=False,
-    )
+    ) = model.data_prep(df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config)
 
     probs = probability_individual(
         betas,
@@ -344,6 +334,7 @@ def test_probability_individual(simple_data):
 #     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
 #     assert out.shape == (N, Kr, R)
 
+
 def save_simple_data_output():
     X, y, ids, alts, avail, panels, weights = make_simple_data()
     # print(X)
@@ -373,8 +364,10 @@ def save_simple_data_output():
     with open("tests/simple_data_output.pkl", "wb") as f:
         pickle.dump(model, f)
 
+
 def main():
     save_simple_data_output()
+
 
 if __name__ == "__main__":
     main()
