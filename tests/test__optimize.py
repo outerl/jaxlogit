@@ -6,8 +6,7 @@ import jax.numpy as jnp
 import pytest
 
 
-# TODO: minimise tests once mixed_logit is osrted out
-# TODO: test input validation for hessian, gradient
+# TODO: minimise tests once mixed_logit is sorted out
 def test_hessian_no_finite_diff():
     def test_function(x, a, b, c, force_positive_chol_diag, num_panels):
         return a ** x[0] + b ** x[1] + a / c + x[2] ** 5
