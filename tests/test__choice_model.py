@@ -1,4 +1,4 @@
-from jaxlogit._choice_model import *
+from jaxlogit._choice_model import ChoiceModel
 import numpy as np
 import pytest
 from pytest import approx
