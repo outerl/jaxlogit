@@ -104,9 +104,7 @@ def lrtest(general_model, restricted_model):
     return {"pval": chi2.sf(stat, df=degfreedom), "chisq": stat, "degfree": degfreedom}
 
 
-def get_panel_aware_batch_indices(
-    panel_ids: jnp.ndarray, n_batches: int
-) -> list[tuple[int, int, int]]:
+def get_panel_aware_batch_indices(panel_ids: jnp.ndarray, n_batches: int) -> list[tuple[int, int, int]]:
     """
     Calculates batch indices ensuring that panels are not split across batches.
 
