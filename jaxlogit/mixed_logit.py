@@ -199,7 +199,7 @@ class MixedLogit(ChoiceModel):
             coef_names,
         )
 
-    def set_variable_indexes(self, include_correlations):
+    def set_variable_indices(self, include_correlations):
         """Find and save indexes of types of random variables."""
         ### WIP
         # want idx_norml, idx_trunc for mean into betas.
@@ -240,7 +240,7 @@ class MixedLogit(ChoiceModel):
             sd_slice_size,
         )
 
-    def set_fixed_variable_indicies(
+    def set_fixed_variable_indices(
         self, mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
     ):
         mask = np.zeros(len(fixedvars), dtype=np.int32)
@@ -351,7 +351,7 @@ class MixedLogit(ChoiceModel):
             draws_idx_truncnorm,
             sd_start_idx,
             sd_slice_size,
-        ) = self.set_variable_indexes(include_correlations)
+        ) = self.set_variable_indices(include_correlations)
 
         # Set up index into _rvdist for lognormal distributions. This is used to apply the lognormal transformation
         # to the random betas
@@ -365,7 +365,7 @@ class MixedLogit(ChoiceModel):
         values_for_chol_mask = []
 
         if fixedvars is not None:
-            mask, values_for_mask = self.set_fixed_variable_indicies(
+            mask, values_for_mask = self.set_fixed_variable_indices(
                 mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
             )
 
