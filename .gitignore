@@ -33,3 +33,5 @@ examples/benchmark/Rprof.out
 # biogeme
 *.iter
 biogeme.toml
+
+venv/
