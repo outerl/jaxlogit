@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+
 # import jax
 import jax.numpy as jnp
 import pickle
@@ -13,6 +14,7 @@ from jaxlogit.mixed_logit import (
 )
 
 SEED = 0
+
 
 def make_simple_data():
     N = 6  # individuals
@@ -31,6 +33,7 @@ def make_simple_data():
     panels = np.repeat(np.arange(N), J)
     weights = np.ones(N * J)
     return X, y, ids, alts, avail, panels, weights
+
 
 @pytest.fixture
 def simple_data():
@@ -63,10 +66,8 @@ def test_mixed_logit_fit(simple_data):
         skip_std_errs=True,
     )
 
-
     assert result is not None
     assert "fun" in result
-
 
 
 # def test_mixed_logit_fit_against_previous_results(simple_data):
@@ -107,7 +108,6 @@ def test_mixed_logit_fit(simple_data):
 #     # could also add model.loglikelihood, model.aic and model.bic
 
 
-
 def test_loglike_individual_and_total(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
@@ -124,29 +124,7 @@ def test_loglike_individual_and_total(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
-    (
-        betas,
-        Xdf,
-        Xdr,
-        panels,
-        draws,
-        weights,
-        avail,
-        mask,
-        values_for_mask,
-        mask_chol,
-        values_for_chol_mask,
-        rand_idx_norm,
-        rand_idx_truncnorm,
-        draws_idx_norm,
-        draws_idx_truncnorm,
-        fixed_idx,
-        num_panels,
-        idx_ln_dist,
-        coef_names,
-        rand_idx_stddev,
-        rand_idx_chol,
-    ) = model.data_prep(
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info) = model.data_prep(
         X=df[varnames],
         y=df["choice"],
         varnames=varnames,
@@ -162,56 +140,11 @@ def test_loglike_individual_and_total(simple_data):
         include_correlations=False,
     )
 
-    ll_indiv = loglike_individual(
-        betas,
-        Xdf,
-        Xdr,
-        panels,
-        draws,
-        weights,
-        avail,
-        mask,
-        values_for_mask,
-        mask_chol,
-        values_for_chol_mask,
-        rand_idx_norm,
-        rand_idx_truncnorm,
-        draws_idx_norm,
-        draws_idx_truncnorm,
-        fixed_idx,
-        num_panels,
-        idx_ln_dist,
-        False,
-        rand_idx_stddev,
-        rand_idx_chol,
-    )
+    ll_indiv = loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, parameter_info)
     assert ll_indiv.shape[0] == num_panels
     assert not jnp.any(jnp.isnan(ll_indiv))
 
-    nll = neg_loglike(
-        betas,
-        Xdf,
-        Xdr,
-        panels,
-        draws,
-        weights,
-        avail,
-        mask,
-        values_for_mask,
-        mask_chol,
-        values_for_chol_mask,
-        rand_idx_norm,
-        rand_idx_truncnorm,
-        draws_idx_norm,
-        draws_idx_truncnorm,
-        fixed_idx,
-        num_panels,
-        idx_ln_dist,
-        False,
-        rand_idx_stddev,
-        rand_idx_chol,
-        0,
-    )
+    nll = neg_loglike(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, 0, parameter_info)
     assert np.isscalar(nll) or (isinstance(nll, jnp.ndarray) and nll.shape == ())
     assert np.allclose(-nll, jnp.sum(ll_indiv), atol=1e-5)
 
@@ -232,29 +165,7 @@ def test_probability_individual(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
-    (
-        betas,
-        Xdf,
-        Xdr,
-        panels,
-        draws,
-        weights,
-        avail,
-        mask,
-        values_for_mask,
-        mask_chol,
-        values_for_chol_mask,
-        rand_idx_norm,
-        rand_idx_truncnorm,
-        draws_idx_norm,
-        draws_idx_truncnorm,
-        fixed_idx,
-        num_panels,
-        idx_ln_dist,
-        coef_names,
-        rand_idx_stddev,
-        rand_idx_chol,
-    ) = model.data_prep(
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info) = model.data_prep(
         X=df[varnames],
         y=df["choice"],
         varnames=varnames,
@@ -270,29 +181,7 @@ def test_probability_individual(simple_data):
         include_correlations=False,
     )
 
-    probs = probability_individual(
-        betas,
-        Xdf,
-        Xdr,
-        panels,
-        draws,
-        weights,
-        avail,
-        mask,
-        values_for_mask,
-        mask_chol,
-        values_for_chol_mask,
-        rand_idx_norm,
-        rand_idx_truncnorm,
-        draws_idx_norm,
-        draws_idx_truncnorm,
-        fixed_idx,
-        num_panels,
-        idx_ln_dist,
-        False,
-        rand_idx_stddev,
-        rand_idx_chol,
-    )
+    probs = probability_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, parameter_info)
     assert probs.shape[0] == Xdf.shape[0]
     assert not jnp.any(jnp.isnan(probs))
 
@@ -344,6 +233,7 @@ def test_probability_individual(simple_data):
 #     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
 #     assert out.shape == (N, Kr, R)
 
+
 def save_simple_data_output():
     X, y, ids, alts, avail, panels, weights = make_simple_data()
     # print(X)
@@ -373,8 +263,10 @@ def save_simple_data_output():
     with open("tests/simple_data_output.pkl", "wb") as f:
         pickle.dump(model, f)
 
+
 def main():
     save_simple_data_output()
+
 
 if __name__ == "__main__":
     main()

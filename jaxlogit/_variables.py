@@ -17,14 +17,19 @@ class ParametersSetup:
     values_for_mask: Optional[jnp.ndarray] = None
     mask_chol: Optional[jnp.ndarray] = None
     values_for_chol_mask: Optional[jnp.ndarray] = None
-    rand_idx_norm: Optional[jnp.ndarray] = None
-    rand_idx_truncnorm: Optional[jnp.ndarray] = None
-    draws_idx_norm: Optional[jnp.ndarray] = None
-    draws_idx_truncnorm: Optional[jnp.ndarray] = None
+    rand_idx_norm: Optional[jnp.ndarray] = None  # index into betas for normal draws
+    rand_idx_truncnorm: Optional[jnp.ndarray] = None  # index into betas for truncated normal draws
+    draws_idx_norm: Optional[jnp.ndarray] = None  # index into draws for normal draws
+    draws_idx_truncnorm: Optional[jnp.ndarray] = None  # index into draws for truncated normal draws
     fixed_idx: Optional[jnp.ndarray] = None
     idx_ln_dist: Optional[jnp.ndarray] = None
     rand_idx_stddev: Optional[jnp.ndarray] = None
     rand_idx_chol: Optional[jnp.ndarray] = None
+
+    def get_batched_version(self, start: int, end: int):
+        return ParametersSetup(
+            self.draws[start:end, :, :],
+        )
 
 
 # @dataclass
