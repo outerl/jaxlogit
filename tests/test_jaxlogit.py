@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-# import jax
+import jax
 import jax.numpy as jnp
 import pickle
 
@@ -9,7 +9,7 @@ import pickle
 from jaxlogit.mixed_logit import (
     MixedLogit,
     ConfigData,
-    # _transform_rand_betas,
+    _transform_rand_betas,
     loglike_individual,
     neg_loglike,
     probability_individual,
@@ -79,22 +79,19 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
     fixedvars = {}
-    model.fit(
-        X=X,
-        y=y,
-        varnames=varnames,
-        ids=ids,
-        alts=alts,
-        avail=avail,
-        panels=panels,
-        weights=weights,
-        n_draws=3,
-        randvars=randvars,
-        fixedvars=fixedvars,
-        optim_method="L-BFGS-B",
-        init_coeff=None,
+
+    config = ConfigData(
         skip_std_errs=True,
+        init_coeff=None,
+        optim_method="L-BFGS-B",
+        fixedvars=fixedvars,
+        n_draws=3,
+        weights=weights,
+        panels=panels,
+        avail=avail,
     )
+
+    model.fit(X=X, y=y, varnames=varnames, ids=ids, alts=alts, randvars=randvars, config=config)
 
     with open("tests/simple_data_output.pkl", "rb") as f:
         previous_model = pickle.load(f)
