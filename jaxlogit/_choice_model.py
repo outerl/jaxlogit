@@ -43,6 +43,7 @@ class ChoiceModel(ABC):  # noqa: B024
         panels,
         avail,
     ):
+        """ Returns given parameters as np arrays if they exist """
         X = np.asarray(X)
         y = np.asarray(y)
         varnames = np.asarray(varnames) if varnames is not None else None
@@ -126,7 +127,7 @@ class ChoiceModel(ABC):  # noqa: B024
         return covariance
 
     def _setup_design_matrix(self, X):
-        """Setups and reshapes input data."""
+        """Sets up and reshapes input data."""
         J = len(self.alternatives)
         N = int(len(X) / J)
         varnames = self._varnames.copy()
