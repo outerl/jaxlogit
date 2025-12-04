@@ -32,7 +32,6 @@ class ChoiceModel(ABC):  # noqa: B024
         self.loglikelihood = None
         self.total_fun_eval = 0
 
-    # TODO: refactor to be more generic
     def _as_array(
         self,
         X,
@@ -224,12 +223,6 @@ class ChoiceModel(ABC):  # noqa: B024
         print("Log-Likelihood= {:.3f}".format(self.loglikelihood))
         print("AIC= {:.3f}".format(self.aic))
         print("BIC= {:.3f}".format(self.bic))
-
-    def coefficients_df(self):
-        return pd.DataFrame(
-            data=zip(self.coeff_names, self.coeff_, self.stderr, self.zvalues),
-            columns=["coefficient_name", "value", "std err", "z-val"],
-        ).set_index("coefficient_name")
 
 
 def diff_nonchosen_chosen(X, y, avail):
