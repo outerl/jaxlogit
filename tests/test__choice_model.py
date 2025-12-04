@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 from pytest import approx
 from jaxlogit.mixed_logit import MixedLogit
+from time import time
 
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
 y = np.array([0, 1, 0, 1, 0, 1])
@@ -40,8 +41,32 @@ def test__reset_attributes(setup):
     assert 0 == choiceModel.total_fun_eval
 
 
-def test__setup_design_matrix_smoke_test():
-    choiceModel = ChoiceModel()
+def test__pre_fit(setup):
+    choiceModel = setup
+    choiceModel.coeff_names = ["a"]
+    choiceModel.coeff_ = {"key": 1}
+    choiceModel.stderr = 10
+    choiceModel.zvalues = 0.1
+    choiceModel.pvalues = 0.2
+    choiceModel.loglikelihood = 0.5
+    choiceModel.total_fun_eval = 5
+
+    choiceModel._pre_fit(alts, varnames, 100)
+    assert choiceModel._fit_start_time == pytest.approx(time(), abs=1)
+
+    assert choiceModel.coeff_names is None
+    assert choiceModel.coeff_ is None
+    assert choiceModel.stderr is None
+    assert choiceModel.zvalues is None
+    assert choiceModel.pvalues is None
+    assert choiceModel.loglikelihood is None
+    assert 0 == choiceModel.total_fun_eval
+    assert np.array_equal(choiceModel.alternatives, np.sort(np.unique(alts)))
+    assert choiceModel.maxiter == 100
+
+
+def test__setup_design_matrix_smoke_test(setup):
+    choiceModel = setup
     choiceModel.alternatives = np.sort(np.unique(alts))
     obtained = choiceModel._setup_design_matrix(X)
     assert obtained[0].shape == (3, 2, 2)
@@ -177,10 +202,10 @@ def test_diff_nonchosen_chosen(setup):
     # avail = avail.reshape(N * J)[~y].reshape(N, J - 1) if avail is not None else None
     # return Xd, avail
 
-    # TODO: FIX!!!
+    # TODO: talk to Jan and potentially change
     choiceModel = setup
     X_, _ = choiceModel._setup_design_matrix(X)
-    # y_ = choiceModel._format_choice_var(y, alts)
+    # y = np.array([0, 0, 1, 0, 0, 1])
     Xd, avail = diff_nonchosen_chosen(X_, y, None)
     expected = np.array([np.array([np.array([1, -2]), np.array([1, -3]), np.array([0, -3])])])
     assert np.array_equal(expected, Xd)
