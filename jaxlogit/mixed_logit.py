@@ -3,7 +3,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from dataclasses import dataclass
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Union, Sequence
+from pandas import Series
 
 from ._choice_model import ChoiceModel, diff_nonchosen_chosen
 from ._optimize import _minimize, gradient, hessian
@@ -22,13 +23,15 @@ Notations
     K : Number of variables (Kf: fixed, Kr: random)
 """
 
+ArrayLike = Union[np.ndarray, Series, Sequence[Any]]
+
 
 @dataclass
 class ConfigData:
-    weights: Optional[np.ndarray] = None
-    avail: Optional[np.ndarray] = None
-    panels: Optional[np.ndarray] = None
-    init_coeff: Optional[np.ndarray] = None
+    weights: Optional[ArrayLike] = None
+    avail: Optional[ArrayLike] = None
+    panels: Optional[ArrayLike] = None
+    init_coeff: Optional[ArrayLike] = None
     maxiter: int = 2000
     random_state: Optional[int] = None
     n_draws: int = 1000
@@ -283,7 +286,7 @@ class MixedLogit(ChoiceModel):
         values_for_mask = jnp.array(values_for_mask)
         mask_chol = jnp.array(mask_chol, dtype=jnp.int32)
         values_for_chol_mask = jnp.array(values_for_chol_mask)
-        return mask, values_for_mask
+        return mask, values_for_mask, mask_chol, values_for_chol_mask
 
     def data_prep(
         self,
@@ -364,7 +367,7 @@ class MixedLogit(ChoiceModel):
         values_for_chol_mask = []
 
         if config.fixedvars is not None:
-            mask, values_for_mask = self.set_fixed_variable_indicies(
+            mask, values_for_mask, mask_chol, values_for_chol_mask = self.set_fixed_variable_indicies(
                 mask_chol, values_for_chol_mask, config.fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
             )
 
@@ -562,7 +565,6 @@ class MixedLogit(ChoiceModel):
         #     finite_diff_hessian,
         #     batch_size,
         # )
-
         (
             betas,
             Xdf,
