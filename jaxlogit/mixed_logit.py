@@ -289,16 +289,26 @@ class MixedLogit(ChoiceModel):
         predict_mode=False,
     ):
         # Handle array-like inputs by converting everything to numpy arrays
-        (
-            X,
-            y,
-            varnames,
-            alts,
-            ids,
-            weights,
-            panels,
-            avail,
-        ) = self._as_array(
+        # (
+        #     X,
+        #     y,
+        #     varnames,
+        #     alts,
+        #     ids,
+        #     weights,
+        #     panels,
+        #     avail,
+        # ) = self._as_array(
+        #     X,
+        #     y,
+        #     varnames,
+        #     alts,
+        #     ids,
+        #     weights,
+        #     panels,
+        #     avail,
+        # )
+        toTransform = (
             X,
             y,
             varnames,
@@ -308,6 +318,19 @@ class MixedLogit(ChoiceModel):
             panels,
             avail,
         )
+        transformed = []
+        for array in toTransform:
+            transformed.append(np.asarray(array) if array is not None else None)
+        (
+            X,
+            y,
+            varnames,
+            alts,
+            ids,
+            weights,
+            panels,
+            avail,
+        ) = tuple(transformed)
 
         self._validate_inputs(X, y, alts, varnames, ids, weights, predict_mode=predict_mode)
 
