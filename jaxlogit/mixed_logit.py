@@ -289,25 +289,6 @@ class MixedLogit(ChoiceModel):
         predict_mode=False,
     ):
         # Handle array-like inputs by converting everything to numpy arrays
-        # (
-        #     X,
-        #     y,
-        #     varnames,
-        #     alts,
-        #     ids,
-        #     weights,
-        #     panels,
-        #     avail,
-        # ) = self._as_array(
-        #     X,
-        #     y,
-        #     varnames,
-        #     alts,
-        #     ids,
-        #     weights,
-        #     panels,
-        #     avail,
-        # )
         toTransform = (
             X,
             y,
