@@ -46,6 +46,8 @@ def wide_to_long(dataframe, id_col, alt_list, alt_name, varying=None, sep="_", a
     varying = varying if varying is not None else []
 
     # Validations
+    if dataframe is None or id_col is None or alt_list is None or alt_name is None:
+        raise ValueError("Dataframe, id_col, alt_list, and alt_name cannot be None")
     if any(col in varying for col in dataframe.columns):
         raise ValueError("varying can't be identical to a column name")
     if alt_name in dataframe.columns:
@@ -85,10 +87,10 @@ def lrtest(general_model, restricted_model):
 
     Parameters
     ----------
-    general_model : xlogit Model
+    general_model : jaxlogit Model
         Fitted model that contains all parameters (unrestricted)
 
-    restricted_model : xlogit Model
+    restricted_model : jaxlogit Model
         Fitted model with less parameters than ``general_model``.
 
     Returns
@@ -112,11 +114,16 @@ def get_panel_aware_batch_indices(panel_ids: jnp.ndarray, n_batches: int) -> lis
         panel_ids: A 1D numpy array of panel IDs, which must be sorted.
         n_batches: The desired number of batches.
 
+    Requires:
+        jnp.all(jnp.diff(panel_ids) >= 0)
+
     Returns:
         A list of (start, end, num_panels_in_batch) tuples for slicing the data.
     """
     if n_batches <= 0:
         raise ValueError("Number of batches must be positive.")
+    if panel_ids is None:
+        raise ValueError("panel_ids cannot be None")
 
     n_obs = len(panel_ids)
     if n_obs == 0:
