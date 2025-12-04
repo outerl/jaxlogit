@@ -1,4 +1,4 @@
-from jaxlogit._choice_model import ChoiceModel
+from jaxlogit._choice_model import ChoiceModel, diff_nonchosen_chosen
 import numpy as np
 import pandas as pd
 import pytest
@@ -16,6 +16,8 @@ N, J, K = 3, 2, 2
 @pytest.fixture
 def setup():
     choiceModel = ChoiceModel()
+    choiceModel.alternatives = alts
+    choiceModel._varnames = varnames
     return choiceModel
 
 
@@ -41,8 +43,6 @@ def test__reset_attributes(setup):
 def test__setup_design_matrix_smoke_test():
     choiceModel = ChoiceModel()
     choiceModel.alternatives = np.sort(np.unique(alts))
-    choiceModel._varnames = varnames
-    # return X, np.array(varnames)
     obtained = choiceModel._setup_design_matrix(X)
     assert obtained[0].shape == (3, 2, 2)
     assert varnames == list(obtained[1])
@@ -162,3 +162,25 @@ def test__robust_covariance():
     sum_sq_diff = np.sum(np.power(robust_cov - test_robust_cov, 2))
 
     assert sum_sq_diff == approx(0)
+
+
+def test_diff_nonchosen_chosen(setup):
+    # Setup Xd as Xij - Xi* (difference between non-chosen and chosen alternatives)
+    # N, J, K = X.shape  # number of choice situations, alternatives, and variables
+    # X, y = (
+    #     X.reshape(N * J, K),
+    #     y.astype(bool).reshape(
+    #         N * J,
+    #     ),
+    # )
+    # Xd = X[~y, :].reshape(N, J - 1, K) - X[y, :].reshape(N, 1, K)
+    # avail = avail.reshape(N * J)[~y].reshape(N, J - 1) if avail is not None else None
+    # return Xd, avail
+
+    # TODO: FIX!!!
+    choiceModel = setup
+    X_, _ = choiceModel._setup_design_matrix(X)
+    # y_ = choiceModel._format_choice_var(y, alts)
+    Xd, avail = diff_nonchosen_chosen(X_, y, None)
+    expected = np.array([np.array([np.array([1, -2]), np.array([1, -3]), np.array([0, -3])])])
+    assert np.array_equal(expected, Xd)

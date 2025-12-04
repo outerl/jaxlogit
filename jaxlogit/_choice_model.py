@@ -3,7 +3,6 @@ import logging
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pandas as pd
 from scipy.stats import t
 from time import time
 from abc import ABC
@@ -234,6 +233,6 @@ def diff_nonchosen_chosen(X, y, avail):
             N * J,
         ),
     )
-    Xd = X[~y, :].reshape(N, J - 1, K) - X[y, :].reshape(N, 1, K)
+    Xd = X[~y, :].reshape(N, -1, K) - X[y, :].reshape(N, -1, K)
     avail = avail.reshape(N * J)[~y].reshape(N, J - 1) if avail is not None else None
     return Xd, avail
