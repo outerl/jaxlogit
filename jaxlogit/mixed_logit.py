@@ -199,6 +199,74 @@ class MixedLogit(ChoiceModel):
             coef_names,
         )
 
+    def set_variable_indexes(self, include_correlations):
+        """Find and save indexes of types of random variables."""
+        ### WIP
+        # want idx_norml, idx_trunc for mean into betas.
+        # rvidx = jnp.array(self._rvidx, dtype=bool)
+        rand_idx_norm = jnp.where(self._rvidx_normal_bases)[0]
+        rand_idx_truncnorm = jnp.where(self._rvidx_truncnorm_based)[0]
+
+        # #std dev is different: in order
+        sd_start_idx = len(self._rvidx)  # start of std devs
+        sd_slice_size = len(jnp.where(self._rvidx)[0])  # num all std devs
+        # TODO TN: separate rand_idx_stddev for n_trunc and n/ln
+        rand_idx_stddev = jnp.arange(sd_start_idx, sd_start_idx + sd_slice_size, dtype=jnp.int32)
+        # rand_idx_stddev = jnp.argwhere
+
+        # only for n/ln, not n_trunc
+        chol_start_idx = sd_start_idx + sd_slice_size  # start: after all std devs
+        sd_chol_slice_size = len(jnp.where(self._rvidx_normal_bases)[0])  # number of elements based on n/ln dists
+        chol_slice_size = (sd_chol_slice_size * (sd_chol_slice_size + 1)) // 2 - sd_chol_slice_size
+        rand_idx_chol = (
+            None
+            if not include_correlations
+            else jnp.arange(chol_start_idx, chol_start_idx + chol_slice_size, dtype=jnp.int32)
+        )
+
+        draws_idx_norm = jnp.array([k for k, dist in enumerate(self._rvdist) if dist in ["n", "ln"]], dtype=jnp.int32)
+        draws_idx_truncnorm = jnp.array(
+            [k for k, dist in enumerate(self._rvdist) if dist == "n_trunc"], dtype=jnp.int32
+        )
+
+        return (
+            rand_idx_norm,
+            rand_idx_truncnorm,
+            rand_idx_stddev,
+            rand_idx_chol,
+            draws_idx_norm,
+            draws_idx_truncnorm,
+            sd_start_idx,
+            sd_slice_size,
+        )
+
+    def set_fixed_variable_indicies(
+        self, mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
+    ):
+        mask = np.zeros(len(fixedvars), dtype=np.int32)
+        values_for_mask = np.zeros(len(fixedvars), dtype=np.int32)
+        for i, (k, v) in enumerate(fixedvars.items()):
+            idx = np.where(coef_names == k)[0]
+            if len(idx) == 0:
+                raise ValueError(f"Variable {k} not found in the model.")
+            if len(idx) > 1:
+                raise ValueError(f"Variable {k} found more than once, this should never happen.")
+            idx = idx[0]
+            mask[i] = idx
+            assert v is not None
+            betas = betas.at[idx].set(v)
+            values_for_mask[i] = v
+
+            if (idx >= sd_start_idx) & (idx < sd_start_idx + sd_slice_size):
+                mask_chol.append(idx - sd_start_idx)
+                values_for_chol_mask.append(v)
+
+        mask = jnp.array(mask)
+        values_for_mask = jnp.array(values_for_mask)
+        mask_chol = jnp.array(mask_chol, dtype=jnp.int32)
+        values_for_chol_mask = jnp.array(values_for_chol_mask)
+        return mask, values_for_mask
+
     def data_prep(
         self,
         X,
@@ -274,6 +342,21 @@ class MixedLogit(ChoiceModel):
             include_correlations=include_correlations,
         )
 
+        (
+            rand_idx_norm,
+            rand_idx_truncnorm,
+            rand_idx_stddev,
+            rand_idx_chol,
+            draws_idx_norm,
+            draws_idx_truncnorm,
+            sd_start_idx,
+            sd_slice_size,
+        ) = self.set_variable_indexes(include_correlations)
+
+        # Set up index into _rvdist for lognormal distributions. This is used to apply the lognormal transformation
+        # to the random betas
+        idx_ln_dist = jnp.array([i for i, x in enumerate(self._rvdist) if x == "ln"], dtype=jnp.int32)
+
         # Mask fixed coefficients and set up array with values for the loglikelihood function
         mask = None
         values_for_mask = None
@@ -281,57 +364,10 @@ class MixedLogit(ChoiceModel):
         mask_chol = []
         values_for_chol_mask = []
 
-        ### WIP
-        # want idx_norml, idx_trunc for mean into betas.
-        # rvidx = jnp.array(self._rvidx, dtype=bool)
-        rand_idx_norm = jnp.where(self._rvidx_normal_bases)[0]
-        rand_idx_truncnorm = jnp.where(self._rvidx_truncnorm_based)[0]
-
-        # #std dev is different: in order
-        sd_start_idx = len(self._rvidx)  # start of std devs
-        sd_slice_size = len(jnp.where(self._rvidx)[0])  # num all std devs
-        # TODO TN: separate rand_idx_stddev for n_trunc and n/ln
-        rand_idx_stddev = jnp.arange(sd_start_idx, sd_start_idx + sd_slice_size, dtype=jnp.int32)
-        # rand_idx_stddev = jnp.argwhere
-
-        # only for n/ln, not n_trunc
-        chol_start_idx = sd_start_idx + sd_slice_size  # start: after all std devs
-        sd_chol_slice_size = len(jnp.where(self._rvidx_normal_bases)[0])  # number of elements based on n/ln dists
-        chol_slice_size = (sd_chol_slice_size * (sd_chol_slice_size + 1)) // 2 - sd_chol_slice_size
-        rand_idx_chol = (
-            None
-            if not include_correlations
-            else jnp.arange(chol_start_idx, chol_start_idx + chol_slice_size, dtype=jnp.int32)
-        )
-
-        draws_idx_norm = jnp.array([k for k, dist in enumerate(self._rvdist) if dist in ["n", "ln"]], dtype=jnp.int32)
-        draws_idx_truncnorm = jnp.array(
-            [k for k, dist in enumerate(self._rvdist) if dist == "n_trunc"], dtype=jnp.int32
-        )
-
         if fixedvars is not None:
-            mask = np.zeros(len(fixedvars), dtype=np.int32)
-            values_for_mask = np.zeros(len(fixedvars), dtype=np.int32)
-            for i, (k, v) in enumerate(fixedvars.items()):
-                idx = np.where(coef_names == k)[0]
-                if len(idx) == 0:
-                    raise ValueError(f"Variable {k} not found in the model.")
-                if len(idx) > 1:
-                    raise ValueError(f"Variable {k} found more than once, this should never happen.")
-                idx = idx[0]
-                mask[i] = idx
-                assert v is not None
-                betas = betas.at[idx].set(v)
-                values_for_mask[i] = v
-
-                if (idx >= sd_start_idx) & (idx < sd_start_idx + sd_slice_size):
-                    mask_chol.append(idx - sd_start_idx)
-                    values_for_chol_mask.append(v)
-
-            mask = jnp.array(mask)
-            values_for_mask = jnp.array(values_for_mask)
-            mask_chol = jnp.array(mask_chol, dtype=jnp.int32)
-            values_for_chol_mask = jnp.array(values_for_chol_mask)
+            mask, values_for_mask = self.set_fixed_variable_indicies(
+                mask_chol, values_for_chol_mask, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas
+            )
 
         if (fixedvars is None) or (len(mask_chol) == 0):
             mask_chol = None
@@ -341,10 +377,6 @@ class MixedLogit(ChoiceModel):
         # of panels. We provide this number explicitly to the log-likelihood function for jit compilation of
         # segment_sum (product of probabilities over panels)
         num_panels = 0 if panels is None else int(jnp.max(panels)) + 1
-
-        # Set up index into _rvdist for lognormal distributions. This is used to apply the lognormal transformation
-        # to the random betas
-        idx_ln_dist = jnp.array([i for i, x in enumerate(self._rvdist) if x == "ln"], dtype=jnp.int32)
 
         if not predict_mode:
             # This here is estimation specific - we compute the difference between the chosen and non-chosen
@@ -985,7 +1017,6 @@ def neg_loglike_grad_batched(
     rand_idx_chol,
     batch_size,
 ):
-
     if panels is None:
         # Simple case: no panels, just batch observations
         n_obs = Xdf.shape[0]
@@ -1041,8 +1072,8 @@ def neg_loglike_grad_batched(
         #    + f", acc: {loglik:.3f}, {grad_loglik}, {num_panels_counter})."
         # )
 
-
     return -loglik, -grad_loglik  # is this right 0 both -1?
+
 
 def loglike_individual_sum(
     betas,
