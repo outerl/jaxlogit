@@ -104,7 +104,6 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
     assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
     # could also add model.loglikelihood, model.aic and model.bic
 
-
 def test_loglike_individual_and_total(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
@@ -333,6 +332,7 @@ def test_transform_rand_betas_jit():
     )
     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
     assert out.shape == (N, Kr, R)
+
 
 
 def save_simple_data_output():

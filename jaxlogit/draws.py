@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 #     out = jnp.select([case_left, case_right], [ppf_left(q, a, b), ppf_right(q, a, b)])
 #     return out
 
+
 # This seems considerably faster based on a small-ish test case. TODO: proper performance testing.
 def _truncnorm_ppf(u, b):
     """
@@ -51,6 +52,7 @@ def _truncnorm_ppf(u, b):
     phi_b = jstats.norm.cdf(b)
     val_ = u * phi_b  # phi_a + u * (phi_b - phi_a)
     return jstats.norm.ppf(val_.clip(LOG_PROB_MIN, LOG_PROB_MAX))
+
 
 def truncnorm_ppf(q, loc, scale):
     """
