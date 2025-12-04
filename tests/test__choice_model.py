@@ -190,22 +190,8 @@ def test__robust_covariance():
 
 
 def test_diff_nonchosen_chosen(setup):
-    # Setup Xd as Xij - Xi* (difference between non-chosen and chosen alternatives)
-    # N, J, K = X.shape  # number of choice situations, alternatives, and variables
-    # X, y = (
-    #     X.reshape(N * J, K),
-    #     y.astype(bool).reshape(
-    #         N * J,
-    #     ),
-    # )
-    # Xd = X[~y, :].reshape(N, J - 1, K) - X[y, :].reshape(N, 1, K)
-    # avail = avail.reshape(N * J)[~y].reshape(N, J - 1) if avail is not None else None
-    # return Xd, avail
-
-    # TODO: talk to Jan and potentially change
-    choiceModel = setup
-    X_, _ = choiceModel._setup_design_matrix(X)
-    # y = np.array([0, 0, 1, 0, 0, 1])
+    X_ = np.array([np.array([[2, 1], [1, 3], [3, 1]]), np.array([[2, 4], [2, 1], [2, 4]])])
+    y = np.array([0, 0, 1, 0, 0, 1])
     Xd, avail = diff_nonchosen_chosen(X_, y, None)
-    expected = np.array([np.array([np.array([1, -2]), np.array([1, -3]), np.array([0, -3])])])
+    expected = np.array([[[-1, 0], [-2, 2]], [[0, 0], [0, -3]]])
     assert np.array_equal(expected, Xd)
