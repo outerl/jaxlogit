@@ -109,6 +109,8 @@ def gradient(funct, x, *args):
     # Finite differences, lowest memory usage but slowest
     eps = 1e-6
     n = x.size
+    if n == 0:
+        raise ValueError("x must have at least one dimension")
     grad_shape = funct(x, *args).size
     grad = jnp.zeros((grad_shape, n))
     for i in range(n):
@@ -128,7 +130,7 @@ def hessian(funct, x, hessian_by_row, finite_diff, *args):
     grad_funct = jax.jit(jax.grad(funct, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES)
 
     # This is a compromise between memory and speed - we know jax gradient calculations are
-    # within memory limits because we use it during minimization, to stay within the smae
+    # within memory limits because we use it during minimization, to stay within the same
     # memory limits we use finite differences on the jitted grad.
     if finite_diff:
         eps = 1e-6
