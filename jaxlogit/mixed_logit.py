@@ -135,62 +135,6 @@ class MixedLogit(ChoiceModel):
         self._rvidx = None  # Index of random variables (True when random var)
         self._rvdist = None  # List of mixing distributions of rand vars
 
-    def set_data_variables(
-        self,
-        X,
-        y,
-        varnames,
-        alts,
-        ids,
-        randvars,
-        weights,
-        avail,
-        panels,
-        init_coeff,
-        maxiter,
-        random_state,
-        n_draws,
-        halton,
-        halton_opts,
-        tol_opts,
-        num_hess,
-        fixedvars,
-        optim_method,
-        skip_std_errs,
-        include_correlations,
-        force_positive_chol_diag,
-        hessian_by_row,
-        finite_diff_hessian,
-        batch_size,
-    ):
-        # Set class variables to enable simple pickling and running things post-estimation for analysis. This will be
-        # replaced by proper database/dataseries structure in the future.
-        self.X_raw = X
-        self.y_raw = y
-        self.varnames_raw = varnames
-        self.alts_raw = (alts,)
-        self.ids_raw = (ids,)
-        self.randvars_raw = (randvars,)
-        self.weights_raw = (weights,)
-        self.avail_raw = (avail,)
-        self.panels_raw = (panels,)
-        self.init_coeff_raw = (init_coeff,)
-        self.maxiter_raw = (maxiter,)
-        self.random_state_raw = (random_state,)
-        self.n_draws_raw = (n_draws,)
-        self.halton_raw = (halton,)
-        self.halton_opts_raw = (halton_opts,)
-        self.tol_opts_raw = (tol_opts,)
-        self.num_hess_raw = (num_hess,)
-        self.fixedvars_raw = (fixedvars,)
-        self.optim_method_raw = (optim_method,)
-        self.skip_std_errs_raw = (skip_std_errs,)
-        self.include_correlations_raw = (include_correlations,)
-        self.force_positive_chol_diag_raw = (force_positive_chol_diag,)
-        self.hessian_by_row_raw = (hessian_by_row,)
-        self.finite_diff_hessian_raw = (finite_diff_hessian,)
-        self.batch_size_raw = (batch_size,)
-
     def _setup_input_data(
         self,
         X,
