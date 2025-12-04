@@ -43,7 +43,7 @@ class ChoiceModel(ABC):  # noqa: B024
         panels,
         avail,
     ):
-        """ Returns given parameters as np arrays if they exist """
+        """Returns given parameters as np arrays if they exist"""
         X = np.asarray(X)
         y = np.asarray(y)
         varnames = np.asarray(varnames) if varnames is not None else None

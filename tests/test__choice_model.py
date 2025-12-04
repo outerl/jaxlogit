@@ -3,9 +3,7 @@ import numpy as np
 import pytest
 from pytest import approx
 
-from jaxlogit.mixed_logit import (
-    MixedLogit
-)
+from jaxlogit.mixed_logit import MixedLogit
 
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
 y = np.array([0, 1, 0, 1, 0, 1])
@@ -51,6 +49,7 @@ def test__validate_inputs():
     with pytest.raises(ValueError):  # y dimensions
         validate(X, np.array([]), alts, varnames=None, ids=ids, weights=None)
 
+
 def test__format_choice_var():
     """
     Ensures that the variable y is properly formatted as needed by internal
@@ -63,9 +62,19 @@ def test__format_choice_var():
     y1 = np.array([1, 1, 2, 2, 1, 1])
     assert np.array_equal(model._format_choice_var(y1, alts), expected)
 
-    y2 = np.array(['a', 'a', 'b', 'b', 'a', 'a'])
-    alts2 = np.array(['a', 'b', 'a', 'b', 'a', 'b',])
+    y2 = np.array(["a", "a", "b", "b", "a", "a"])
+    alts2 = np.array(
+        [
+            "a",
+            "b",
+            "a",
+            "b",
+            "a",
+            "b",
+        ]
+    )
     assert np.array_equal(model._format_choice_var(y2, alts2), expected)
+
 
 def test__robust_covariance():
     """
@@ -74,8 +83,8 @@ def test__robust_covariance():
 
     Adapted from xlogit tests
     """
-    hess_inv = np.array([[1, .5], [.5, 4]])
-    grad_n = np.array([[0, 0], [.05, .05], [-0.05, -0.05]])
+    hess_inv = np.array([[1, 0.5], [0.5, 4]])
+    grad_n = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
 
     robust_cov = np.array([[0.016875, 0.050625], [0.050625, 0.151875]])
 
@@ -83,6 +92,6 @@ def test__robust_covariance():
 
     test_robust_cov = model._robust_covariance(hess_inv, grad_n)
 
-    sum_sq_diff = np.sum(np.power(robust_cov-test_robust_cov,2))
+    sum_sq_diff = np.sum(np.power(robust_cov - test_robust_cov, 2))
 
     assert sum_sq_diff == approx(0)

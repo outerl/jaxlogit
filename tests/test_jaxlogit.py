@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+
 # import jax
 import jax.numpy as jnp
 import pickle
@@ -13,6 +14,7 @@ from jaxlogit.mixed_logit import (
 )
 
 SEED = 0
+
 
 def make_simple_data():
     N = 6  # individuals
@@ -31,6 +33,7 @@ def make_simple_data():
     panels = np.repeat(np.arange(N), J)
     weights = np.ones(N * J)
     return X, y, ids, alts, avail, panels, weights
+
 
 @pytest.fixture
 def simple_data():
@@ -63,10 +66,8 @@ def test_mixed_logit_fit(simple_data):
         skip_std_errs=True,
     )
 
-
     assert result is not None
     assert "fun" in result
-
 
 
 # def test_mixed_logit_fit_against_previous_results(simple_data):
@@ -105,7 +106,6 @@ def test_mixed_logit_fit(simple_data):
 #     # assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
 #     assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
 #     # could also add model.loglikelihood, model.aic and model.bic
-
 
 
 def test_loglike_individual_and_total(simple_data):
@@ -344,6 +344,7 @@ def test_probability_individual(simple_data):
 #     out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
 #     assert out.shape == (N, Kr, R)
 
+
 def save_simple_data_output():
     X, y, ids, alts, avail, panels, weights = make_simple_data()
     # print(X)
@@ -373,8 +374,10 @@ def save_simple_data_output():
     with open("tests/simple_data_output.pkl", "wb") as f:
         pickle.dump(model, f)
 
+
 def main():
     save_simple_data_output()
+
 
 if __name__ == "__main__":
     main()
