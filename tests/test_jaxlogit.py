@@ -144,7 +144,7 @@ def test_loglike_individual_and_total(simple_data):
     assert ll_indiv.shape[0] == num_panels
     assert not jnp.any(jnp.isnan(ll_indiv))
 
-    nll = neg_loglike(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, 0, parameter_info)
+    nll = neg_loglike(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, parameter_info, 0)
     assert np.isscalar(nll) or (isinstance(nll, jnp.ndarray) and nll.shape == ())
     assert np.allclose(-nll, jnp.sum(ll_indiv), atol=1e-5)
 

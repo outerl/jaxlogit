@@ -866,8 +866,8 @@ def neg_loglike_grad_batched(
     avail,
     num_panels,
     force_positive_chol_diag,
-    batch_size,
     parameter_info: FrozenParametersSetup,
+    batch_size,
 ):
     if panels is None:
         # Simple case: no panels, just batch observations
