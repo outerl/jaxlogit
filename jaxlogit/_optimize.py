@@ -7,7 +7,7 @@ import jax.numpy as jnp
 logger = logging.getLogger(__name__)
 
 # static_argnames in loglikelihood function, TODO: maybe replace with partial and get rid of all additional args
-STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag"]
+STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_info"]
 
 
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
@@ -28,13 +28,11 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
             # standard BFGS uses optx.AbstractSearch = optx.BacktrackingArmijo()
 
         def neg_loglike_optx(betas, args):
-           """Wrapper for neg_loglike to use with optx."""
-           return loglik_fn(betas, *args)
+            """Wrapper for neg_loglike to use with optx."""
+            return loglik_fn(betas, *args)
 
         solver_optx = HybridSolver(
-            rtol=1e-6,
-            atol=1e-6,
-            verbose=frozenset({"step_size", "loss"}) if options["disp"] else frozenset({})
+            rtol=1e-6, atol=1e-6, verbose=frozenset({"step_size", "loss"}) if options["disp"] else frozenset({})
         )
         optx_result = optx.minimise(neg_loglike_optx, solver_optx, x, max_steps=options.get("maxiter", 2000), args=args)
         # TODO: wrap things up in proper result class, for now just use scipy's structure
@@ -52,7 +50,10 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
         from scipy.optimize import minimize
 
         if jit_loglik:
-            neg_loglik_and_grad = jax.jit(jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES)
+            neg_loglik_and_grad = jax.jit(
+                jax.value_and_grad(loglik_fn, argnums=0),
+                static_argnames=STATIC_LOGLIKE_ARGNAMES,
+            )
         else:
             # If we are batching, we provide both
             neg_loglik_and_grad = loglik_fn
@@ -63,6 +64,7 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
             return neg_loglik_and_grad(x, *args)
 
         nit = 0  # global counter for display callback
+
         def display_callback(optim_res):
             nonlocal nit, neg_loglike_scipy, args
             nit += 1
@@ -121,8 +123,8 @@ def hessian(funct, x, hessian_by_row, finite_diff, *args):
     """Compute the Hessian of funct for variables x."""
 
     # # this is memory intensive for large x.
-    #hess_fn = jax.jacfwd(jax.grad(funct))  # jax.hessian(neg_loglike)
-    #H = hess_fn(jnp.array(x), *args)
+    # hess_fn = jax.jacfwd(jax.grad(funct))  # jax.hessian(neg_loglike)
+    # H = hess_fn(jnp.array(x), *args)
 
     grad_funct = jax.jit(jax.grad(funct, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES)
 

@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from ._choice_model import ChoiceModel, diff_nonchosen_chosen
-from ._variables import ParametersSetup
+from ._variables import ParametersSetup, FrozenParametersSetup
 from ._optimize import _minimize, gradient, hessian
 from .draws import generate_draws, truncnorm_ppf
 from .utils import get_panel_aware_batch_indices
@@ -403,7 +403,9 @@ class MixedLogit(ChoiceModel):
         Xdf = Xd[:, :, ~rvidx]  # Data for fixed parameters
         Xdr = Xd[:, :, rvidx]  # Data for random parameters
 
-        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info)
+        frozen_parameter_info = parameter_info.freeze()
+
+        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, frozen_parameter_info)
 
     def fit(
         self,
@@ -588,7 +590,7 @@ class MixedLogit(ChoiceModel):
             include_correlations=include_correlations,
         )
 
-        fargs = (Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, batch_size, parameter_info)
+        fargs = (Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info, batch_size)
 
         if parameter_info.idx_ln_dist.shape[0] > 0:
             logger.info(
@@ -844,8 +846,8 @@ def neg_loglike(
     avail,
     num_panels,
     force_positive_chol_diag,
+    parameter_info: FrozenParametersSetup,
     batch_size,
-    parameter_info: ParametersSetup,
 ):
     loglik_individ = loglike_individual(
         betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info
@@ -865,7 +867,7 @@ def neg_loglike_grad_batched(
     num_panels,
     force_positive_chol_diag,
     batch_size,
-    parameter_info: ParametersSetup,
+    parameter_info: FrozenParametersSetup,
 ):
     if panels is None:
         # Simple case: no panels, just batch observations
@@ -922,7 +924,7 @@ def loglike_individual_sum(
     avail,
     num_panels,
     force_positive_chol_diag,
-    parameter_info: ParametersSetup,
+    parameter_info: FrozenParametersSetup,
 ):
     ll = loglike_individual(
         betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info
@@ -936,7 +938,9 @@ loglike_and_grad_individual = jax.jit(
 )
 
 
-def loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info):
+def loglike_individual(
+    betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info: FrozenParametersSetup
+):
     """Compute the log-likelihood.
 
     Fixed and random parameters are handled separately to speed up the estimation and the results are concatenated.
@@ -992,7 +996,7 @@ def loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, forc
 
 
 def probability_individual(
-    betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info: ParametersSetup
+    betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info: FrozenParametersSetup
 ):
     """Compute the probabilities of all alternatives."""
 
