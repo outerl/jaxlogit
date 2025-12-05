@@ -313,7 +313,7 @@ class MixedLogit(ChoiceModel):
             avail,
         ) = tuple(transformed)
 
-        self._validate_inputs(X, y, alts, varnames, ids, weights, predict_mode=predict_mode)
+        self._validate_inputs(X, y, alts, varnames, weights, predict_mode=predict_mode)
 
         self._pre_fit(alts, varnames, maxiter)
 

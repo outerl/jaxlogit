@@ -127,19 +127,27 @@ def test__validate_inputs():
     model = MixedLogit()
     validate = model._validate_inputs
     with pytest.raises(ValueError):  # match between columns in X and varnames
-        validate(X, y, alts, varnames=["a"], ids=ids, weights=None)
+        validate(X, y, alts, varnames=["a"], weights=None)
 
     with pytest.raises(ValueError):  # alts can't be None
-        validate(X, y, None, varnames=["a"], ids=ids, weights=None)
+        validate(X, y, None, varnames=["a"], weights=None)
 
     with pytest.raises(ValueError):  # varnames can't be None
-        validate(X, y, alts, None, ids=ids, weights=None)
+        validate(X, y, alts, None, weights=None)
 
     with pytest.raises(ValueError):  # X dimensions
-        validate(np.array([]), y, alts, varnames=None, ids=ids, weights=None)
+        validate(np.array([]), y, alts, varnames=None, weights=None)
 
     with pytest.raises(ValueError):  # y dimensions
-        validate(X, np.array([]), alts, varnames=None, ids=ids, weights=None)
+        validate(X, np.array([]), alts, varnames=None, weights=None)
+
+    with pytest.raises(ValueError):
+        validate(X, y, alts, None, weights=np.ones(5))
+
+    with pytest.raises(ValueError):
+        validate(X, np.array([[1, 2]]), alts, None, np.ones(12))
+
+    validate(X, y, alts, varnames, np.ones(12))
 
 
 def test__format_choice_var():
