@@ -145,9 +145,9 @@ def test__validate_inputs():
         validate(X, y, alts, None, weights=np.ones(5))
 
     with pytest.raises(ValueError):
-        validate(X, np.array([[1, 2]]), alts, None, np.ones(12))
+        validate(X, np.array([[1, 2]]), alts, None, np.ones(6))
 
-    validate(X, y, alts, varnames, np.ones(12))
+    validate(X, y, alts, varnames, np.ones(6))
 
 
 def test__format_choice_var():
