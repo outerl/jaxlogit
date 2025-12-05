@@ -203,3 +203,29 @@ def test_diff_nonchosen_chosen(setup):
     Xd, avail = diff_nonchosen_chosen(X_, y, None)
     expected = np.array([[[-1, 0], [-2, 2]], [[0, 0], [0, -3]]])
     assert np.array_equal(expected, Xd)
+
+
+@pytest.fixture
+def fit_setup():
+    optim_res = {
+        "success": True,
+        "message": "optimisation message",
+        "x": np.array([10, 11, 12]),
+        "fun": 5.12,
+        "nit": 9,
+        "nfev": 100,
+    }
+    coeff_names = ["a", "b", "c"]
+    sample_size = 0
+    fixedvars = ["a"]
+    return optim_res, coeff_names, sample_size, fixedvars
+
+
+def test_post_fit_basic(setup, fit_setup):
+    choiceModel = setup
+    choiceModel._fit_start_time = time() - 5
+    # optim_res, coeff_names, sample_size, mask=None, fixedvars=None, skip_std_errors=False
+    optim_res, coeff_names, sample_size, fixedvars = fit_setup
+    choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
+
+    assert np.array_equal(coeff_names, choiceModel.coeff_names)
