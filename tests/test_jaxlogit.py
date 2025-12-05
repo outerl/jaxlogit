@@ -31,7 +31,6 @@ def make_simple_data():
     y = y.reshape(-1)
     ids = np.repeat(np.arange(N), J)
     alts = np.tile(np.arange(J), N)
-    print(f"{J=}, {N=}, {alts=}")
     avail = np.ones((N * J,))
     panels = np.repeat(np.arange(N), J)
     weights = np.ones(N * J)
@@ -45,8 +44,6 @@ def simple_data():
 
 def test_mixed_logit_fit(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
-    print(f"{weights=}")
-    # print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
@@ -72,7 +69,6 @@ def test_mixed_logit_fit(simple_data):
 @pytest.mark.skip(reason="different python versions and OSs give different results")
 def test_mixed_logit_fit_against_previous_results(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
-    # print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
@@ -96,13 +92,13 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
     with open("tests/simple_data_output.pkl", "rb") as f:
         previous_model = pickle.load(f)
 
-    print(previous_model)
     # assert list(model.coeff_names) == list(previous_model.coeff_names)
     assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
     # assert list(model.stderr) == pytest.approx(list(previous_model.stderr), rel=1e-3)
     # assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
     assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
     # could also add model.loglikelihood, model.aic and model.bic
+
 
 def test_loglike_individual_and_total(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
@@ -122,13 +118,13 @@ def test_loglike_individual_and_total(simple_data):
 
     fixedvars = {}
     config = ConfigData(
-        avail=np.array(df["avail"]),  #
-        panels=np.array(df["person_id_contiguous"]),  #
-        weights=np.array(df["weight"]),  #
-        n_draws=3,  #
-        fixedvars=fixedvars,  #
-        init_coeff=None,  #
-        include_correlations=False,  #
+        avail=np.array(df["avail"]),
+        panels=np.array(df["person_id_contiguous"]),
+        weights=np.array(df["weight"]),
+        n_draws=3,
+        fixedvars=fixedvars,
+        init_coeff=None,
+        include_correlations=False,
     )
     (
         betas,
@@ -334,10 +330,8 @@ def test_transform_rand_betas_jit():
     assert out.shape == (N, Kr, R)
 
 
-
 def save_simple_data_output():
     X, y, ids, alts, avail, panels, weights = make_simple_data()
-    # print(X)
 
     varnames = [f"x{i}" for i in range(X.shape[1])]
 

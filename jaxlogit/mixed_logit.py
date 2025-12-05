@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from dataclasses import dataclass
-from typing import Any, Dict, Union, Sequence
+from typing import Any, Union, Sequence
 from pandas import Series
 
 from ._choice_model import ChoiceModel, diff_nonchosen_chosen
@@ -11,7 +11,6 @@ from ._optimize import _minimize, gradient, hessian
 from .draws import generate_draws, truncnorm_ppf
 from .utils import get_panel_aware_batch_indices
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 """
@@ -114,8 +113,8 @@ class ConfigData:
     random_state: int | None = None
     n_draws: int = 1000
     halton: bool = True
-    halton_opts: Dict | None = None
-    tol_opts: Dict | None = None
+    halton_opts: dict | None = None
+    tol_opts: dict | None = None
     num_hess: bool = False
     fixedvars: Any = None
     optim_method: str = "trust-region"
@@ -198,7 +197,6 @@ class MixedLogit(ChoiceModel):
         logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
 
         if config.weights is not None:  # Reshape weights to match input data
-            print("here", config.weights)
             # weights = weights.reshape(N, J)[:, 0]
             if config.panels is not None:
                 panel_change_idx = np.concatenate(([0], np.where(config.panels[:-1] != config.panels[1:])[0] + 1))
