@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from dataclasses import dataclass
-from typing import Any, Optional, Dict, Union, Sequence
+from typing import Any, Dict, Union, Sequence
 from pandas import Series
 
 from ._choice_model import ChoiceModel, diff_nonchosen_chosen
@@ -106,16 +106,16 @@ class ConfigData:
             Size of batches used to avoid GPU memory overflow.
     """
 
-    weights: Optional[ArrayLike] = None
-    avail: Optional[ArrayLike] = None
-    panels: Optional[ArrayLike] = None
-    init_coeff: Optional[ArrayLike] = None
+    weights: ArrayLike | None = None
+    avail: ArrayLike | None = None
+    panels: ArrayLike | None = None
+    init_coeff: ArrayLike | None = None
     maxiter: int = 2000
-    random_state: Optional[int] = None
+    random_state: int | None = None
     n_draws: int = 1000
     halton: bool = True
-    halton_opts: Optional[Dict] = None
-    tol_opts: Optional[Dict] = None
+    halton_opts: Dict | None = None
+    tol_opts: Dict | None = None
     num_hess: bool = False
     fixedvars: Any = None
     optim_method: str = "trust-region"
@@ -124,7 +124,7 @@ class ConfigData:
     force_positive_chol_diag: bool = True
     hessian_by_row: bool = True
     finite_diff_hessian: bool = False
-    batch_size: Optional[int] = None
+    batch_size: int | None = None
 
 
 class MixedLogit(ChoiceModel):
