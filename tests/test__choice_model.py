@@ -216,8 +216,8 @@ def fit_setup():
         "nfev": 100,
     }
     coeff_names = ["a", "b", "c"]
-    sample_size = 0
-    fixedvars = ["a"]
+    sample_size = 5
+    fixedvars = {"a": 1.0}
     return optim_res, coeff_names, sample_size, fixedvars
 
 
@@ -229,3 +229,12 @@ def test_post_fit_basic(setup, fit_setup):
     choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
 
     assert np.array_equal(coeff_names, choiceModel.coeff_names)
+    assert optim_res["message"] == choiceModel.estimation_message
+    assert choiceModel.total_iter == optim_res["nit"]
+    assert 5 == pytest.approx(choiceModel.estim_time_sec, abs=2)
+    assert sample_size == choiceModel.sample_size
+    assert choiceModel.total_fun_eval == optim_res["nfev"]
+    # TODO: rely on formula, not pre-calc'd values
+    assert choiceModel.loglikelihood == -optim_res["fun"]
+    assert choiceModel.aic == 14.24
+    assert choiceModel.bic == pytest.approx(13.458875824)
