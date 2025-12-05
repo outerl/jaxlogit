@@ -120,14 +120,14 @@ def gradient(funct, x, *args):
     return grad
 
 
-def hessian(funct, x, hessian_by_row, finite_diff, *args):
+def hessian(funct, x, hessian_by_row, finite_diff, *args, static_argnames=STATIC_LOGLIKE_ARGNAMES):
     """Compute the Hessian of funct for variables x."""
 
     # # this is memory intensive for large x.
     # hess_fn = jax.jacfwd(jax.grad(funct))  # jax.hessian(neg_loglike)
     # H = hess_fn(jnp.array(x), *args)
 
-    grad_funct = jax.jit(jax.grad(funct, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES)
+    grad_funct = jax.jit(jax.grad(funct, argnums=0), static_argnames=static_argnames)
 
     # This is a compromise between memory and speed - we know jax gradient calculations are
     # within memory limits because we use it during minimization, to stay within the same
