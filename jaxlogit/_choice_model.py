@@ -3,7 +3,6 @@ import logging
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pandas as pd
 from scipy.stats import t
 from time import time
 from abc import ABC
@@ -44,15 +43,7 @@ class ChoiceModel(ABC):  # noqa: B024
         avail,
     ):
         """Returns given parameters as np arrays if they exist"""
-        X = np.asarray(X)
-        y = np.asarray(y)
-        varnames = np.asarray(varnames) if varnames is not None else None
-        alts = np.asarray(alts) if alts is not None else None
-        ids = np.asarray(ids) if ids is not None else None
-        weights = np.asarray(weights) if weights is not None else None
-        panels = np.asarray(panels) if panels is not None else None
-        avail = np.asarray(avail) if avail is not None else None
-        return (
+        toTransform = (
             X,
             y,
             varnames,
@@ -62,6 +53,10 @@ class ChoiceModel(ABC):  # noqa: B024
             panels,
             avail,
         )
+        transformed = []
+        for array in toTransform:
+            transformed.append(np.asarray(array) if array is not None else None)
+        return tuple(transformed)
 
     def _pre_fit(self, alts, varnames, maxiter):
         self._reset_attributes()
@@ -145,13 +140,15 @@ class ChoiceModel(ABC):  # noqa: B024
 
         It raises an error if the array of alternative indexes is incomplete
         """
+        if ids is None or alts is None:
+            raise ValueError("no inputs can be None")
         uq_alts, idx = np.unique(alts, return_index=True)
         uq_alts = uq_alts[np.argsort(idx)]
         expected_alts = np.tile(uq_alts, int(len(ids) / len(uq_alts)))
         if not np.array_equal(alts, expected_alts):
             raise ValueError(f"inconsistent alts values in long format, expected {expected_alts}, got {uq_alts}")
         _, obs_by_id = np.unique(ids, return_counts=True)
-        if not np.all(obs_by_id / len(uq_alts)):  # Multiple of J
+        if not np.all(obs_by_id % len(uq_alts) == 0):  # Multiple of J
             raise ValueError("inconsistent alts and ids values in long format")
 
     def _format_choice_var(self, y, alts):
@@ -168,7 +165,7 @@ class ChoiceModel(ABC):  # noqa: B024
             else:
                 raise ValueError("inconsistent 'y' values. Make sure the data has one choice per sample")
 
-    def _validate_inputs(self, X, y, alts, varnames, ids, weights, predict_mode=False):
+    def _validate_inputs(self, X, y, alts, varnames, weights, predict_mode=False):
         """Validate potential mistakes in the input data."""
         if varnames is None:
             raise ValueError("The parameter varnames is required")
@@ -176,16 +173,13 @@ class ChoiceModel(ABC):  # noqa: B024
             raise ValueError("The parameter alternatives is required")
         if X.ndim != 2:
             raise ValueError("X must be an array of two dimensions in long format")
-        if not predict_mode and y.ndim != 1:
+        if y.ndim != 1:
             raise ValueError("y must be an array of one dimension in long format")
         if len(varnames) != X.shape[1]:
             raise ValueError("The length of varnames must match the number of columns in X")
         if weights is not None:
-            result = 1
-            for item in weights.shape:
-                result *= item
-            if result % (X.shape[0] * X.shape[1]):
-                raise ValueError("The length of weights must correspond to the dimensions of X")
+            if (X.shape[0] * X.shape[1]) % weights.size:
+                raise ValueError("The length of weights must be divisble by the first two dimensions of X")
 
     def summary(self):
         """Show estimation results in console."""
@@ -231,12 +225,6 @@ class ChoiceModel(ABC):  # noqa: B024
         print("Log-Likelihood= {:.3f}".format(self.loglikelihood))
         print("AIC= {:.3f}".format(self.aic))
         print("BIC= {:.3f}".format(self.bic))
-
-    def coefficients_df(self):
-        return pd.DataFrame(
-            data=zip(self.coeff_names, self.coeff_, self.stderr, self.zvalues),
-            columns=["coefficient_name", "value", "std err", "z-val"],
-        ).set_index("coefficient_name")
 
 
 def diff_nonchosen_chosen(X, y, avail):

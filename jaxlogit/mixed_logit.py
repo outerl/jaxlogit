@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from typing import Any, Union, Sequence
 from pandas import Series
 
-from ._choice_model import ChoiceModel, diff_nonchosen_chosen
-from ._optimize import _minimize, gradient, hessian
-from .draws import generate_draws, truncnorm_ppf
-from .utils import get_panel_aware_batch_indices
+from jaxlogit._choice_model import ChoiceModel, diff_nonchosen_chosen
+from jaxlogit._optimize import _minimize, gradient, hessian
+from jaxlogit.draws import generate_draws, truncnorm_ppf
+from jaxlogit.utils import get_panel_aware_batch_indices
 
 logger = logging.getLogger(__name__)
 
@@ -340,7 +340,7 @@ class MixedLogit(ChoiceModel):
             config.avail,
         )
 
-        self._validate_inputs(X, y, alts, varnames, ids, config.weights, predict_mode=predict_mode)
+        self._validate_inputs(X, y, alts, varnames, config.weights, predict_mode=predict_mode)
 
         self._pre_fit(alts, varnames, config.maxiter)
 
@@ -504,15 +504,7 @@ class MixedLogit(ChoiceModel):
             coef_names,
             rand_idx_stddev,
             rand_idx_chol,
-        ) = self.data_prep(
-            X,
-            y,
-            varnames,
-            alts,
-            ids,
-            randvars,
-            config,
-        )
+        ) = self.data_prep(X, y, varnames, alts, ids, randvars, config, predict_mode=False)
 
         fargs = (
             Xdf,
