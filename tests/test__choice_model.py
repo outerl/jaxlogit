@@ -234,8 +234,7 @@ def test_post_fit_basic(fit_setup):
     assert 5 == pytest.approx(choiceModel.estim_time_sec, abs=2)
     assert sample_size == choiceModel.sample_size
     assert choiceModel.total_fun_eval == optim_res["nfev"]
-    # TODO: rely on formula, not pre-calc'd values
-    assert choiceModel.loglikelihood == -optim_res["fun"]
+    assert choiceModel.loglikelihood == -5.12
     assert choiceModel.aic == 14.24
     assert choiceModel.bic == pytest.approx(13.458875824)
     assert choiceModel.mask is None
