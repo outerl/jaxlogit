@@ -125,26 +125,25 @@ def test__validate_inputs():
     """
     model = MixedLogit()
     validate = model._validate_inputs
-    with pytest.raises(ValueError):  # match between columns in X and varnames
+    with pytest.raises(
+        ValueError, match=r"The length of varnames must match the number of columns in X"
+    ):  # match between columns in X and varnames
         validate(X, y, alts, varnames=["a"], weights=None)
 
-    with pytest.raises(ValueError):  # alts can't be None
+    with pytest.raises(ValueError, match=r"The parameter alternatives is required"):
         validate(X, y, None, varnames=["a"], weights=None)
 
-    with pytest.raises(ValueError):  # varnames can't be None
+    with pytest.raises(ValueError, match=r"The parameter varnames is required"):
         validate(X, y, alts, None, weights=None)
 
-    with pytest.raises(ValueError):  # X dimensions
-        validate(np.array([]), y, alts, varnames=None, weights=None)
+    with pytest.raises(ValueError, match=r"X must be an array of two dimensions in long format"):  # X dimensions
+        validate(np.array([]), y, alts, varnames=["a", "b"], weights=None)
 
-    with pytest.raises(ValueError):  # y dimensions
-        validate(X, np.array([]), alts, varnames=None, weights=None)
+    with pytest.raises(ValueError, match=r"y must be an array of one dimension in long format"):  # y dimensions
+        validate(X, np.array(0), alts, varnames=["a", "b"], weights=None, predict_mode=False)
 
-    with pytest.raises(ValueError):
-        validate(X, y, alts, None, weights=np.ones(5))
-
-    with pytest.raises(ValueError):
-        validate(X, np.array([[1, 2]]), alts, None, np.ones(6))
+    with pytest.raises(ValueError, match=r"The length of weights must be divisble by the first two dimensions of X"):
+        validate(X, np.array([1, 2]), alts, varnames=["a", "b"], weights=np.ones(7))
 
     validate(X, y, alts, varnames, np.ones(6))
 
