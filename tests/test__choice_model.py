@@ -100,18 +100,17 @@ def test__check_long_format_consistency(setup):
     choiceModel._check_long_format_consistency(ids, alts)
 
 
-def test__format_choice_var_y(setup):
+ys = [np.asarray(pd.Series([1, 0, 0, 1])), np.array([1, 0, 0, 1]), np.array([1, 0, 1, 0])]
+
+
+@pytest.mark.parametrize("y", ys)
+def test__format_choice_var_y(setup, y):
     choiceModel = setup
-
-    y = np.asarray(pd.Series([1, 0, 0, 1]))
     assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
 
-    y = np.array([1, 0, 0, 1])
-    assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
 
-    y = np.array([1, 0, 1, 0])
-    assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
-
+def test__format_choice_var_y_bad_input(setup):
+    choiceModel = setup
     with pytest.raises(ValueError):
         y = np.array([1, 0, 1, 0, 0])
         assert np.array_equal(y, choiceModel._format_choice_var(y, alts))
