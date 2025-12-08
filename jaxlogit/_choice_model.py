@@ -180,6 +180,12 @@ class ChoiceModel(ABC):  # noqa: B024
             raise ValueError("y must be an array of one dimension in long format")
         if len(varnames) != X.shape[1]:
             raise ValueError("The length of varnames must match the number of columns in X")
+        if weights is not None:
+            result = 1
+            for item in weights.shape:
+                result *= item
+            if result % (X.shape[0] * X.shape[1]):
+                raise ValueError("The length of weights must correspond to the dimensions of X")
 
     def summary(self):
         """Show estimation results in console."""
