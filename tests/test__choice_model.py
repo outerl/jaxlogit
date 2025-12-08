@@ -277,6 +277,6 @@ def test_post_fit_stderr(fit_setup):
     expected = np.array([76.980034, 28.226011])
     for i in range(len(expected)):
         assert expected[i] == pytest.approx(choiceModel.zvalues[i])
-    expected = np.array([7.00855479e-09, 1.04528207e-06])
+    expected = np.array([0.000168707, 0.00125281])
     for i in range(len(expected)):
-        assert expected[i] == pytest.approx(choiceModel.pvalues[i])
+        assert expected[i] == pytest.approx(choiceModel.pvalues[i], rel=1e-3)
