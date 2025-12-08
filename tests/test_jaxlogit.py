@@ -1,11 +1,12 @@
 import pytest
 import numpy as np
+import pandas as pd
 
 import jax
 import jax.numpy as jnp
 import pickle
 
-
+from jaxlogit.utils import wide_to_long
 from jaxlogit.mixed_logit import (
     MixedLogit,
     ConfigData,
@@ -356,8 +357,120 @@ def save_simple_data_output():
         pickle.dump(model, f)
 
 
+def save_correlated_example():
+    model, df, varnames, config = setup_correlated_example()
+    res = model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
+    with open("tests/correlated_example_estimate_params_output.pkl", "wb") as f:
+        pickle.dump(model, f)
+
+    model, df, varnames, config = setup_correlated_example()
+    varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
+    df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
+    fixedvars = {"ASC_SM": 0.0}
+    config = ConfigData(
+        avail=df["AV"],
+        panels=df["ID"],
+        fixedvars=fixedvars,
+        n_draws=1500,
+    )
+    res = model.fit(
+        X=df[varnames],
+        y=df["CHOICE"],
+        varnames=varnames,
+        alts=df["alt"],
+        ids=df["custom_id"],
+        randvars={"TT": "n"},
+        config=config,
+    )
+    with open("tests/correlated_example_fix_params_output.pkl", "wb") as f:
+        pickle.dump(model, f)
+
+
+def setup_correlated_example():
+    jax.config.update("jax_enable_x64", True)
+
+    df_wide = pd.read_table("http://transp-or.epfl.ch/data/swissmetro.dat", sep="\t")
+    # Keep only observations for commute and business purposes that contain known choices
+    df_wide = df_wide[(df_wide["PURPOSE"].isin([1, 3]) & (df_wide["CHOICE"] != 0))]
+    df_wide["custom_id"] = np.arange(len(df_wide))  # Add unique identifier
+    df_wide["CHOICE"] = df_wide["CHOICE"].map({1: "TRAIN", 2: "SM", 3: "CAR"})
+
+    df = wide_to_long(
+        df_wide,
+        id_col="custom_id",
+        alt_name="alt",
+        sep="_",
+        alt_list=["TRAIN", "SM", "CAR"],
+        empty_val=0,
+        varying=["TT", "CO", "HE", "AV", "SEATS"],
+        alt_is_prefix=True,
+    )
+
+    df["ASC_TRAIN"] = np.ones(len(df)) * (df["alt"] == "TRAIN")
+    df["ASC_CAR"] = np.ones(len(df)) * (df["alt"] == "CAR")
+    df["TT"], df["CO"] = df["TT"] / 100, df["CO"] / 100  # Scale variables
+    annual_pass = (df["GA"] == 1) & (df["alt"].isin(["TRAIN", "SM"]))
+    df.loc[annual_pass, "CO"] = 0  # Cost zero for pass holders
+
+    varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
+    model = MixedLogit()
+
+    config = ConfigData(
+        n_draws=1500,
+        avail=(df["AV"]),
+        panels=(df["ID"]),
+    )
+
+    return model, df, varnames, config
+
+
+def test_correlated_example_estimate_params_against_previous_results():
+    model, df, varnames, config = setup_correlated_example()
+
+    res = model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
+    with open("tests/correlated_example_estimate_params_output.pkl", "rb") as f:
+        previous_model = pickle.load(f)
+    compare_models(model, previous_model)
+
+
+def test_correlated_example_fix_params_against_previous_results():
+    model, df, varnames, config = setup_correlated_example()
+    varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
+    df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
+    fixedvars = {"ASC_SM": 0.0}
+    config = ConfigData(
+        avail=df["AV"],
+        panels=df["ID"],
+        fixedvars=fixedvars,
+        n_draws=1500,
+    )
+    res = model.fit(
+        X=df[varnames],
+        y=df["CHOICE"],
+        varnames=varnames,
+        alts=df["alt"],
+        ids=df["custom_id"],
+        randvars={"TT": "n"},
+        config=config,
+    )
+    with open("tests/correlated_example_fix_params_output.pkl", "rb") as f:
+        previous_model = pickle.load(f)
+    compare_models(model, previous_model)
+
+
+def compare_models(new, previous):
+    assert list(new.coeff_names) == list(previous.coeff_names)
+    assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-3)
+    assert list(new.stderr) == pytest.approx(list(previous.stderr), rel=1e-3)
+    assert list(new.zvalues) == pytest.approx(list(previous.zvalues), rel=1e-3)
+    assert new.loglikelihood == pytest.approx(previous.loglikelihood)
+    assert new.aic == pytest.approx(previous.aic)
+    assert new.bic == pytest.approx(previous.bic)
+
+
 def main():
-    save_simple_data_output()
+    # save_simple_data_output()
+    save_correlated_example()
 
 
 if __name__ == "__main__":
