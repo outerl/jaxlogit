@@ -117,7 +117,7 @@ class ConfigData:
     tol_opts: dict | None = None
     num_hess: bool = False
     fixedvars: Any = None
-    optim_method: str = "trust-region"
+    optim_method: str = "L-BFGS-B"
     skip_std_errs: bool = False
     include_correlations: bool = False
     force_positive_chol_diag: bool = True
