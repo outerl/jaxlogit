@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from jaxlogit.mixed_logit import MixedLogit
+from jaxlogit.mixed_logit import MixedLogit, ConfigData
 
 # Setup data used for tests
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
@@ -62,29 +62,18 @@ def test_validate_inputs():
     """
     model = MixedLogit()
     with pytest.raises(ValueError):  # wrong distribution
-        model.fit(
-            X,
-            y,
-            varnames=varnames,
-            alts=alts,
-            ids=ids,
+        config = ConfigData(
+            halton=True,
             n_draws=10,
             maxiter=0,
-            verbose=0,
-            halton=True,
-            randvars={"a": "fake"},
         )
+        model.fit(X, y, varnames=varnames, alts=alts, ids=ids, verbose=0, randvars={"a": "fake"}, config=config)
 
     with pytest.raises(ValueError):  # wrong var name
-        model.fit(
-            X,
-            y,
-            varnames=varnames,
-            alts=alts,
-            ids=ids,
-            n_draws=10,
-            maxiter=0,
-            verbose=0,
+        config = ConfigData(
             halton=True,
-            randvars={"fake": "n"},
+            maxiter=0,
+            n_draws=10,
         )
+
+        model.fit(X, y, varnames=varnames, alts=alts, ids=ids, verbose=0, randvars={"fake": "n"}, config=config)
