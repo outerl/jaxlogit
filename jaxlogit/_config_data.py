@@ -62,7 +62,7 @@ class ConfigData:
         fixedvars: dict, default=None
             Specified variable names (keys) of variables to be fixed to the given value (values)
 
-        optim_method: str, default="trust-region" ##############################
+        optim_method: str, default="trust-region"
             Optimization method to use for model estimation. It can be `trust-region`, `BFGS` or `L-BFGS-B`.
 
         skip_std_errs: bool, default=False
