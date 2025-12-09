@@ -234,8 +234,6 @@ class MixedLogit(ChoiceModel):
         Xdf = Xd[:, :, ~rvidx]  # Data for fixed parameters
         Xdr = Xd[:, :, rvidx]  # Data for random parameters
 
-        # frozen_parameter_info = parameter_info.freeze()
-
         return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info)
 
     def fit(
