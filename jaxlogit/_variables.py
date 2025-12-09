@@ -17,11 +17,9 @@ class ParametersSetup:
     """
 
     def __init__(
-        self, X, rvdist, rvidx, rvidx_normal_bases, rvidx_truncnorm_based, coef_names, betas, config: ConfigData
+        self, rvdist, rvidx, rvidx_normal_bases, rvidx_truncnorm_based, coef_names, betas, config: ConfigData
     ) -> None:
         self._frozen = False
-
-        # self.draws = self.setup_draws_from_config(X.shape[0], rvdist, config)
 
         sd_start_idx, sd_slice_size = self.setup_betas_indicies(
             rvidx_normal_bases, rvidx_truncnorm_based, rvidx, rvdist, config
@@ -32,6 +30,7 @@ class ParametersSetup:
         rvidx = jnp.array(rvidx, dtype=bool)
         self.fixed_idx = jnp.where(~rvidx)[0]
 
+        self._hash = None
         self._frozen = True
 
     def setup_betas_indicies(self, rvidx_normal_bases, rvidx_truncnorm_based, rvidx, rvdist, config: ConfigData):
@@ -128,25 +127,33 @@ class ParametersSetup:
         self.values_for_mask = jnp.array(values_for_mask)
 
     def __setattr__(self, attr, value):
-        if getattr(self, "_frozen", None):
+        if attr != "_hash" and getattr(self, "_frozen", None):
             raise AttributeError("Trying to set attribute on a frozen instance")
         return super().__setattr__(attr, value)
 
-    # def get_batched_version(self, start: int, end: int):
-    #     return replace(self, draws=self.draws[start:end, :, :])
-
     def __hash__(self):
-        hash_values = []
+        if self._hash is None:
+            hash_values = []
 
-        for attr_name in sorted(vars(self)):
-            attr_value = getattr(self, attr_name)
+            for attr_name in sorted(vars(self)):
+                if attr_name == "_hash":
+                    continue
+                attr_value = getattr(self, attr_name)
 
-            if attr_value is None:
-                hash_values.append(hash(None))
-            elif hasattr(attr_value, "__array__"):
-                # For integer JAX arrays, tobytes() is fine
-                hash_values.append(hash(attr_value.tobytes()))
-            else:
-                hash_values.append(hash(attr_value))
+                if attr_value is None:
+                    hash_values.append(hash(None))
+                elif hasattr(attr_value, "__array__"):
+                    # For integer JAX arrays, tobytes() is fine
+                    hash_values.append(hash(attr_value.tobytes()))
+                else:
+                    hash_values.append(hash(attr_value))
 
-        return hash(tuple(hash_values))
+            self._hash = hash(tuple(hash_values))
+        return self._hash
+
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, ParametersSetup):
+            return False
+        return all(
+            getattr(self, attr_name) == getattr(value, attr_name) for attr_name in vars(self) if attr_name != "_hash"
+        )[0]
