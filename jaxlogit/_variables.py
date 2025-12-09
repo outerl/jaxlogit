@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from ._config_data import ConfigData
 from .draws import generate_draws
 import numpy as np
+import jax
 
 
 logger = logging.getLogger(__name__)
@@ -154,6 +155,17 @@ class ParametersSetup:
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, ParametersSetup):
             return False
-        return all(
-            getattr(self, attr_name) == getattr(value, attr_name) for attr_name in vars(self) if attr_name != "_hash"
-        )
+
+        for attr_name in vars(self):
+            if attr_name == "_hash":
+                continue
+
+            first_variable_value = getattr(self, attr_name)
+            second_variable_value = getattr(value, attr_name)
+            if isinstance(getattr(self, attr_name), jax.Array):
+                are_equal = jnp.array_equal(first_variable_value, second_variable_value)
+            else:
+                are_equal = first_variable_value == second_variable_value
+            if not are_equal:
+                return False
+        return True

@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from jaxlogit._choice_model import ChoiceModel, diff_nonchosen_chosen
-from jaxlogit._variables import ParametersSetup  # , FrozenParametersSetup
+from jaxlogit._variables import ParametersSetup
 from jaxlogit._optimize import _minimize, gradient, hessian
 from jaxlogit.draws import truncnorm_ppf, generate_draws
 from jaxlogit.utils import get_panel_aware_batch_indices
