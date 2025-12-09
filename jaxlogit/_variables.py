@@ -162,7 +162,7 @@ class ParametersSetup:
 
             first_variable_value = getattr(self, attr_name)
             second_variable_value = getattr(value, attr_name)
-            if isinstance(getattr(self, attr_name), jax.Array):
+            if isinstance(first_variable_value, jax.Array):
                 are_equal = jnp.array_equal(first_variable_value, second_variable_value)
             else:
                 are_equal = first_variable_value == second_variable_value
