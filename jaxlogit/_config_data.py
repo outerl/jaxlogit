@@ -72,8 +72,6 @@ class ConfigData:
             Whether correlations between variables should be included as explanatory variables
 
         force_positive_chol_diag:bool, default=True
-
-
         hessian_by_row: bool, default=True
             whether to calculate the hessian row by row in a for loop to save
             memory at the expense of runtime
