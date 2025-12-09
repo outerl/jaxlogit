@@ -3,12 +3,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from ._choice_model import ChoiceModel, diff_nonchosen_chosen
-from ._variables import ParametersSetup  # , FrozenParametersSetup
-from ._optimize import _minimize, gradient, hessian
-from .draws import truncnorm_ppf, generate_draws
-from .utils import get_panel_aware_batch_indices
-from ._config_data import ConfigData
+from jaxlogit._choice_model import ChoiceModel, diff_nonchosen_chosen
+from jaxlogit._variables import ParametersSetup  # , FrozenParametersSetup
+from jaxlogit._optimize import _minimize, gradient, hessian
+from jaxlogit.draws import truncnorm_ppf, generate_draws
+from jaxlogit.utils import get_panel_aware_batch_indices
+from jaxlogit._config_data import ConfigData
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class MixedLogit(ChoiceModel):
             config.avail,
         )
 
-        self._validate_inputs(X, y, alts, varnames, ids, config.weights, predict_mode=predict_mode)
+        self._validate_inputs(X, y, alts, varnames, config.weights, predict_mode=predict_mode)
 
         self._pre_fit(alts, varnames, config.maxiter)
 
