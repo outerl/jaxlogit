@@ -7,7 +7,7 @@ import jax.numpy as jnp
 logger = logging.getLogger(__name__)
 
 # static_argnames in loglikelihood function, TODO: maybe replace with partial and get rid of all additional args
-STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag"]
+STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_info"]
 
 
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
@@ -120,14 +120,14 @@ def gradient(funct, x, *args):
     return grad
 
 
-def hessian(funct, x, hessian_by_row, finite_diff, *args):
+def hessian(funct, x, hessian_by_row, finite_diff, *args, static_argnames=STATIC_LOGLIKE_ARGNAMES):
     """Compute the Hessian of funct for variables x."""
 
     # # this is memory intensive for large x.
     # hess_fn = jax.jacfwd(jax.grad(funct))  # jax.hessian(neg_loglike)
     # H = hess_fn(jnp.array(x), *args)
 
-    grad_funct = jax.jit(jax.grad(funct, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES)
+    grad_funct = jax.jit(jax.grad(funct, argnums=0), static_argnames=static_argnames)
 
     # This is a compromise between memory and speed - we know jax gradient calculations are
     # within memory limits because we use it during minimization, to stay within the same
