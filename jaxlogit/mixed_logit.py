@@ -2,15 +2,13 @@ import logging
 import jax
 import jax.numpy as jnp
 import numpy as np
-from dataclasses import dataclass
-from typing import Any, Union, Sequence
-from pandas import Series
 
 from ._choice_model import ChoiceModel, diff_nonchosen_chosen
-from ._variables import ParametersSetup, FrozenParametersSetup
+from ._variables import ParametersSetup  # , FrozenParametersSetup
 from ._optimize import _minimize, gradient, hessian
-from .draws import generate_draws, truncnorm_ppf
+from .draws import truncnorm_ppf, generate_draws
 from .utils import get_panel_aware_batch_indices
+from ._config_data import ConfigData
 
 logger = logging.getLogger(__name__)
 
@@ -22,109 +20,6 @@ Notations
     J : Number of alternatives
     K : Number of variables (Kf: fixed, Kr: random)
 """
-
-ArrayLike = Union[np.ndarray, Series, Sequence[Any]]
-
-
-@dataclass
-class ConfigData:
-    """Configurations for the fit and predict functions with default values.
-
-    Member variables:
-        weights: array-like, shape (n_samples,), default=None
-            Sample weights in long format.
-
-        avail: array-like, shape (n_samples*n_alts,), default=None
-            Availability of alternatives for the choice situations. One when available or zero otherwise.
-
-        panels: array-like, shape (n_samples*n_alts,), default=None
-            Identifiers in long format to create panels in combination with ``ids``
-
-        init_coeff: numpy array, shape (n_variables,), default=None
-            Initial coefficients for estimation.
-
-        maxiter: int, default=2000
-            Maximum number of iterations
-
-        random_state: int, default=None
-            Random seed for numpy random generator
-
-        n_draws: int, default=1000
-            Number of random draws to approximate the mixing distributions of the random coefficients
-
-        halton: bool, default=True
-            Whether the estimation uses halton draws.
-
-        halton_opts: dict, default=None
-            Options for generation of halton draws. The dictionary accepts the following options (keys):
-
-                shuffle: bool, default=False
-                    Whether the Halton draws should be shuffled
-
-                drop: int, default=100
-                    Number of initial Halton draws to discard to minimize correlations between Halton sequences
-
-                primes: list
-                    List of primes to be used as base for generation of Halton sequences.
-
-        tol_opts: dict, default=None
-            Options for tolerance of optimization routine. The dictionary accepts the following options (keys):
-
-                ftol: float, default=1e-10
-                    Tolerance for objective function (log-likelihood)
-
-                gtol: float, default=1e-5
-                    Tolerance for gradient function.
-
-        num_hess: bool, default=False
-            Whether numerical hessian should be used for estimation of standard errors
-
-        fixedvars: dict, default=None
-            Specified variable names (keys) of variables to be fixed to the given value (values)
-
-        optim_method: str, default="trust-region" ##############################
-            Optimization method to use for model estimation. It can be `trust-region`, `BFGS` or `L-BFGS-B`.
-
-        skip_std_errs: bool, default=False
-            Whether estimation of standard errors should be skipped
-
-        include_correlations: bool, default=False
-            Whether correlations between variables should be included as explanatory variables
-
-        force_positive_chol_diag:bool, default=True
-
-
-        hessian_by_row: bool, default=True
-            whether to calculate the hessian row by row in a for loop to save
-            memory at the expense of runtime
-
-        finite_diff_hessian: bool, default=False
-            Whether the hessian should be computed using finite difference.
-            If true, this will stay within memory limits.
-
-        batch_size: int, default=None
-            Size of batches used to avoid GPU memory overflow.
-    """
-
-    weights: ArrayLike | None = None
-    avail: ArrayLike | None = None
-    panels: ArrayLike | None = None
-    init_coeff: ArrayLike | None = None
-    maxiter: int = 2000
-    random_state: int | None = None
-    n_draws: int = 1000
-    halton: bool = True
-    halton_opts: dict | None = None
-    tol_opts: dict | None = None
-    num_hess: bool = False
-    fixedvars: Any = None
-    optim_method: str = "trust-region"
-    skip_std_errs: bool = False
-    include_correlations: bool = False
-    force_positive_chol_diag: bool = True
-    hessian_by_row: bool = True
-    finite_diff_hessian: bool = False
-    batch_size: int | None = None
 
 
 class MixedLogit(ChoiceModel):
@@ -188,15 +83,6 @@ class MixedLogit(ChoiceModel):
         if config.avail is not None:
             config.avail = config.avail.reshape(N, J)
 
-        # Generate draws
-        n_samples = N if config.panels is None else np.max(config.panels) + 1
-        logger.debug(f"Generating {config.n_draws} number of draws for each observation and random variable")
-        draws = generate_draws(n_samples, config.n_draws, self._rvdist, config.halton, halton_opts=config.halton_opts)
-        if config.panels is not None:
-            draws = draws[config.panels]  # (N,num_random_params,n_draws)
-        draws = jnp.array(draws)
-        logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
-
         if config.weights is not None:  # Reshape weights to match input data
             # weights = weights.reshape(N, J)[:, 0]
             if config.panels is not None:
@@ -234,7 +120,6 @@ class MixedLogit(ChoiceModel):
             jnp.array(X),
             None if predict_mode else jnp.array(y),
             jnp.array(config.panels) if config.panels is not None else None,
-            draws,
             jnp.array(config.weights) if config.weights is not None else None,
             jnp.array(config.avail) if config.avail is not None else None,
             Xnames,
@@ -340,6 +225,29 @@ class MixedLogit(ChoiceModel):
         if values_for_chol_mask is not None:
             parameter_info.values_for_chol_mask = jnp.array(values_for_chol_mask)
 
+    def setup_draws_from_config(self, N: int, config: ConfigData):
+        """Returns the draws.
+
+        Formats the draws according to the panels.
+
+        Args:
+            N: number of observations. Size of X, the data.
+            config: The data config for the fit/predict
+        """
+
+        # Generate draws
+        n_samples = N if config.panels is None else np.max(config.panels) + 1
+        logger.debug(f"Generating {config.n_draws} number of draws for each observation and random variable")
+
+        draws = generate_draws(n_samples, config.n_draws, self._rvdist, config.halton, halton_opts=config.halton_opts)
+        if config.panels is not None:
+            draws = draws[config.panels]  # (N,num_random_params,n_draws)
+        draws = jnp.array(draws)
+
+        logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
+
+        return draws
+
     def data_prep(
         self,
         X,
@@ -376,14 +284,11 @@ class MixedLogit(ChoiceModel):
 
         self._pre_fit(alts, varnames, config.maxiter)
 
-        parameter_info = ParametersSetup()
-
         (
             betas,
             X,
             y,
             panels,
-            parameter_info.draws,
             weights,
             avail,
             Xnames,
@@ -398,12 +303,18 @@ class MixedLogit(ChoiceModel):
             config,
         )
 
-        (
-            sd_start_idx,
-            sd_slice_size,
-        ) = self.set_variable_indices(config.include_correlations, parameter_info)
+        parameter_info = ParametersSetup(
+            X,
+            self._rvdist,
+            self._rvidx,
+            self._rvidx_normal_bases,
+            self._rvidx_truncnorm_based,
+            coef_names,
+            betas,
+            config,
+        )
 
-        self.set_fixed_varaible_masks(config.fixedvars, coef_names, sd_start_idx, sd_slice_size, betas, parameter_info)
+        draws = self.setup_draws_from_config(X.shape[0], config)
 
         # panels are 0-based and contiguous by construction, so we can use the maximum value to determine the number
         # of panels. We provide this number explicitly to the log-likelihood function for jit compilation of
@@ -420,14 +331,12 @@ class MixedLogit(ChoiceModel):
         # split data for fixed and random parameters to speed up calculations
         rvidx = jnp.array(self._rvidx, dtype=bool)
         # rand_idx = jnp.where(rvidx)[0]
-        fixed_idx = jnp.where(~rvidx)[0]
-        parameter_info.fixed_idx = fixed_idx
         Xdf = Xd[:, :, ~rvidx]  # Data for fixed parameters
         Xdr = Xd[:, :, rvidx]  # Data for random parameters
 
-        frozen_parameter_info = parameter_info.freeze()
+        # frozen_parameter_info = parameter_info.freeze()
 
-        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, frozen_parameter_info)
+        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info)
 
     def fit(
         self,
@@ -473,7 +382,7 @@ class MixedLogit(ChoiceModel):
             Return the estimated model parameters result
         """
 
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info) = self.data_prep(
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
             X,
             y,
             varnames,
@@ -491,6 +400,7 @@ class MixedLogit(ChoiceModel):
             avail,
             num_panels,
             config.force_positive_chol_diag,
+            draws,
             parameter_info,
             config.batch_size,
         )
@@ -616,7 +526,7 @@ class MixedLogit(ChoiceModel):
 
     def predict(self, X, varnames, alts, ids, randvars, config: ConfigData):
         assert config.init_coeff is not None
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info) = self.data_prep(
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
             X,
             None,
             varnames,
@@ -627,7 +537,7 @@ class MixedLogit(ChoiceModel):
             predict_mode=True,
         )
 
-        fargs = (Xdf, Xdr, panels, weights, avail, num_panels, config.force_positive_chol_diag, parameter_info)
+        fargs = (Xdf, Xdr, panels, weights, avail, num_panels, config.force_positive_chol_diag, draws, parameter_info)
 
         probs = probability_individual(betas, *fargs)
         # uq_alts, idx = np.unique(alts, return_index=True)
@@ -650,7 +560,7 @@ def _apply_distribution(betas_random, idx_ln_dist):
     return betas_random
 
 
-def _transform_rand_betas(betas, force_positive_chol_diag, parameter_info):
+def _transform_rand_betas(betas, force_positive_chol_diag, draws, parameter_info: ParametersSetup):
     """Compute the products between the betas and the random coefficients.
 
     This method also applies the associated mixing distributions
@@ -687,17 +597,15 @@ def _transform_rand_betas(betas, force_positive_chol_diag, parameter_info):
         tril_vals = jnp.where(diag_mask, br_std_dev[tril_rows], off_diag_vals[jnp.cumsum(off_diag_mask) - 1])
         L = L.at[tril_rows, tril_cols].set(tril_vals)
 
-        N, _, R = parameter_info.draws.shape
-        draws_flat = (
-            parameter_info.draws[:, parameter_info.draws_idx_norm, :].transpose(0, 2, 1).reshape(-1, sd_slice_size)
-        )
+        N, _, R = draws.shape
+        draws_flat = draws[:, parameter_info.draws_idx_norm, :].transpose(0, 2, 1).reshape(-1, sd_slice_size)
         correlated_flat = (L @ draws_flat.T).T
         cov = correlated_flat.reshape(N, R, sd_slice_size).transpose(0, 2, 1)
     else:
-        cov = parameter_info.draws[:, parameter_info.draws_idx_norm, :] * br_std_dev[None, :, None]
+        cov = draws[:, parameter_info.draws_idx_norm, :] * br_std_dev[None, :, None]
 
     # betas random
-    betas_random = jnp.empty_like(parameter_info.draws)  # num_obs, num_rand_vars, num_draws
+    betas_random = jnp.empty_like(draws)  # num_obs, num_rand_vars, num_draws
 
     for i, idx_norm in enumerate(parameter_info.draws_idx_norm):
         betas_random = betas_random.at[:, idx_norm, :].set(br_mean[None, i, None] + cov[:, i, :])
@@ -710,7 +618,7 @@ def _transform_rand_betas(betas, force_positive_chol_diag, parameter_info):
     br_std_dev = diag_vals[parameter_info.draws_idx_truncnorm]
     for i, idx_truncnorm in enumerate(parameter_info.draws_idx_truncnorm):
         betas_random = betas_random.at[:, idx_truncnorm, :].set(
-            truncnorm_ppf(parameter_info.draws[:, idx_truncnorm, :], br_mean[i], br_std_dev[i])
+            truncnorm_ppf(draws[:, idx_truncnorm, :], br_mean[i], br_std_dev[i])
         )
 
     return betas_random
@@ -726,11 +634,12 @@ def neg_loglike(
     avail,
     num_panels,
     force_positive_chol_diag,
-    parameter_info: FrozenParametersSetup,
+    draws,
+    parameter_info: ParametersSetup,
     batch_size,
 ):
     loglik_individ = loglike_individual(
-        betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info
+        betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info
     )
 
     loglik = loglik_individ.sum()
@@ -746,7 +655,8 @@ def neg_loglike_grad_batched(
     avail,
     num_panels,
     force_positive_chol_diag,
-    parameter_info: FrozenParametersSetup,
+    draws,
+    parameter_info: ParametersSetup,
     batch_size,
 ):
     if panels is None:
@@ -780,7 +690,8 @@ def neg_loglike_grad_batched(
             avail[start:end] if avail is not None else None,
             num_panels_this_batch,
             force_positive_chol_diag,
-            parameter_info.get_batched_version(start, end),
+            draws[start:end, :, :],
+            parameter_info,
         )
 
         num_panels_counter += num_panels_this_batch
@@ -804,10 +715,11 @@ def loglike_individual_sum(
     avail,
     num_panels,
     force_positive_chol_diag,
-    parameter_info: FrozenParametersSetup,
+    draws,
+    parameter_info: ParametersSetup,
 ):
     ll = loglike_individual(
-        betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info
+        betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info
     )
     return ll.sum()
 
@@ -819,7 +731,16 @@ loglike_and_grad_individual = jax.jit(
 
 
 def loglike_individual(
-    betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info: FrozenParametersSetup
+    betas,
+    Xdf,
+    Xdr,
+    panels,
+    weights,
+    avail,
+    num_panels,
+    force_positive_chol_diag,
+    draws,
+    parameter_info: ParametersSetup,
 ):
     """Compute the log-likelihood.
 
@@ -843,7 +764,7 @@ def loglike_individual(
 
     # Utility for random parameters
     Br = _transform_rand_betas(
-        betas, force_positive_chol_diag, parameter_info
+        betas, force_positive_chol_diag, draws, parameter_info
     )  # Br shape: (num_obs, num_rand_vars, num_draws)
 
     # Vdr shape: (N,J-1,R)
@@ -867,7 +788,7 @@ def loglike_individual(
             )
         )
 
-    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / parameter_info.draws.shape[2], LOG_PROB_MIN, jnp.inf))
+    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / draws.shape[2], LOG_PROB_MIN, jnp.inf))
 
     if weights is not None:
         loglik = loglik * weights
@@ -876,7 +797,16 @@ def loglike_individual(
 
 
 def probability_individual(
-    betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, parameter_info: FrozenParametersSetup
+    betas,
+    Xdf,
+    Xdr,
+    panels,
+    weights,
+    avail,
+    num_panels,
+    force_positive_chol_diag,
+    draws,
+    parameter_info: ParametersSetup,
 ):
     """Compute the probabilities of all alternatives."""
 
@@ -885,7 +815,7 @@ def probability_individual(
     else:
         UTIL_MAX = 87
 
-    R = parameter_info.draws.shape[2]
+    R = draws.shape[2]
 
     # mask for asserted parameters.
     if parameter_info.mask is not None:
@@ -895,7 +825,7 @@ def probability_individual(
     Bf = betas[parameter_info.fixed_idx]  # Fixed betas
     Vdf = jnp.einsum("njk,k -> nj", Xdf, Bf)  # (N, J)
 
-    Br = _transform_rand_betas(betas, force_positive_chol_diag, parameter_info)
+    Br = _transform_rand_betas(betas, force_positive_chol_diag, draws, parameter_info)
 
     # Vdr shape: (N,J,R)
     Vd = Vdf[:, :, None] + jnp.einsum("njk,nkr -> njr", Xdr, Br)

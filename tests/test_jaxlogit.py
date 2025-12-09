@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import pickle
 
+from jaxlogit._variables import ParametersSetup
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
@@ -126,15 +127,15 @@ def test_loglike_individual_and_total(simple_data):
         init_coeff=None,
         include_correlations=False,
     )
-    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info) = model.data_prep(
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
         df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config
     )
 
-    ll_indiv = loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, parameter_info)
+    ll_indiv = loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info)
     assert ll_indiv.shape[0] == num_panels
     assert not jnp.any(jnp.isnan(ll_indiv))
 
-    nll = neg_loglike(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, parameter_info, 0)
+    nll = neg_loglike(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info, 0)
     assert np.isscalar(nll) or (isinstance(nll, jnp.ndarray) and nll.shape == ())
     assert np.allclose(-nll, jnp.sum(ll_indiv), atol=1e-5)
 
@@ -164,11 +165,11 @@ def test_probability_individual(simple_data):
         init_coeff=None,
         include_correlations=False,
     )
-    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info) = model.data_prep(
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
         df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config
     )
 
-    probs = probability_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, parameter_info)
+    probs = probability_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info)
     assert probs.shape[0] == Xdf.shape[0]
     assert not jnp.any(jnp.isnan(probs))
 
@@ -186,13 +187,14 @@ def test_transform_rand_betas_shapes():
     chol_start_idx = sd_start_idx + sd_slice_size
     chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
     idx_ln_dist = jnp.array([], dtype=int)
+
+    parameter_info = ParametersSetup()
+
     out = _transform_rand_betas(
         betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, False
     )
     assert out.shape == (N, Kr, R)
-    out_corr = _transform_rand_betas(
-        betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True
-    )
+    out_corr = _transform_rand_betas(betas, True, draws, parameter_info)
     assert out_corr.shape == (N, Kr, R)
 
 
