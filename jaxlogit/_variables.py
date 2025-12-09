@@ -85,7 +85,7 @@ class ParametersSetup:
         return draws
 
     def setup_fixed_variable_masks(self, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas):
-        if fixedvars == None:
+        if fixedvars is None:
             self.mask = None
             self.values_for_mask = None
             self.mask_chol = None
@@ -156,4 +156,4 @@ class ParametersSetup:
             return False
         return all(
             getattr(self, attr_name) == getattr(value, attr_name) for attr_name in vars(self) if attr_name != "_hash"
-        )[0]
+        )
