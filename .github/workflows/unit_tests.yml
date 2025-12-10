@@ -30,4 +30,4 @@ jobs:
 
     - name: Runs test
       # run: pytest tests/ --durations=50 --verbose --cov=. --cov-report=term # --cov-report=xml
-      run: pytest --cov=. tests/ --cov-report=term-missing markdown-append:$GITHUB_STEP_SUMMARY
+      run: pytest --cov=. tests/ --cov-report=term-missing --cov-report=markdown-append:$GITHUB_STEP_SUMMARY
