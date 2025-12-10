@@ -12,12 +12,13 @@ from jaxlogit.mixed_logit import (
 )
 
 
-def save_correlated_example():
+def estimate_model_parameters():
     model, df, varnames, config = setup_correlated_example()
     res = model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
-    with open("tests/system_tests/correlated_example_estimate_params_output.pkl", "wb") as f:
-        pickle.dump(model, f)
+    return model
 
+
+def fix_parameters():
     model, df, varnames, config = setup_correlated_example()
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
@@ -37,7 +38,60 @@ def save_correlated_example():
         randvars={"TT": "n"},
         config=config,
     )
-    with open("tests/system_tests/correlated_example_fix_params_output.pkl", "wb") as f:
+    return model
+
+
+def error_components():
+    model, df, varnames, config = setup_correlated_example()
+    varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
+    df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
+    randvars = {"ASC_CAR": "n", "ASC_TRAIN": "n", "ASC_SM": "n"}
+    fixedvars = {
+        "ASC_SM": 0.0,
+        "sd.ASC_TRAIN": 1.0,
+        "sd.ASC_CAR": 0.0,
+        "chol.ASC_CAR.ASC_TRAIN": 0.0,
+        "chol.ASC_CAR.ASC_SM": 0.0,
+    }  # Identification of error components, see J. Walker's PhD thesis (MIT 2001)
+
+    config = ConfigData(
+        avail=df["AV"],
+        panels=df["ID"],
+        fixedvars=fixedvars,
+        n_draws=1500,
+        include_correlations=True,  # Enable correlation between random parameters
+    )
+
+    model = MixedLogit()
+    res = model.fit(
+        X=df[varnames],
+        y=df["CHOICE"],
+        varnames=varnames,
+        alts=df["alt"],
+        ids=df["custom_id"],
+        randvars=randvars,
+        config=config,
+    )
+    return model
+
+
+def save_correlated_example():
+    model = estimate_model_parameters()
+    with open(
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.pkl", "wb"
+    ) as f:
+        pickle.dump(model, f)
+
+    model = fix_parameters()
+    with open(
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.pkl", "wb"
+    ) as f:
+        pickle.dump(model, f)
+
+    model = error_components()
+    with open(
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.pkl", "wb"
+    ) as f:
         pickle.dump(model, f)
 
 
@@ -80,35 +134,28 @@ def setup_correlated_example():
 
 
 def test_correlated_example_estimate_params_against_previous_results():
-    model, df, varnames, config = setup_correlated_example()
-
-    res = model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
-    with open("tests/system_tests/correlated_example_estimate_params_output.pkl", "rb") as f:
+    model = estimate_model_parameters()
+    with open(
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.pkl", "rb"
+    ) as f:
         previous_model = pickle.load(f)
     compare_models(model, previous_model)
 
 
 def test_correlated_example_fix_params_against_previous_results():
-    model, df, varnames, config = setup_correlated_example()
-    varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
-    df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
-    fixedvars = {"ASC_SM": 0.0}
-    config = ConfigData(
-        avail=df["AV"],
-        panels=df["ID"],
-        fixedvars=fixedvars,
-        n_draws=1500,
-    )
-    res = model.fit(
-        X=df[varnames],
-        y=df["CHOICE"],
-        varnames=varnames,
-        alts=df["alt"],
-        ids=df["custom_id"],
-        randvars={"TT": "n"},
-        config=config,
-    )
-    with open("tests/system_tests/correlated_example_fix_params_output.pkl", "rb") as f:
+    model = fix_parameters()
+    with open(
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.pkl", "rb"
+    ) as f:
+        previous_model = pickle.load(f)
+    compare_models(model, previous_model)
+
+
+def test_correlated_example_error_components_against_previous_results():
+    model = error_components()
+    with open(
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.pkl", "rb"
+    ) as f:
         previous_model = pickle.load(f)
     compare_models(model, previous_model)
 
@@ -124,7 +171,6 @@ def compare_models(new, previous):
 
 
 def main():
-    # save_simple_data_output()
     save_correlated_example()
 
 
