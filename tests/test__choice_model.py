@@ -203,7 +203,6 @@ def test_diff_nonchosen_chosen(setup):
     assert np.array_equal(expected, Xd)
 
 
-@pytest.fixture
 def fit_setup(setup):
     choiceModel = setup
     choiceModel._fit_start_time = time() - 5
@@ -221,9 +220,28 @@ def fit_setup(setup):
     return choiceModel, optim_res, coeff_names, sample_size, fixedvars
 
 
-def test_post_fit_basic(fit_setup):
+@pytest.fixture
+def good_fit_setup(setup) -> tuple[ChoiceModel, dict, list, int, dict]:
+    return fit_setup(setup)
+
+
+@pytest.fixture
+def bad_fit_setup(setup) -> tuple[ChoiceModel, dict, list, int, dict]:
+    choiceModel, _, coeff_names, sample_size, fixedvars = fit_setup(setup)
+    optim_res = {
+        "success": False,
+        "message": "This failed to converge!",
+        "x": np.array([10, 11, 12]),
+        "fun": 5.12,
+        "nit": 9,
+        "nfev": 100,
+    }
+    return choiceModel, optim_res, coeff_names, sample_size, fixedvars
+
+
+def test_post_fit_basic(good_fit_setup):
     # optim_res, coeff_names, sample_size, mask=None, fixedvars=None, skip_std_errors=False
-    choiceModel, optim_res, coeff_names, sample_size, fixedvars = fit_setup
+    choiceModel, optim_res, coeff_names, sample_size, fixedvars = good_fit_setup
     choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
 
     assert np.array_equal(coeff_names, choiceModel.coeff_names)
@@ -238,8 +256,8 @@ def test_post_fit_basic(fit_setup):
     assert choiceModel.mask is None
 
 
-def test_post_fit_skip_stderr(fit_setup):
-    choiceModel, optim_res, coeff_names, sample_size, fixedvars = fit_setup
+def test_post_fit_skip_stderr(good_fit_setup):
+    choiceModel, optim_res, coeff_names, sample_size, fixedvars = good_fit_setup
     choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
 
     assert np.array_equal(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), choiceModel.covariance)
@@ -247,8 +265,8 @@ def test_post_fit_skip_stderr(fit_setup):
     assert np.array_equal(np.array([10, 11, 12]), choiceModel.zvalues)
 
 
-def test_post_fit_stderr(fit_setup):
-    choiceModel, optim_res, coeff_names, sample_size, fixedvars = fit_setup
+def test_post_fit_stderr(good_fit_setup):
+    choiceModel, optim_res, coeff_names, sample_size, fixedvars = good_fit_setup
     optim_res = {
         "success": True,
         "message": "optimisation message",
@@ -280,3 +298,19 @@ def test_post_fit_stderr(fit_setup):
     expected = np.array([0.000168707, 0.00125281])
     for i in range(len(expected)):
         assert expected[i] == pytest.approx(choiceModel.pvalues[i], rel=1e-3)
+
+
+def test__post_fit_no_converge(bad_fit_setup):
+    choiceModel, optim_res, coeff_names, sample_size, fixedvars = bad_fit_setup
+    choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
+
+    assert np.array_equal(coeff_names, choiceModel.coeff_names)
+    assert optim_res["message"] == choiceModel.estimation_message
+    assert choiceModel.total_iter == optim_res["nit"]
+    assert 5 == pytest.approx(choiceModel.estim_time_sec, abs=2)
+    assert sample_size == choiceModel.sample_size
+    assert choiceModel.total_fun_eval == optim_res["nfev"]
+    assert choiceModel.loglikelihood == -5.12
+    assert choiceModel.aic == -2 * choiceModel.loglikelihood + 2 * 2
+    assert choiceModel.bic == pytest.approx(-2 * choiceModel.loglikelihood + 2 * np.log(sample_size))
+    assert choiceModel.mask is None
