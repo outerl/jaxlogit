@@ -29,5 +29,4 @@ jobs:
         python -m uv pip install coverage pytest-cov
 
     - name: Runs test
-      # run: pytest tests/ --durations=50 --verbose --cov=. --cov-report=term # --cov-report=xml
       run: pytest --cov=. tests/ --cov-report=term-missing --durations=50 --verbose
