@@ -58,7 +58,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 options=options,
                 callback=display_callback if options["disp"] else None,
             )
-        # elif method == "trust-region": # could add scipy version
         else:
             logger.error(f"Unknown optimization method: {method} exiting gracefully")
             return None
