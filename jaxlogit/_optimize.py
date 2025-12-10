@@ -12,41 +12,7 @@ STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_
 
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
-
-    if method == "trust-region":
-        import optimistix as optx
-        from collections.abc import Callable, Set
-
-        class HybridSolver(optx.AbstractBFGS):
-            rtol: float
-            atol: float
-            norm: Callable = optx.max_norm  # max_norm, rms_norm, l2_norm
-            use_inverse: bool = False  # need to set to false when using trust region methods.
-            verbose: Set = frozenset({})
-            descent: optx.AbstractDescent = optx.DoglegDescent()
-            search: optx.AbstractSearch = optx.ClassicalTrustRegion()
-            # standard BFGS uses optx.AbstractSearch = optx.BacktrackingArmijo()
-
-        def neg_loglike_optx(betas, args):
-            """Wrapper for neg_loglike to use with optx."""
-            return loglik_fn(betas, *args)
-
-        solver_optx = HybridSolver(
-            rtol=1e-6, atol=1e-6, verbose=frozenset({"step_size", "loss"}) if options["disp"] else frozenset({})
-        )
-        optx_result = optx.minimise(neg_loglike_optx, solver_optx, x, max_steps=options.get("maxiter", 2000), args=args)
-        # TODO: wrap things up in proper result class, for now just use scipy's structure
-        return {
-            "x": optx_result.value,
-            "fun": optx_result.state.f_info.f,
-            "jac": optx_result.state.f_info.grad,
-            "success": optx_result.result == optx.RESULTS.successful,
-            "nit": optx_result.state.num_accepted_steps,
-            "nfev": optx_result.stats["num_steps"],
-            "njev": optx_result.state.num_accepted_steps,
-            "message": "",
-        }
-    elif method in ["L-BFGS-B", "BFGS"]:
+    if method in ["L-BFGS-B", "BFGS"]:
         from scipy.optimize import minimize
 
         if jit_loglik:

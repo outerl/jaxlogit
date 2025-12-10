@@ -6,10 +6,10 @@ import jax.numpy as jnp
 import pickle
 
 from jaxlogit._variables import ParametersSetup
+from jaxlogit._config_data import ConfigData
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
-    ConfigData,
     _transform_rand_betas,
     loglike_individual,
     neg_loglike,
