@@ -30,8 +30,17 @@ jobs:
 
     - name: Runs test (Linux)
       if: matrix.os == 'ubuntu-latest'
-      run: pytest --cov=. tests/ --cov-report=term-missing --cov-report markdown-append:$GITHUB_STEP_SUMMARY --durations=50 --verbose
+      run: pytest --cov=. tests/ --cov-branch --cov-report=term-missing --cov-report markdown-append:$GITHUB_STEP_SUMMARY --durations=50 --verbose
 
     - name: Runs test (Windows)
       if: matrix.os == 'windows-latest'
-      run: pytest --cov=. tests/ --cov-report=term-missing --cov-report markdown-append:$env:GITHUB_STEP_SUMMARY --durations=50 --verbose
+      run: pytest --cov=. tests/ --cov-branch --cov-report=term-missing --cov-report html:cov_html --cov-report markdown-append:$env:GITHUB_STEP_SUMMARY --durations=50 --verbose
+
+    - uses: actions/upload-artifact@v4
+      with: 
+        name: html-artifact
+        path: ./cov_html/
+
+
+
+    
