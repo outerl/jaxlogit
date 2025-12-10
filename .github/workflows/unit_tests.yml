@@ -26,6 +26,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip uv
         python -m uv pip install -e .[dev]
-
-    - name: Runs test
+    
+    - name: Run tests on all versions and operating systems
       run: pytest tests/ --durations=50 --verbose
+
+
+
+    
