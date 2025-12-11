@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
-from jaxlogit.mixed_logit import MixedLogit, ConfigData
+from jaxlogit.mixed_logit import MixedLogit
+from jaxlogit._config_data import ConfigData
+
 
 # Setup data used for tests
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
