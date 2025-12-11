@@ -13,6 +13,8 @@ from jaxlogit.mixed_logit import (
     neg_loglike,
     probability_individual,
 )
+from jaxlogit._variables import ParametersSetup
+from jaxlogit._config_data import ConfigData
 
 SEED = 0
 

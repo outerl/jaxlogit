@@ -14,7 +14,7 @@ class MixedLogitEncoder(JSONEncoder):
 def mixed_logit_decoder(obj):
     try:
         model = MixedLogit()
-        model.coeff_names = obj["coeff_names"]
+        model.coeff_names = np.array(obj["coeff_names"])
         model.coeff_ = np.array(obj["coeff_"])
         model.stderr = np.array(obj["stderr"])
         model.zvalues = np.array(obj["zvalues"])
