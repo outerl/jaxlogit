@@ -3,13 +3,17 @@ import numpy as np
 import pandas as pd
 
 import jax
-import pickle
+import json
 
 from jaxlogit.utils import wide_to_long
 from jaxlogit.mixed_logit import (
     MixedLogit,
     ConfigData,
 )
+
+import json
+import jsonpickle
+from json import JSONEncoder
 
 
 def estimate_model_parameters():
@@ -78,21 +82,21 @@ def error_components():
 def save_correlated_example():
     model = estimate_model_parameters()
     with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.pkl", "wb"
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.json", "w"
     ) as f:
-        pickle.dump(model, f)
+        json.dump(jsonpickle.encode(model, unpicklable=True), f)
 
     model = fix_parameters()
     with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.pkl", "wb"
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.json", "w"
     ) as f:
-        pickle.dump(model, f)
+        json.dump(jsonpickle.encode(model, unpicklable=True), f)
 
     model = error_components()
     with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.pkl", "wb"
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.json", "w"
     ) as f:
-        pickle.dump(model, f)
+        json.dump(jsonpickle.encode(model, unpicklable=True), f)
 
 
 def setup_correlated_example():
@@ -136,27 +140,27 @@ def setup_correlated_example():
 def test_correlated_example_estimate_params_against_previous_results():
     model = estimate_model_parameters()
     with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.pkl", "rb"
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.json", "r"
     ) as f:
-        previous_model = pickle.load(f)
+        previous_model = jsonpickle.decode(json.load(f))
     compare_models(model, previous_model)
 
 
 def test_correlated_example_fix_params_against_previous_results():
     model = fix_parameters()
     with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.pkl", "rb"
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.json", "r"
     ) as f:
-        previous_model = pickle.load(f)
+        previous_model = jsonpickle.decode(json.load(f))
     compare_models(model, previous_model)
 
 
 def test_correlated_example_error_components_against_previous_results():
     model = error_components()
     with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.pkl", "rb"
+        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.json", "r"
     ) as f:
-        previous_model = pickle.load(f)
+        previous_model = jsonpickle.decode(json.load(f))
     compare_models(model, previous_model)
 
 
