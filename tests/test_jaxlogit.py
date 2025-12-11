@@ -38,9 +38,46 @@ def make_simple_data():
     return X, y, ids, alts, avail, panels, weights
 
 
+def make_empty_data():
+    N = 6  # individuals
+    J = 3  # alternatives
+    K = 3  # variables
+    np.random.seed(SEED)
+    X = np.random.randn(N * J, K)
+    # y = np.random.randint(0, 2, size=(N * J,))
+    y = np.zeros((N, J))
+    y[:, 0] = 1
+    _ = [np.random.shuffle(x) for x in list(y)]
+    y = y.reshape(-1)
+    ids = np.repeat(np.arange(N), J)
+    alts = np.tile(np.arange(J), N)
+    avail = np.ones((N * J,))
+    panels = np.repeat(np.arange(N), J)
+    weights = np.ones(N * J)
+
+
 @pytest.fixture
 def simple_data():
     return make_simple_data()
+
+
+def test_bad_random_variables(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {varnames[0]: "n", varnames[1]: "fake"}
+    config = ConfigData(
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+    with pytest.raises(ValueError):
+        model.fit(X, y, varnames, alts, ids, randvars, config)
 
 
 def test_mixed_logit_fit(simple_data):
@@ -63,6 +100,13 @@ def test_mixed_logit_fit(simple_data):
     )
     result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
+    assert result is not None
+    assert "fun" in result
+
+    no_weights_or_panel_config = ConfigData(
+        avail=avail, n_draws=3, fixedvars=fixedvars, optim_method="L-BFGS-B", init_coeff=None, skip_std_errs=False
+    )
+    result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
     assert result is not None
     assert "fun" in result
 
