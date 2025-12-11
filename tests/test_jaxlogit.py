@@ -174,54 +174,51 @@ def test_probability_individual(simple_data):
     assert not jnp.any(jnp.isnan(probs))
 
 
-@pytest.mark.skip(reason="Not working properly")
 def test_transform_rand_betas_shapes():
     Kr = 2
     N = 4
     R = 3
     betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
     draws = jnp.ones((N, Kr, R))
-    rand_idx = jnp.arange(Kr)
-    sd_start_idx = Kr
-    sd_slice_size = Kr
-    chol_start_idx = sd_start_idx + sd_slice_size
-    chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
-    idx_ln_dist = jnp.array([], dtype=int)
-
-    parameter_info = ParametersSetup()
-
-    out = _transform_rand_betas(
-        betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, False
+    rvdist = np.array(["n", "n"])
+    rvidx = jnp.array([True, True])
+    rvidx_normal_bases = jnp.array([True, True])
+    rvidx_truncnorm_based = jnp.array([False, False])
+    coef_names = np.array(["testvar1", "testvar2"])
+    config = ConfigData(include_correlations=False, force_positive_chol_diag=False)
+    parameter_info_no_correlation = ParametersSetup(
+        rvdist, rvidx, rvidx_normal_bases, rvidx_truncnorm_based, coef_names, betas, config
     )
+
+    config_corellation = ConfigData(include_correlations=True, force_positive_chol_diag=True)
+    parameter_info_correlation = ParametersSetup(
+        rvdist, rvidx, rvidx_normal_bases, rvidx_truncnorm_based, coef_names, betas, config_corellation
+    )
+
+    out = _transform_rand_betas(betas, False, draws, parameter_info_no_correlation)
     assert out.shape == (N, Kr, R)
-    out_corr = _transform_rand_betas(betas, True, draws, parameter_info)
+    out_corr = _transform_rand_betas(betas, True, draws, parameter_info_correlation)
     assert out_corr.shape == (N, Kr, R)
 
 
-@pytest.mark.skip(reason="Not working properly")
 def test_transform_rand_betas_jit():
     Kr = 2
     N = 3
     R = 2
     betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
     draws = jnp.ones((N, Kr, R))
-    rand_idx = jnp.arange(Kr)
-    sd_start_idx = Kr
-    sd_slice_size = Kr
-    chol_start_idx = sd_start_idx + sd_slice_size
-    chol_slice_size = (sd_slice_size * (sd_slice_size + 1)) // 2 - sd_slice_size
-    idx_ln_dist = jnp.array([], dtype=int)
-    fn = jax.jit(
-        _transform_rand_betas,
-        static_argnames=[
-            "sd_start_index",
-            "sd_slice_size",
-            "chol_start_idx",
-            "chol_slice_size",
-            "include_correlations",
-        ],
+    rvdist = np.array(["n", "n"])
+    rvidx = jnp.array([True, True])
+    rvidx_normal_bases = jnp.array([True, True])
+    rvidx_truncnorm_based = jnp.array([False, False])
+    coef_names = np.array(["testvar1", "testvar2"])
+
+    config_corellation = ConfigData(include_correlations=True, force_positive_chol_diag=True)
+    parameter_info_correlation = ParametersSetup(
+        rvdist, rvidx, rvidx_normal_bases, rvidx_truncnorm_based, coef_names, betas, config_corellation
     )
-    out = fn(betas, draws, rand_idx, sd_start_idx, sd_slice_size, chol_start_idx, chol_slice_size, idx_ln_dist, True)
+    fn = jax.jit(_transform_rand_betas, static_argnames=["parameter_info", "force_positive_chol_diag"])
+    out = fn(betas, True, draws, parameter_info_correlation)
     assert out.shape == (N, Kr, R)
 
 
