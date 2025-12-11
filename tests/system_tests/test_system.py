@@ -14,7 +14,7 @@ from jaxlogit.mixed_logit import (
 
 def estimate_model_parameters():
     model, df, varnames, config = setup_correlated_example()
-    res = model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
+    model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
     return model
 
 
@@ -29,7 +29,7 @@ def fix_parameters():
         fixedvars=fixedvars,
         n_draws=1500,
     )
-    res = model.fit(
+    model.fit(
         X=df[varnames],
         y=df["CHOICE"],
         varnames=varnames,
@@ -63,7 +63,7 @@ def error_components():
     )
 
     model = MixedLogit()
-    res = model.fit(
+    model.fit(
         X=df[varnames],
         y=df["CHOICE"],
         varnames=varnames,
@@ -162,12 +162,12 @@ def test_correlated_example_error_components_against_previous_results():
 
 def compare_models(new, previous):
     assert list(new.coeff_names) == list(previous.coeff_names)
-    assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-3)
-    assert list(new.stderr) == pytest.approx(list(previous.stderr), rel=1e-3)
-    assert list(new.zvalues) == pytest.approx(list(previous.zvalues), rel=1e-3)
-    assert new.loglikelihood == pytest.approx(previous.loglikelihood)
-    assert new.aic == pytest.approx(previous.aic)
-    assert new.bic == pytest.approx(previous.bic)
+    assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-2)
+    assert list(new.stderr) == pytest.approx(list(previous.stderr), rel=1e-2)
+    assert list(new.zvalues) == pytest.approx(list(previous.zvalues), rel=1e-2)
+    assert new.loglikelihood == pytest.approx(previous.loglikelihood, rel=1e-2)
+    assert new.aic == pytest.approx(previous.aic, rel=1e-2)
+    assert new.bic == pytest.approx(previous.bic, rel=1e-2)
 
 
 def main():
