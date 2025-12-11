@@ -22,7 +22,7 @@ SEED = 0
 def make_simple_data():
     N = 6  # individuals
     J = 3  # alternatives
-    K = 2  # variables
+    K = 3  # variables
     np.random.seed(SEED)
     X = np.random.randn(N * J, K)
     # y = np.random.randint(0, 2, size=(N * J,))
@@ -49,7 +49,7 @@ def test_mixed_logit_fit(simple_data):
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
     model = MixedLogit()
-    randvars = {varnames[0]: "n"}
+    randvars = {varnames[0]: "n", varnames[1]: "ln", varnames[2]: "n_trunc"}
     fixedvars = {}
     config = ConfigData(
         avail=avail,
@@ -175,16 +175,16 @@ def test_probability_individual(simple_data):
 
 
 def test_transform_rand_betas_shapes():
-    Kr = 2
+    Kr = 3
     N = 4
     R = 3
     betas = jnp.arange(Kr + Kr + Kr * (Kr + 1) // 2, dtype=float)
     draws = jnp.ones((N, Kr, R))
-    rvdist = np.array(["n", "n"])
-    rvidx = jnp.array([True, True])
-    rvidx_normal_bases = jnp.array([True, True])
-    rvidx_truncnorm_based = jnp.array([False, False])
-    coef_names = np.array(["testvar1", "testvar2"])
+    rvdist = np.array(["n", "ln", "n_trunc"])
+    rvidx = jnp.array([True, True, True])
+    rvidx_normal_bases = jnp.array([True, True, False])
+    rvidx_truncnorm_based = jnp.array([False, False, True])
+    coef_names = np.array(["normal_variable", "lognormal_variable", "truncated_normal_variable"])
     config = ConfigData(include_correlations=False, force_positive_chol_diag=False)
     parameter_info_no_correlation = ParametersSetup(
         rvdist, rvidx, rvidx_normal_bases, rvidx_truncnorm_based, coef_names, betas, config
