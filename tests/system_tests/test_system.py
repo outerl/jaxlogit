@@ -78,21 +78,15 @@ def error_components():
 
 def save_correlated_example():
     model = estimate_model_parameters()
-    with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.json", "w"
-    ) as f:
+    with open("tests/system_tests/correlated_example_estimate_params_output.json", "w") as f:
         json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
     model = fix_parameters()
-    with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.json", "w"
-    ) as f:
+    with open("tests/system_tests/correlated_example_fix_params_output.json", "w") as f:
         json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
     model = error_components()
-    with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.json", "w"
-    ) as f:
+    with open("tests/system_tests/correlated_example_error_components_output.json", "w") as f:
         json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
@@ -135,9 +129,7 @@ def setup_correlated_example():
 
 
 def test_correlated_example_estimate_params_against_previous_results():
-    with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_estimate_params_output.json", "r"
-    ) as f:
+    with open("tests/system_tests/correlated_example_estimate_params_output.json", "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
     model = estimate_model_parameters()
     compare_models(model, previous_model)
@@ -145,18 +137,14 @@ def test_correlated_example_estimate_params_against_previous_results():
 
 def test_correlated_example_fix_params_against_previous_results():
     model = fix_parameters()
-    with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_fix_params_output.json", "r"
-    ) as f:
+    with open("tests/system_tests/correlated_example_fix_params_output.json", "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
     compare_models(model, previous_model)
 
 
 def test_correlated_example_error_components_against_previous_results():
     model = error_components()
-    with open(
-        "/home/evelyn/projects_shared/jaxlogit/tests/system_tests/correlated_example_error_components_output.json", "r"
-    ) as f:
+    with open("tests/system_tests/correlated_example_error_components_output.json", "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
     compare_models(model, previous_model)
 
