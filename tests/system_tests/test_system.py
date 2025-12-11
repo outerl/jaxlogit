@@ -120,6 +120,38 @@ def setup_correlated_example():
     return model, df, varnames, config
 
 
+def save_batching_example():
+    model = setup_batching_example()
+    with open("tests/system_tests/batching_example_output.json", "w") as f:
+        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+
+
+def setup_batching_example():
+    df = pd.read_csv("examples/electricity_long.csv")
+    n_draws = 5000
+    varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
+    model = MixedLogit()
+
+    config = ConfigData(
+        panels=df["id"],
+        n_draws=n_draws,
+        skip_std_errs=True,  # skip standard errors to speed up the example
+        batch_size=539,
+        optim_method="L-BFGS-B",
+    )
+
+    model.fit(
+        X=df[varnames],
+        y=df["choice"],
+        varnames=varnames,
+        ids=df["chid"],
+        alts=df["alt"],
+        randvars={"pf": "n", "cl": "n", "loc": "n", "wk": "n", "tod": "n", "seas": "n"},
+        config=config,
+    )
+    return model
+
+
 def test_correlated_example_estimate_params_against_previous_results():
     with open("tests/system_tests/correlated_example_estimate_params_output.json", "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
@@ -141,6 +173,13 @@ def test_correlated_example_error_components_against_previous_results():
     compare_models(model, previous_model)
 
 
+def test_batching_example():
+    model = setup_batching_example()
+    with open("tests/system_tests/batching_example_output.json", "r") as f:
+        previous_model = json.load(f, object_hook=mixed_logit_decoder)
+    compare_models(model, previous_model)
+
+
 def compare_models(new, previous):
     assert list(new.coeff_names) == list(previous.coeff_names)
     assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-2)
@@ -152,7 +191,8 @@ def compare_models(new, previous):
 
 
 def main():
-    save_correlated_example()
+    # save_correlated_example()
+    save_batching_example()
 
 
 if __name__ == "__main__":
