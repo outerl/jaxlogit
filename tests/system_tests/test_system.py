@@ -11,7 +11,6 @@ from jaxlogit.mixed_logit import (
     ConfigData,
 )
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
-import jsonpickle
 
 
 def estimate_model_parameters():
