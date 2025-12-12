@@ -1,7 +1,9 @@
 name: System tests on all platforms
 
-# TODO: change from push to pull request
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   testing:
