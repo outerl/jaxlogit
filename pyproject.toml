@@ -27,6 +27,7 @@ dependencies = [
     'pandas',
     'scipy',
     'optimistix',
+    'regex',
 ]
 
 [project.optional-dependencies]
