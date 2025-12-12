@@ -22,15 +22,17 @@ class ParametersSetup:
     ) -> None:
         self._frozen = False
 
-        sd_start_idx, sd_slice_size = self.setup_betas_indicies(
-            rvidx_normal_bases, rvidx_truncnorm_based, rvidx, rvdist, config
-        )
-
-        self.setup_fixed_variable_masks(config.set_vars, coef_names, sd_start_idx, sd_slice_size, betas)
-
         rvidx = jnp.array(rvidx, dtype=bool)
         self.random_idx = jnp.where(rvidx)[0]
         self.non_random_idx = jnp.where(~rvidx)[0]
+
+        sd_start_idx, sd_slice_size = self.setup_betas_indicies(
+            rvidx_normal_bases, rvidx_truncnorm_based, rvidx, rvdist, config
+        )
+        if config.include_correlations and len(self.rand_idx_norm) < 2:
+            raise ValueError(f"Only {len(rvidx_normal_bases)} normal based variable(s). Cannot use correlation")
+
+        self.setup_fixed_variable_masks(config.set_vars, coef_names, sd_start_idx, sd_slice_size, betas)
 
         self._hash = None
         self._frozen = True

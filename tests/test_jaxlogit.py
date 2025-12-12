@@ -80,16 +80,7 @@ def test_bad_random_variables(simple_data):
         model.fit(X, y, varnames, alts, ids, randvars, config)
 
 
-# @given(
-#     include_correlations=st.booleans(),
-#     rand_var_types=st.tuples(
-#         st.sampled_from(["n", "ln", "n_trunc", None]),
-#         st.sampled_from(["n", "ln", "n_trunc", None]),
-#         st.sampled_from(["n", "ln", "n_trunc", None]),
-#     ),
-# )
-# @settings(deadline=None)
-def test_mixed_logit_fit(simple_data):
+def test_mixed_logit_fit_different_variables(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     rand_var_type_combos = [
         ("n", "n", "n"),
@@ -104,8 +95,6 @@ def test_mixed_logit_fit(simple_data):
     for include_correlations in [True, False]:
         for rand_var_types in rand_var_type_combos:
             number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
-            if number_normal_and_lognormal < 2:
-                include_correlations = False
             varnames = [f"x{i}" for i in range(X.shape[1])]
 
             model = MixedLogit()
@@ -122,6 +111,11 @@ def test_mixed_logit_fit(simple_data):
                 include_correlations=include_correlations,
                 skip_std_errs=True,
             )
+            if include_correlations and number_normal_and_lognormal < 2:
+                with pytest.raises(ValueError):
+                    result = model.fit(X, y, varnames, alts, ids, randvars, config)
+                continue
+
             result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
             assert result is not None
