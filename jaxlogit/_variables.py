@@ -1,7 +1,6 @@
 import logging
 import jax.numpy as jnp
 from ._config_data import ConfigData
-from .draws import generate_draws
 import numpy as np
 import jax
 
@@ -61,29 +60,6 @@ class ParametersSetup:
         self.idx_ln_dist = jnp.array([i for i, x in enumerate(rvdist) if x == "ln"], dtype=jnp.int32)
 
         return sd_start_idx, sd_slice_size
-
-    def setup_draws_from_config(self, N: int, rvdist, config: ConfigData):
-        """Returns the draws.
-
-        Formats the draws according to the panels.
-
-        Args:
-            N: number of observations. Size of X, the data.
-            config: The data config for the fit/predict
-        """
-
-        # Generate draws
-        n_samples = N if config.panels is None else np.max(config.panels) + 1
-        logger.debug(f"Generating {config.n_draws} number of draws for each observation and random variable")
-
-        draws = generate_draws(n_samples, config.n_draws, rvdist, config.halton, halton_opts=config.halton_opts)
-        if config.panels is not None:
-            draws = draws[config.panels]  # (N,num_random_params,n_draws)
-        draws = jnp.array(draws)
-
-        logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
-
-        return draws
 
     def setup_fixed_variable_masks(self, fixedvars, coef_names, sd_start_idx, sd_slice_size, betas):
         if fixedvars is None:
