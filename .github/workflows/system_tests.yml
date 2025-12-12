@@ -28,4 +28,4 @@ jobs:
         python -m uv pip install -e .[dev]
 
     - name: Runs test
-      run: pytest tests/unit_tests/ --durations=50 --verbose
+      run: pytest -n 3 tests/system_tests/ --durations=50 --verbose
