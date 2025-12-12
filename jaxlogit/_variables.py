@@ -26,10 +26,11 @@ class ParametersSetup:
             rvidx_normal_bases, rvidx_truncnorm_based, rvidx, rvdist, config
         )
 
-        self.setup_fixed_variable_masks(config.fixedvars, coef_names, sd_start_idx, sd_slice_size, betas)
+        self.setup_fixed_variable_masks(config.set_vars, coef_names, sd_start_idx, sd_slice_size, betas)
 
         rvidx = jnp.array(rvidx, dtype=bool)
-        self.fixed_idx = jnp.where(~rvidx)[0]
+        self.random_idx = jnp.where(rvidx)[0]
+        self.non_random_idx = jnp.where(~rvidx)[0]
 
         self._hash = None
         self._frozen = True

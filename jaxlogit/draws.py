@@ -79,6 +79,9 @@ def generate_draws(sample_size, n_draws, _rvdist, halton=True, halton_opts=None)
     uniform randoms for uniform and truncated normal distributions.
     The actual distributtion during estimation is applied in _apply_distribution.
     """
+    if len(_rvdist) == 0:
+        return np.empty((0, 0, 0))
+
     if halton:
         draws = generate_halton_draws(
             sample_size,

@@ -1,4 +1,5 @@
 import pytest
+from hypothesis import given, settings, strategies as st
 import numpy as np
 
 import jax
@@ -80,35 +81,123 @@ def test_bad_random_variables(simple_data):
         model.fit(X, y, varnames, alts, ids, randvars, config)
 
 
-def test_mixed_logit_fit(simple_data):
-    X, y, ids, alts, avail, panels, weights = simple_data
-
+@given(
+    include_correlations=st.booleans(),
+    rand_var_types=st.tuples(
+        st.sampled_from(["n", "ln", "n_trunc", None]),
+        st.sampled_from(["n", "ln", "n_trunc", None]),
+        st.sampled_from(["n", "ln", "n_trunc", None]),
+    ),
+)
+@settings(deadline=None)
+def test_mixed_logit_fit(include_correlations, rand_var_types):
+    X, y, ids, alts, avail, panels, weights = make_simple_data()
+    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
+    if number_normal_and_lognormal < 2:
+        include_correlations = False
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
     model = MixedLogit()
-    randvars = {varnames[0]: "n", varnames[1]: "ln", varnames[2]: "n_trunc"}
-    fixedvars = {}
+    randvars = {varnames[i]: rand_var_types[i] for i in range(len(rand_var_types)) if rand_var_types[i]}
+    set_vars = {}
     config = ConfigData(
         avail=avail,
         panels=panels,
         weights=weights,
         n_draws=3,
-        fixedvars=fixedvars,
+        set_vars=set_vars,
         optim_method="L-BFGS-B",
         init_coeff=None,
+        include_correlations=include_correlations,
         skip_std_errs=True,
     )
     result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
     assert result is not None
     assert "fun" in result
-
-    no_weights_or_panel_config = ConfigData(
-        avail=avail, n_draws=3, fixedvars=fixedvars, optim_method="L-BFGS-B", init_coeff=None, skip_std_errs=False
+    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
+    assert (
+        len(result.x)
+        == 2 * len(rand_var_types)
+        - rand_var_types.count(None)
+        + number_normal_and_lognormal * (number_normal_and_lognormal - 1) / 2 * include_correlations
     )
-    result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
+
+    # config = ConfigData(
+    #     avail=avail,
+    #     panels=panels,
+    #     weights=weights,
+    #     n_draws=3,
+    #     set_vars=set_vars,
+    #     optim_method="L-BFGS-B",
+    #     init_coeff=None,
+    #     skip_std_errs=True,
+    #     include_correlations=True,
+    # )
+    # result = model.fit(X, y, varnames, alts, ids, randvars, config)
+
+    # assert result is not None
+    # assert "fun" in result
+
+    # no_weights_or_panel_config = ConfigData(
+    #     avail=avail, n_draws=3, set_vars=set_vars, optim_method="L-BFGS-B", init_coeff=None, skip_std_errs=False
+    # )
+    # result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
+    # assert result is not None
+    # assert "fun" in result
+
+    # randvars = {varnames[0]: "n"}
+    # set_vars = {varnames[1]: 0.0}
+    # config = ConfigData(
+    #     avail=avail,
+    #     panels=panels,
+    #     weights=weights,
+    #     n_draws=3,
+    #     set_vars=set_vars,
+    #     optim_method="L-BFGS-B",
+    #     init_coeff=None,
+    #     skip_std_errs=True,
+    # )
+    # result = model.fit(X, y, varnames, alts, ids, randvars, config)
+    # assert result is not None
+    # assert "fun" in result
+    # assert len(result.x) == 4  # two from normal distribution, two from un-parameterised variables
+
+
+def test_2mixed_logit_fit():
+    X, y, ids, alts, avail, panels, weights = make_simple_data()
+    include_correlations = False
+    rand_var_types = ("n", None, None)
+    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
+    if number_normal_and_lognormal < 2:
+        include_correlations = False
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {varnames[i]: rand_var_types[i] for i in range(len(rand_var_types)) if rand_var_types[i]}
+    set_vars = {}
+    config = ConfigData(
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        set_vars=set_vars,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        include_correlations=include_correlations,
+        skip_std_errs=True,
+    )
+    result = model.fit(X, y, varnames, alts, ids, randvars, config)
+
     assert result is not None
     assert "fun" in result
+    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
+    assert (
+        len(result.x)
+        == 2 * len(rand_var_types)
+        - rand_var_types.count(None)
+        + number_normal_and_lognormal * (number_normal_and_lognormal - 1) / 2 * include_correlations
+    )
 
 
 @pytest.mark.skip(reason="different python versions and OSs give different results")
@@ -119,13 +208,13 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
 
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
-    fixedvars = {}
+    set_vars = {}
 
     config = ConfigData(
         skip_std_errs=True,
         init_coeff=None,
         optim_method="L-BFGS-B",
-        fixedvars=fixedvars,
+        set_vars=set_vars,
         n_draws=3,
         weights=weights,
         panels=panels,
@@ -161,13 +250,13 @@ def test_loglike_individual_and_total(simple_data):
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
 
-    fixedvars = {}
+    set_vars = {}
     config = ConfigData(
         avail=np.array(df["avail"]),
         panels=np.array(df["person_id_contiguous"]),
         weights=np.array(df["weight"]),
         n_draws=3,
-        fixedvars=fixedvars,
+        set_vars=set_vars,
         init_coeff=None,
         include_correlations=False,
     )
@@ -199,13 +288,13 @@ def test_probability_individual(simple_data):
 
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
-    fixedvars = {}
+    set_vars = {}
     config = ConfigData(
         avail=np.array(df["avail"]),
         panels=np.array(df["person_id_contiguous"]),
         weights=np.array(df["weight"]),
         n_draws=3,
-        fixedvars=fixedvars,
+        set_vars=set_vars,
         init_coeff=None,
         include_correlations=False,
     )
@@ -273,13 +362,13 @@ def save_simple_data_output():
 
     model = MixedLogit()
     randvars = {varnames[0]: "n"}
-    fixedvars = {}
+    set_vars = {}
 
     config = ConfigData(
         skip_std_errs=True,
         init_coeff=None,
         optim_method="L-BFGS-B",
-        fixedvars=fixedvars,
+        set_vars=set_vars,
         n_draws=3,
         weights=weights,
         panels=panels,

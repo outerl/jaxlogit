@@ -141,6 +141,9 @@ class MixedLogit(ChoiceModel):
         logger.debug(f"Generating {config.n_draws} number of draws for each observation and random variable")
 
         draws = generate_draws(n_samples, config.n_draws, self._rvdist, config.halton, halton_opts=config.halton_opts)
+        if draws.size == 0:
+            return draws
+
         if config.panels is not None:
             draws = draws[config.panels]  # (N,num_random_params,n_draws)
         draws = jnp.array(draws)
@@ -228,10 +231,10 @@ class MixedLogit(ChoiceModel):
         else:
             Xd = X
 
-        # split data for fixed and random parameters to speed up calculations
+        # split data for non-random and random parameters to speed up calculations
         rvidx = jnp.array(self._rvidx, dtype=bool)
         # rand_idx = jnp.where(rvidx)[0]
-        Xdf = Xd[:, :, ~rvidx]  # Data for fixed parameters
+        Xdf = Xd[:, :, ~rvidx]  # Data for fixed (non-random) parameters
         Xdr = Xd[:, :, rvidx]  # Data for random parameters
 
         return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info)
@@ -376,7 +379,7 @@ class MixedLogit(ChoiceModel):
                 logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
                 optim_res["hess_inv"] = jnp.eye(len(optim_res["x"]))
 
-        self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.fixedvars, config.skip_std_errs)
+        self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
         return optim_res
 
     def _setup_randvars_info(self, randvars, Xnames):
@@ -657,16 +660,20 @@ def loglike_individual(
         betas = betas.at[parameter_info.mask].set(parameter_info.values_for_mask)
 
     # Utility for fixed parameters
-    Bf = betas[parameter_info.fixed_idx]  # Fixed betas
+    Bf = betas[parameter_info.non_random_idx]  # Fixed betas
     Vdf = jnp.einsum("njk,k -> nj", Xdf, Bf)  # (N, J-1)
 
     # Utility for random parameters
-    Br = _transform_rand_betas(
-        betas, force_positive_chol_diag, draws, parameter_info
-    )  # Br shape: (num_obs, num_rand_vars, num_draws)
+    if parameter_info.random_idx.size != 0:
+        Br = _transform_rand_betas(
+            betas, force_positive_chol_diag, draws, parameter_info
+        )  # Br shape: (num_obs, num_rand_vars, num_draws)
+        parameterised_random_variable_contribution = jnp.einsum("njk,nkr -> njr", Xdr, Br)
+    else:
+        parameterised_random_variable_contribution = jnp.zeros_like(Vdf[:, :, None])
 
     # Vdr shape: (N,J-1,R)
-    Vd = Vdf[:, :, None] + jnp.einsum("njk,nkr -> njr", Xdr, Br)
+    Vd = Vdf[:, :, None] + parameterised_random_variable_contribution
     eVd = jnp.exp(jnp.clip(Vd, -UTIL_MAX, UTIL_MAX))
     eVd = eVd if avail is None else eVd * avail[:, :, None]
     proba_n = 1 / (1 + eVd.sum(axis=1))  # (N,R)
@@ -685,7 +692,6 @@ def loglike_individual(
                 UTIL_MAX,
             )
         )
-
     loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / draws.shape[2], LOG_PROB_MIN, jnp.inf))
 
     if weights is not None:
@@ -720,13 +726,19 @@ def probability_individual(
         betas = betas.at[parameter_info.mask].set(parameter_info.values_for_mask)
 
     # Utility for fixed parameters
-    Bf = betas[parameter_info.fixed_idx]  # Fixed betas
+    Bf = betas[parameter_info.non_random_idx]  # Fixed betas
     Vdf = jnp.einsum("njk,k -> nj", Xdf, Bf)  # (N, J)
 
-    Br = _transform_rand_betas(betas, force_positive_chol_diag, draws, parameter_info)
+    if parameter_info.random_idx:
+        Br = _transform_rand_betas(
+            betas, force_positive_chol_diag, draws, parameter_info
+        )  # Br shape: (num_obs, num_rand_vars, num_draws)
+        parameterised_random_variable_contribution = jnp.einsum("njk,nkr -> njr", Xdr, Br)
+    else:
+        parameterised_random_variable_contribution = jnp.zeros_like(Vdf[:, :, None])
 
     # Vdr shape: (N,J,R)
-    Vd = Vdf[:, :, None] + jnp.einsum("njk,nkr -> njr", Xdr, Br)
+    Vd = Vdf[:, :, None] + parameterised_random_variable_contribution
     eVd = jnp.exp(jnp.clip(Vd, -UTIL_MAX, UTIL_MAX))
     eVd = eVd if avail is None else eVd * avail[:, :, None]
 
