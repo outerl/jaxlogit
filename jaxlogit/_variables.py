@@ -30,7 +30,7 @@ class ParametersSetup:
             rvidx_normal_bases, rvidx_truncnorm_based, rvidx, rvdist, config
         )
         if config.include_correlations and len(self.rand_idx_norm) < 2:
-            raise ValueError(f"Only {len(rvidx_normal_bases)} normal based variable(s). Cannot use correlation")
+            raise ValueError(f"Only {len(self.rand_idx_norm)} normal based variable(s). Cannot use correlation")
 
         self.setup_fixed_variable_masks(config.set_vars, coef_names, sd_start_idx, sd_slice_size, betas)
 

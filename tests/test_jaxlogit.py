@@ -4,6 +4,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 import pickle
+import regex as re
 
 from jaxlogit._variables import ParametersSetup
 from jaxlogit._config_data import ConfigData
@@ -58,7 +59,9 @@ def test_bad_random_variables(simple_data):
         init_coeff=None,
         skip_std_errs=True,
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, tn"
+    ):
         model.fit(X, y, varnames, alts, ids, randvars, config)
 
 
@@ -95,7 +98,12 @@ def test_mixed_logit_fit_different_variables(simple_data):
                 skip_std_errs=True,
             )
             if include_correlations and number_normal_and_lognormal < 2:
-                with pytest.raises(ValueError):
+                with pytest.raises(
+                    ValueError,
+                    match=re.escape(
+                        f"Only {number_normal_and_lognormal} normal based variable(s). Cannot use correlation"
+                    ),
+                ):
                     result = model.fit(X, y, varnames, alts, ids, randvars, config)
                 continue
 
