@@ -202,6 +202,7 @@ class MixedLogit(ChoiceModel):
             ids,
             randvars,
             config,
+            predict_mode=predict_mode
         )
 
         parameter_info = ParametersSetup(
