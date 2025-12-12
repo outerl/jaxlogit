@@ -173,7 +173,7 @@ class ChoiceModel(ABC):  # noqa: B024
             raise ValueError("The parameter alternatives is required")
         if X.ndim != 2:
             raise ValueError("X must be an array of two dimensions in long format")
-        if y.ndim != 1:
+        if (not predict_mode) and y.ndim != 1:
             raise ValueError("y must be an array of one dimension in long format")
         if len(varnames) != X.shape[1]:
             raise ValueError("The length of varnames must match the number of columns in X")
