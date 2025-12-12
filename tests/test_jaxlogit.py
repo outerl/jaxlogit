@@ -92,10 +92,11 @@ def test_mixed_logit_fit_different_variables(simple_data):
         ("n", None, None),
         ("n", "ln", None),
     ]
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
     for include_correlations in [True, False]:
         for rand_var_types in rand_var_type_combos:
             number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
-            varnames = [f"x{i}" for i in range(X.shape[1])]
 
             model = MixedLogit()
             randvars = {varnames[i]: rand_var_types[i] for i in range(len(rand_var_types)) if rand_var_types[i]}
@@ -128,59 +129,30 @@ def test_mixed_logit_fit_different_variables(simple_data):
                 + number_normal_and_lognormal * (number_normal_and_lognormal - 1) / 2 * include_correlations
             )
 
-    # config = ConfigData(
-    #     avail=avail,
-    #     panels=panels,
-    #     weights=weights,
-    #     n_draws=3,
-    #     set_vars=set_vars,
-    #     optim_method="L-BFGS-B",
-    #     init_coeff=None,
-    #     skip_std_errs=True,
-    #     include_correlations=True,
-    # )
-    # result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
-    # assert result is not None
-    # assert "fun" in result
-
-    # no_weights_or_panel_config = ConfigData(
-    #     avail=avail, n_draws=3, set_vars=set_vars, optim_method="L-BFGS-B", init_coeff=None, skip_std_errs=False
-    # )
-    # result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
-    # assert result is not None
-    # assert "fun" in result
-
-    # randvars = {varnames[0]: "n"}
-    # set_vars = {varnames[1]: 0.0}
-    # config = ConfigData(
-    #     avail=avail,
-    #     panels=panels,
-    #     weights=weights,
-    #     n_draws=3,
-    #     set_vars=set_vars,
-    #     optim_method="L-BFGS-B",
-    #     init_coeff=None,
-    #     skip_std_errs=True,
-    # )
-    # result = model.fit(X, y, varnames, alts, ids, randvars, config)
-    # assert result is not None
-    # assert "fun" in result
-    # assert len(result.x) == 4  # two from normal distribution, two from un-parameterised variables
-
-
-def test_2mixed_logit_fit():
-    X, y, ids, alts, avail, panels, weights = make_simple_data()
-    include_correlations = False
-    rand_var_types = ("n", None, None)
-    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
-    if number_normal_and_lognormal < 2:
-        include_correlations = False
-    varnames = [f"x{i}" for i in range(X.shape[1])]
+def test_mixed_logit_fit_no_panels_weights(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
 
     model = MixedLogit()
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+    rand_var_types = ("n_trunc", "n", "ln")
     randvars = {varnames[i]: rand_var_types[i] for i in range(len(rand_var_types)) if rand_var_types[i]}
     set_vars = {}
+
+    no_weights_or_panel_config = ConfigData(
+        avail=avail, n_draws=3, set_vars=set_vars, optim_method="L-BFGS-B", init_coeff=None, skip_std_errs=False
+    )
+    result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
+    assert result is not None
+    assert "fun" in result
+
+
+def test_mixed_logit_fit_set_variables(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    randvars = {varnames[0]: "n"}
+    set_vars = {varnames[1]: 0.0}
     config = ConfigData(
         avail=avail,
         panels=panels,
@@ -189,20 +161,13 @@ def test_2mixed_logit_fit():
         set_vars=set_vars,
         optim_method="L-BFGS-B",
         init_coeff=None,
-        include_correlations=include_correlations,
         skip_std_errs=True,
     )
+    model = MixedLogit()
     result = model.fit(X, y, varnames, alts, ids, randvars, config)
-
     assert result is not None
     assert "fun" in result
-    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
-    assert (
-        len(result.x)
-        == 2 * len(rand_var_types)
-        - rand_var_types.count(None)
-        + number_normal_and_lognormal * (number_normal_and_lognormal - 1) / 2 * include_correlations
-    )
+    assert len(result.x) == 4  # two from normal distribution, two from un-parameterised variables
 
 
 @pytest.mark.skip(reason="different python versions and OSs give different results")
