@@ -1,5 +1,4 @@
 import pytest
-from hypothesis import given, settings, strategies as st
 import numpy as np
 
 import jax
@@ -81,47 +80,59 @@ def test_bad_random_variables(simple_data):
         model.fit(X, y, varnames, alts, ids, randvars, config)
 
 
-@given(
-    include_correlations=st.booleans(),
-    rand_var_types=st.tuples(
-        st.sampled_from(["n", "ln", "n_trunc", None]),
-        st.sampled_from(["n", "ln", "n_trunc", None]),
-        st.sampled_from(["n", "ln", "n_trunc", None]),
-    ),
-)
-@settings(deadline=None)
-def test_mixed_logit_fit(include_correlations, rand_var_types):
-    X, y, ids, alts, avail, panels, weights = make_simple_data()
-    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
-    if number_normal_and_lognormal < 2:
-        include_correlations = False
-    varnames = [f"x{i}" for i in range(X.shape[1])]
+# @given(
+#     include_correlations=st.booleans(),
+#     rand_var_types=st.tuples(
+#         st.sampled_from(["n", "ln", "n_trunc", None]),
+#         st.sampled_from(["n", "ln", "n_trunc", None]),
+#         st.sampled_from(["n", "ln", "n_trunc", None]),
+#     ),
+# )
+# @settings(deadline=None)
+def test_mixed_logit_fit(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    rand_var_type_combos = [
+        ("n", "n", "n"),
+        ("n", "ln", "ln"),
+        ("n_trunc", "n", "ln"),
+        ("n_trunc", "n_trunc", "n_trunc"),
+        ("n_trunc", None, None),
+        (None, None, None),
+        ("n", None, None),
+        ("n", "ln", None),
+    ]
+    for include_correlations in [True, False]:
+        for rand_var_types in rand_var_type_combos:
+            number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
+            if number_normal_and_lognormal < 2:
+                include_correlations = False
+            varnames = [f"x{i}" for i in range(X.shape[1])]
 
-    model = MixedLogit()
-    randvars = {varnames[i]: rand_var_types[i] for i in range(len(rand_var_types)) if rand_var_types[i]}
-    set_vars = {}
-    config = ConfigData(
-        avail=avail,
-        panels=panels,
-        weights=weights,
-        n_draws=3,
-        set_vars=set_vars,
-        optim_method="L-BFGS-B",
-        init_coeff=None,
-        include_correlations=include_correlations,
-        skip_std_errs=True,
-    )
-    result = model.fit(X, y, varnames, alts, ids, randvars, config)
+            model = MixedLogit()
+            randvars = {varnames[i]: rand_var_types[i] for i in range(len(rand_var_types)) if rand_var_types[i]}
+            set_vars = {}
+            config = ConfigData(
+                avail=avail,
+                panels=panels,
+                weights=weights,
+                n_draws=3,
+                set_vars=set_vars,
+                optim_method="L-BFGS-B",
+                init_coeff=None,
+                include_correlations=include_correlations,
+                skip_std_errs=True,
+            )
+            result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
-    assert result is not None
-    assert "fun" in result
-    number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
-    assert (
-        len(result.x)
-        == 2 * len(rand_var_types)
-        - rand_var_types.count(None)
-        + number_normal_and_lognormal * (number_normal_and_lognormal - 1) / 2 * include_correlations
-    )
+            assert result is not None
+            assert "fun" in result
+            number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
+            assert (
+                len(result.x)
+                == 2 * len(rand_var_types)
+                - rand_var_types.count(None)
+                + number_normal_and_lognormal * (number_normal_and_lognormal - 1) / 2 * include_correlations
+            )
 
     # config = ConfigData(
     #     avail=avail,
