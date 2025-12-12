@@ -1,4 +1,4 @@
-name: Tests on all platforms
+name: System tests on all platforms
 
 # TODO: change from push to pull request
 on: [push]
@@ -26,7 +26,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip uv
         python -m uv pip install -e .[dev]
-        python -m uv pip install pytest-xdist
 
     - name: Runs test
-      run: pytest -n 3 tests/system_tests/ --durations=50 --verbose
+      run: pytest tests/system_tests/ --durations=50 --verbose
