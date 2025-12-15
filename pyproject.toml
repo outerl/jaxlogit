@@ -28,6 +28,7 @@ dependencies = [
     'scipy',
     'optimistix',
     'regex',
+    'sphinx',
 ]
 
 [project.optional-dependencies]
