@@ -86,18 +86,6 @@ def save_correlated_example():
         with open(pathlib.Path(__file__).parent / "test_data" / files[i], "w") as f:
             json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
-    # model = estimate_model_parameters()
-    # with open("tests/system_tests/test_data/correlated_example_estimate_params_output.json", "w") as f:
-    #     json.dump(model, f, indent=4, cls=MixedLogitEncoder)
-
-    # model = fix_parameters()
-    # with open("tests/system_tests/test_data/correlated_example_fix_params_output.json", "w") as f:
-    #     json.dump(model, f, indent=4, cls=MixedLogitEncoder)
-
-    # model = error_components()
-    # with open("tests/system_tests/test_data/correlated_example_error_components_output.json", "w") as f:
-    #     json.dump(model, f, indent=4, cls=MixedLogitEncoder)
-
 
 def setup_correlated_example():
     jax.config.update("jax_enable_x64", True)

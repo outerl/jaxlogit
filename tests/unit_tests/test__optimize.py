@@ -41,7 +41,7 @@ def test_hessian_finite_diff():
     x = jnp.array([0.1, 0.1, 0.1])
     expected = np.array([np.array([3.0426044, 0.0, 0.0]), np.array([0.0, 0.5149368, 0.0]), np.array([0.0, 0.0, 0.02])])
     assert expected == pytest.approx(
-        hessian(test_function, x, False, True, *args, static_argnames=("dummy_1", "dummy_2")), rel=6e-2
+        hessian(test_function, x, False, True, *args, static_argnames=("dummy_1", "dummy_2")), rel=5e-2
     )
 
 
@@ -58,7 +58,7 @@ def test_gradient():
     expected = jnp.zeros((1, 3))
     expected = expected.at[0, 0].set(1.9073486)
     expected = expected.at[0, 1].set(0.715255)
-    assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e1)
+    assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e-2)
 
 
 def test_gradient_no_args():
@@ -72,7 +72,7 @@ def test_gradient_no_args():
     expected = expected.at[0, 0].set(0.078231096)
     expected = expected.at[0, 1].set(-0.1825392246)
     expected = expected.at[0, 2].set(0.7897615432)
-    assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e1)
+    assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e-2)
 
 
 def test_gradient_empty_x():
