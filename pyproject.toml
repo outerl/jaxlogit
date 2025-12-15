@@ -28,7 +28,6 @@ dependencies = [
     'scipy',
     'optimistix',
     'regex',
-    'sphinx',
 ]
 
 [project.optional-dependencies]
@@ -47,6 +46,10 @@ devtools = [
 ]
 tests = [
     'pytest',
+]
+
+docs = [
+    'sphinx'
 ]
 dev = ['jaxlogit[linting, devtools, tests]']
 
