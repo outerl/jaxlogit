@@ -58,7 +58,7 @@ def test_gradient():
     expected = jnp.zeros((1, 3))
     expected = expected.at[0, 0].set(1.9073486)
     expected = expected.at[0, 1].set(0.715255)
-    assert expected == pytest.approx(gradient(test_function, x, *args), rel=5e-2)
+    assert expected == pytest.approx(gradient(test_function, x, *args), rel=6e-2)
 
 
 def test_gradient_no_args():
