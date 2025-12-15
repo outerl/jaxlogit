@@ -12,7 +12,7 @@ jobs:
     - name: Build static files
       id: build
       run: |
-       sphinx-build -M html docs docs/_build
+       make html
 
     - name: Upload static files as artifact
       id: deployment
