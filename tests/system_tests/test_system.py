@@ -74,17 +74,29 @@ def error_components():
 
 
 def save_correlated_example():
-    model = estimate_model_parameters()
-    with open("tests/system_tests/test_data/correlated_example_estimate_params_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+    models = [estimate_model_parameters, fix_parameters, error_components]
+    files = [
+        "correlated_example_estimate_params_output.json",
+        "correlated_example_fix_params_output.json",
+        "correlated_example_error_components_output.json",
+    ]
 
-    model = fix_parameters()
-    with open("tests/system_tests/test_data/correlated_example_fix_params_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+    for i in range(len(models)):
+        model = models[i]()
+        with open(pathlib.Path(__file__).parent / "test_data" / files[i], "w") as f:
+            json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
-    model = error_components()
-    with open("tests/system_tests/test_data/correlated_example_error_components_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+    # model = estimate_model_parameters()
+    # with open("tests/system_tests/test_data/correlated_example_estimate_params_output.json", "w") as f:
+    #     json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+
+    # model = fix_parameters()
+    # with open("tests/system_tests/test_data/correlated_example_fix_params_output.json", "w") as f:
+    #     json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+
+    # model = error_components()
+    # with open("tests/system_tests/test_data/correlated_example_error_components_output.json", "w") as f:
+    #     json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
 def setup_correlated_example():
@@ -128,7 +140,7 @@ def save_batching_example():
 
 
 def setup_batching_example():
-    df = pd.read_csv("examples/electricity_long.csv")
+    df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
     n_draws = 5000
     varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
     model = MixedLogit()
@@ -180,7 +192,7 @@ def compare_models(new, previous):
 
 
 def main():
-    # save_correlated_example()
+    save_correlated_example()
     save_batching_example()
 
 
