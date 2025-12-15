@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import pandas as pd
+import pathlib
 
 import jax
 import json
@@ -152,31 +153,19 @@ def setup_batching_example():
     return model
 
 
-def test_correlated_example_estimate_params_against_previous_results():
-    with open("tests/system_tests/test_data/correlated_example_estimate_params_output.json", "r") as f:
+@pytest.mark.parametrize(
+    "example,file",
+    [
+        (estimate_model_parameters, "correlated_example_estimate_params_output.json"),
+        (fix_parameters, "correlated_example_fix_params_output.json"),
+        (error_components, "correlated_example_error_components_output.json"),
+        (setup_batching_example, "batching_example_output.json"),
+    ],
+)
+def test_previous_results(example: callable, file: str):
+    with open(pathlib.Path(__file__).parent / "test_data" / file, "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    model = estimate_model_parameters()
-    compare_models(model, previous_model)
-
-
-def test_correlated_example_fix_params_against_previous_results():
-    model = fix_parameters()
-    with open("tests/system_tests/test_data/correlated_example_fix_params_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    compare_models(model, previous_model)
-
-
-def test_correlated_example_error_components_against_previous_results():
-    model = error_components()
-    with open("tests/system_tests/test_data/correlated_example_error_components_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    compare_models(model, previous_model)
-
-
-def test_batching_example():
-    model = setup_batching_example()
-    with open("tests/system_tests/test_data/batching_example_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
+    model = example()
     compare_models(model, previous_model)
 
 
