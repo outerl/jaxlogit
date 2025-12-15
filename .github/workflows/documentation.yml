@@ -5,10 +5,13 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+    #   contents: write
+    #   pages: write       # GitHub Pages deployment?
+      id-token: write
     strategy:
       max-parallel: 1
     steps:
-    # - uses: actions/checkout@v4
       - uses: actions/checkout@v4
       - name: Set Python environment
         uses: actions/setup-python@v5
