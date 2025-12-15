@@ -40,6 +40,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    permissions:
+    #   contents: write
+      pages: write       # GitHub Pages deployment?
+      id-token: write
     needs: build
     steps:
       - name: Deploy to GitHub Pages
