@@ -56,7 +56,7 @@ def test_gradient():
     x = jnp.array([0.1, 0.1, 1.1])
 
     # based on values calculated by hand
-    expected = jnp.array([1.89047, 0.742896, 7.3205])
+    expected = np.array([1.89047, 0.7428968, 7.3205]).reshape(1, 3)
     assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e-2)
 
 
