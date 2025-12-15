@@ -53,13 +53,11 @@ def test_gradient():
     b = 2.0
     c = 3.0
     args = (a, b, c)
-    x = jnp.array([0.1, 0.1, 0.1])
+    x = jnp.array([0.1, 0.1, 1.1])
 
-    expected = jnp.zeros((1, 3))
-    expected = expected.at[0, 0].set(1.9073486)
-    expected = expected.at[0, 1].set(0.715255)
-    # print(gradient(test_function, x, *args))
-    assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e-1)
+    # based on values calculated by hand
+    expected = jnp.array([1.89047, 0.742896, 7.3205])
+    assert expected == pytest.approx(gradient(test_function, x, *args), rel=1e-2)
 
 
 def test_gradient_no_args():
