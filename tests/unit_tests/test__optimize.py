@@ -1,4 +1,4 @@
-from jaxlogit._optimize import hessian, gradient
+from jaxlogit._optimize import hessian
 import numpy as np
 import jax as jax
 import jax.numpy as jnp
