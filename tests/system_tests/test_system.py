@@ -169,6 +169,15 @@ def test_previous_results(example: callable, file: str):
     compare_models(model, previous_model)
 
 
+def test_json():
+    before = estimate_model_parameters()
+    with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "w") as f:
+        json.dump(before, f, indent=4, cls=MixedLogitEncoder)
+    with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "r") as f:
+        after = json.load(f, object_hook=mixed_logit_decoder)
+    compare_models(after, before)
+
+
 def compare_models(new, previous):
     assert list(new.coeff_names) == list(previous.coeff_names)
     assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-2)
