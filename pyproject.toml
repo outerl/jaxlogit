@@ -49,7 +49,9 @@ tests = [
 ]
 
 docs = [
-    'sphinx'
+    'sphinx',
+    'pydata-sphinx-theme',
+    'myst-parser'
 ]
 dev = ['jaxlogit[linting, devtools, tests]']
 

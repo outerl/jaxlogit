@@ -13,3 +13,7 @@ jaxlogit is a package used to estimate and predict using mixed logit models.
    :maxdepth: 2
    :caption: Contents:
 
+   api
+
+   markdown_test
+
