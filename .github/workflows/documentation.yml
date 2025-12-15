@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
     #   contents: write
-    #   pages: write       # GitHub Pages deployment?
+      pages: write       # GitHub Pages deployment?
       id-token: write
     strategy:
       max-parallel: 1
