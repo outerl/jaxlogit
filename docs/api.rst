@@ -1,8 +1,12 @@
 API Reference
 =============
 
+
+.. autoclass:: jaxlogit.mixed_logit.MixedLogit
+   :members: fit, predict
+
 .. autosummary::
    :toctree: _autosummary
-   :recursive:
 
-   jaxlogit
+   jaxlogit._config_data.ConfigData
+   jaxlogit.utils.wide_to_long
