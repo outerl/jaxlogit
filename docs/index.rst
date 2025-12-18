@@ -6,6 +6,8 @@
    :maxdepth: 2
    :caption: Contents:
 
-   _autosummary/jaxlogit.mixed_logit.MixedLogit
+   examples
    api
+   _autosummary/jaxlogit.mixed_logit.MixedLogit
+
    

@@ -18,13 +18,24 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "myst_parser",
+    "nbsphinx",
 ]
+
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
+nbsphinx_custom_formats = {
+    '.py': ['jupytext.reads', {'fmt': 'py:percent'}],
+}
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autodoc_default_options = {"autosummary": True}
 autosummary_generate = True
+
 
 
 # -- Options for HTML output -------------------------------------------------

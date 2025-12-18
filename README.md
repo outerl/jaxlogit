@@ -87,25 +87,36 @@ res = model.fit(
 model.summary()
 ```
 
-``
-varnames=['ASC_CAR', 'ASC_TRAIN', 'CO', 'TT']
-model = MixedLogit()
 
-config = ConfigData(
-    n_draws=1500, 
-    avail=(df['AV']),
-    panels=(df["ID"]),
-)
+            Message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+            Iterations: 17
+            Function evaluations: 21
+        Estimation time= 57.3 seconds
+        ---------------------------------------------------------------------------
+        Coefficient              Estimate      Std.Err.         z-val         P>|z|
+        ---------------------------------------------------------------------------
+        ASC_CAR                -0.2279764     0.4655508    -0.4896917         0.624    
+        ASC_TRAIN              -1.1966263     0.5873328    -2.0373905        0.0416 *  
+        ASC_SM                  0.1000000     0.0000000           inf             0 ***
+        CO                     -2.0490264     0.3444999    -5.9478289      2.85e-09 ***
+        TT                     -2.1429727     0.6607183    -3.2433986       0.00119 ** 
+        sd.ASC_CAR              0.1000000     0.0000000           inf             0 ***
+        sd.ASC_TRAIN            0.1000000     0.0000000           inf             0 ***
+        sd.ASC_SM               2.4459162     0.2814464     8.6905216      4.47e-18 ***
+        chol.ASC_CAR.ASC_TR     0.1000000     0.0000000           inf             0 ***
+        chol.ASC_CAR.ASC_SM     0.1000000     0.0000000           inf             0 ***
+        chol.ASC_TRAIN.ASC_     0.6937107     0.2260149     3.0693135       0.00215 ** 
+        ---------------------------------------------------------------------------
+        Significance:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-res = model.fit(
-    df[varnames],
-    df['CHOICE'],
-    varnames,
-    df['alt'],
-    df['custom_id'],
-    {'TT': 'n'},
-    config
-)
-model.summary()
-``
+        Log-Likelihood= -4071.438
+        AIC= 8154.876
+        BIC= 8195.795
+
+If out of memory, the data can be batched as well. .
+
+## Quick Install
+
+Clone the [repo](https://github.com/outerl/jaxlogit). Planned to be installable via PyPI.
+
 
