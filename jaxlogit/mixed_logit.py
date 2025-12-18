@@ -348,7 +348,7 @@ class MixedLogit(ChoiceModel):
             logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
         else:
             logger.info("Calculating gradient of individual log-likelihood contributions")
-            grad = jax.grad(loglike_individual)
+            grad = jax.jacfwd(loglike_individual)
             optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
 
             try:
