@@ -3,7 +3,8 @@ import numpy as np
 
 import jax
 import jax.numpy as jnp
-import jsonimport regex as re
+import json
+import regex as re
 
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 
