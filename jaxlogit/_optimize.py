@@ -71,6 +71,7 @@ def gradient(funct, x, *args):
 
     # # memory intensive for large x and large sample sizes
     # grad = jax.jacobian(funct, argnums=0)(jnp.array(x), *args)
+    # struggles with very small numbers
 
     # Finite differences, lowest memory usage but slowest
     eps = 1e-6

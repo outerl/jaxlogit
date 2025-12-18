@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import pandas as pd
+import pathlib
 
 import jax
 import json
@@ -73,17 +74,17 @@ def error_components():
 
 
 def save_correlated_example():
-    model = estimate_model_parameters()
-    with open("tests/system_tests/correlated_example_estimate_params_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+    models = [estimate_model_parameters, fix_parameters, error_components]
+    files = [
+        "correlated_example_estimate_params_output.json",
+        "correlated_example_fix_params_output.json",
+        "correlated_example_error_components_output.json",
+    ]
 
-    model = fix_parameters()
-    with open("tests/system_tests/correlated_example_fix_params_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
-
-    model = error_components()
-    with open("tests/system_tests/correlated_example_error_components_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
+    for i in range(len(models)):
+        model = models[i]()
+        with open(pathlib.Path(__file__).parent / "test_data" / files[i], "w") as f:
+            json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
 def setup_correlated_example():
@@ -122,12 +123,12 @@ def setup_correlated_example():
 
 def save_batching_example():
     model = setup_batching_example()
-    with open("tests/system_tests/batching_example_output.json", "w") as f:
+    with open("tests/system_tests/test_data/batching_example_output.json", "w") as f:
         json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
 def setup_batching_example():
-    df = pd.read_csv("examples/electricity_long.csv")
+    df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
     n_draws = 5000
     varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
     model = MixedLogit()
@@ -152,32 +153,29 @@ def setup_batching_example():
     return model
 
 
-def test_correlated_example_estimate_params_against_previous_results():
-    with open("tests/system_tests/correlated_example_estimate_params_output.json", "r") as f:
+@pytest.mark.parametrize(
+    "example,file",
+    [
+        (estimate_model_parameters, "correlated_example_estimate_params_output.json"),
+        (fix_parameters, "correlated_example_fix_params_output.json"),
+        (error_components, "correlated_example_error_components_output.json"),
+        (setup_batching_example, "batching_example_output.json"),
+    ],
+)
+def test_previous_results(example: callable, file: str):
+    with open(pathlib.Path(__file__).parent / "test_data" / file, "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    model = estimate_model_parameters()
+    model = example()
     compare_models(model, previous_model)
 
 
-def test_correlated_example_fix_params_against_previous_results():
-    model = fix_parameters()
-    with open("tests/system_tests/correlated_example_fix_params_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    compare_models(model, previous_model)
-
-
-def test_correlated_example_error_components_against_previous_results():
-    model = error_components()
-    with open("tests/system_tests/correlated_example_error_components_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    compare_models(model, previous_model)
-
-
-def test_batching_example():
-    model = setup_batching_example()
-    with open("tests/system_tests/batching_example_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    compare_models(model, previous_model)
+def test_json():
+    before = estimate_model_parameters()
+    with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "w") as f:
+        json.dump(before, f, indent=4, cls=MixedLogitEncoder)
+    with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "r") as f:
+        after = json.load(f, object_hook=mixed_logit_decoder)
+    compare_models(after, before)
 
 
 def compare_models(new, previous):
@@ -191,7 +189,7 @@ def compare_models(new, previous):
 
 
 def main():
-    # save_correlated_example()
+    save_correlated_example()
     save_batching_example()
 
 

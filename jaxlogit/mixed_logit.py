@@ -5,7 +5,7 @@ import numpy as np
 
 from jaxlogit._choice_model import ChoiceModel, diff_nonchosen_chosen
 from jaxlogit._variables import ParametersSetup
-from jaxlogit._optimize import _minimize, gradient, hessian
+from jaxlogit._optimize import _minimize, hessian
 from jaxlogit.draws import truncnorm_ppf, generate_draws
 from jaxlogit.utils import get_panel_aware_batch_indices
 from jaxlogit._config_data import ConfigData
@@ -340,7 +340,8 @@ class MixedLogit(ChoiceModel):
             logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
         else:
             logger.info("Calculating gradient of individual log-likelihood contributions")
-            optim_res["grad_n"] = gradient(loglike_individual, jnp.array(optim_res["x"]), *fargs[:-1])
+            grad = jax.jacfwd(loglike_individual)
+            optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
 
             try:
                 logger.info(
