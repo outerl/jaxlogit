@@ -28,6 +28,7 @@ dependencies = [
     'scipy',
     'xlogit',
     'scikit-learn',
+    'regex',
 ]
 
 [project.optional-dependencies]
