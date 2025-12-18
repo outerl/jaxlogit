@@ -194,16 +194,7 @@ class MixedLogit(ChoiceModel):
             avail,
             Xnames,
             coef_names,
-        ) = self._setup_input_data(
-            X,
-            y,
-            varnames,
-            alts,
-            ids,
-            randvars,
-            config,
-            predict_mode=predict_mode
-        )
+        ) = self._setup_input_data(X, y, varnames, alts, ids, randvars, config, predict_mode=predict_mode)
 
         parameter_info = ParametersSetup(
             self._rvdist,
