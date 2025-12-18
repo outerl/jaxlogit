@@ -54,6 +54,7 @@ docs = [
     'myst-parser',
     'nbsphinx',
     'jupytext',
+    'ipykernel',
 ]
 dev = ['jaxlogit[linting, devtools, tests]']
 
