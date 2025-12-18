@@ -24,8 +24,8 @@ def fix_parameters():
     model, df, varnames, config = setup_correlated_example()
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
-    fixedvars = {"ASC_SM": 0.0}
-    config = ConfigData(avail=df["AV"], panels=df["ID"], fixedvars=fixedvars, n_draws=1500, optim_method="BFGS")
+    set_vars = {"ASC_SM": 0.0}
+    config = ConfigData(avail=df["AV"], panels=df["ID"], set_vars=set_vars, n_draws=1500, optim_method="BFGS")
     model.fit(
         X=df[varnames],
         y=df["CHOICE"],
@@ -43,7 +43,7 @@ def error_components():
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     randvars = {"ASC_CAR": "n", "ASC_TRAIN": "n", "ASC_SM": "n"}
-    fixedvars = {
+    set_vars = {
         "ASC_SM": 0.0,
         "sd.ASC_TRAIN": 1.0,
         "sd.ASC_CAR": 0.0,
@@ -54,7 +54,7 @@ def error_components():
     config = ConfigData(
         avail=df["AV"],
         panels=df["ID"],
-        fixedvars=fixedvars,
+        set_vars=set_vars,
         n_draws=1500,
         include_correlations=True,  # Enable correlation between random parameters
         optim_method="BFGS",
