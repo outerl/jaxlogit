@@ -26,7 +26,8 @@ dependencies = [
     'numpy',
     'pandas',
     'scipy',
-    'optimistix',
+    'xlogit',
+    'scikit-learn',
 ]
 
 [project.optional-dependencies]
