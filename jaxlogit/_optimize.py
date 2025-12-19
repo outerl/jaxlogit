@@ -55,7 +55,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 jac=True,
                 method="BFGS",
                 options=options,
-                callback=display_callback if options["disp"] else None,
             )
         else:
             logger.error(f"Unknown optimization method: {method} exiting gracefully")
