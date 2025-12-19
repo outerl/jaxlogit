@@ -26,10 +26,11 @@ dependencies = [
     'numpy',
     'pandas',
     'scipy',
-    'xlogit',
-    'scikit-learn',
     'regex',
 ]
+
+[dependency-groups]
+examples = ['xlogit', 'scikit-learn']
 
 [project.optional-dependencies]
 
