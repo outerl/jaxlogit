@@ -178,6 +178,39 @@ def test_json():
     compare_models(after, before)
 
 
+def test_predict():
+    with open(pathlib.Path(__file__).parent / "test_data" / "batching_example_output.json", "r") as f:
+        model = json.load(f, object_hook=mixed_logit_decoder)
+    with open(pathlib.Path(__file__).parent / "test_data" / "predict_prob_output.json", "r") as f:
+        # calculated from biogeme
+        expected = json.load(f)
+    expected = np.array(expected)
+    df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
+    varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
+
+    config = ConfigData(
+        panels=df["id"],
+        skip_std_errs=True,  # skip standard errors to speed up the example
+        batch_size=539,
+        optim_method="L-BFGS-B",
+    )
+    config.init_coeff = model.coeff_
+    prob = model.predict(
+        df[varnames],
+        varnames,
+        df["alt"],
+        df["chid"],
+        {"pf": "n", "cl": "n", "loc": "n", "wk": "n", "tod": "n", "seas": "n"},
+        config,
+    )
+
+    assert len(prob) == len(expected)
+    for i in range(len(prob)):
+        assert len(prob[i]) == len(expected[i])
+        for j in range(len(prob[i])):
+            assert prob[i][j] == pytest.approx(expected[i][j], rel=2e-1)
+
+
 def compare_models(new, previous):
     assert list(new.coeff_names) == list(previous.coeff_names)
     assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-2)
