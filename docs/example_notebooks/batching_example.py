@@ -29,9 +29,9 @@ from jaxlogit.mixed_logit import MixedLogit, ConfigData
 jax.config.update("jax_enable_x64", True)
 
 # %% [markdown]
-# ## Electricity Dataset
+# ## Electricity Dataset batching example
 #
-# From xlogit's examples. Note we skip the calculation of std errors here to speed up test times.
+# From xlogit's examples. Since this example shows how batching reduces memory load, to speed up test times we skip the calculation of std errors and **reduce the maximum interations to 10**.
 
 # %%
 df = pd.read_csv("https://raw.github.com/arteagac/xlogit/master/examples/data/electricity_long.csv")
@@ -39,7 +39,8 @@ df = pd.read_csv("https://raw.github.com/arteagac/xlogit/master/examples/data/el
 # %%
 n_obs = df['chid'].unique().shape[0]
 n_vars = 6
-n_draws = 5000
+n_draws = 4000
+maxiter = 10
 
 size_in_ram = (n_obs * n_vars * n_draws * 8) / (1024 ** 3)  # in GB
 
@@ -50,6 +51,40 @@ print(
 
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
 
+# %% [markdown]
+# ## First we split it into four batches.
+
+# %%
+n_batches = 4
+batch_size = np.ceil(n_obs/n_batches)
+print(f"For {n_batches} batches and {n_obs} obervations, batch size is {batch_size}")
+
+model = MixedLogit()
+
+config = ConfigData(
+    panels=df['id'],
+    n_draws=n_draws,
+    skip_std_errs=True,  # skip standard errors to speed up the example
+    batch_size=batch_size,
+    optim_method="L-BFGS-B",  # "L-BFGS-B", "BFGS"lver
+    maxiter=maxiter,
+)
+
+res = model.fit(
+    X=df[varnames],
+    y=df['choice'],
+    varnames=varnames,
+    ids=df['chid'],
+    alts=df['alt'],
+    randvars={'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'},
+    config=config
+)
+display(model.summary())
+
+
+# %% [markdown]
+# ## No batches
+
 # %%
 model = MixedLogit()
 
@@ -59,6 +94,7 @@ config = ConfigData(
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
     optim_method="L-BFGS-B",
+    maxiter=maxiter,
 )
 
 res = model.fit(
@@ -71,49 +107,3 @@ res = model.fit(
     config=config
 )
 display(model.summary())
-
-# %%
-model = MixedLogit()
-
-config = ConfigData(
-    panels=df['id'],
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=1077,  # should result in 4 batches
-    optim_method="L-BFGS-B",  # "L-BFGS-B", "BFGS"lver
-)
-
-res = model.fit(
-    X=df[varnames],
-    y=df['choice'],
-    varnames=varnames,
-    ids=df['chid'],
-    alts=df['alt'],
-    randvars={'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'},
-    config=config
-)
-display(model.summary())
-
-# %%
-model = MixedLogit()
-
-config = ConfigData(
-    panels=df['id'],
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    optim_method="L-BFGS-B",
-    batch_size=539,
-)
-
-res = model.fit(
-    X=df[varnames],
-    y=df['choice'],
-    varnames=varnames,
-    ids=df['chid'],
-    alts=df['alt'],
-    randvars={'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'},
-    config=config
-)
-display(model.summary())
-
-# %%

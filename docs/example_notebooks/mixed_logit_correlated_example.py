@@ -64,7 +64,6 @@ df
 # ### Create model specification
 # Following the reshaping, users can create or update the dataset's columns in order to accommodate their model specification needs, if necessary. The code below shows how the columns `ASC_TRAIN` and `ASC_CAR` were created to incorporate alternative-specific constants in the model. In addition, the example illustrates an effective way of establishing variable interactions (e.g., trip costs for commuters with an annual pass) by updating existing columns conditional on values of other columns. Although apparently simple, column operations provide users with an intuitive and highly-flexible mechanism to incorporate model specification aspects, such as variable transformations, interactions, and alternative specific coefficients and constants. By operating the dataframe columns, any utility specification can be accommodated in `xlogit`. As shown in [this specification example](https://xlogit.readthedocs.io/en/latest/notebooks/multinomial_model.html#Create-model-specification), highly-flexible utility specifications can be modeled in `xlogit` by operating the dataframe columns.
 # %%
-
 df["ASC_TRAIN"] = np.ones(len(df)) * (df["alt"] == "TRAIN")
 df["ASC_CAR"] = np.ones(len(df)) * (df["alt"] == "CAR")
 df["TT"], df["CO"] = df["TT"] / 100, df["CO"] / 100  # Scale variables
@@ -75,7 +74,6 @@ df.loc[annual_pass, "CO"] = 0  # Cost zero for pass holders
 # ### Estimate model parameters
 # The `fit` method estimates the model by taking as input the data from the previous step along with additional specification criteria, such as the distribution of the random parameters (`randvars`), the number of random draws (`n_draws`), and the availability of alternatives for the choice situations (`avail`). We set the optimization method as `L-BFGS-B` as this is a robust routine that usually helps solve convergence issues.  Once the estimation routine is completed, the `summary` method can be used to display the estimation results.
 # %%
-
 varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
 model = MixedLogit()
 
@@ -91,14 +89,10 @@ model.summary()
 # %% [markdown] 
 # ## Example of fixing parameters
 # %%
-
 # we left this one out before, let's add it and assert parameters to 0
 df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
 
-
 # %%
-
-
 varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
 set_vars = {"ASC_SM": 0.0}  # Fixing parameters
 model = MixedLogit()
@@ -125,7 +119,6 @@ model.summary()
 #  %% [markdown] 
 # ## Error components with correlations
 # %%
-
 varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
 
 randvars = {"ASC_CAR": "n", "ASC_TRAIN": "n", "ASC_SM": "n"}
