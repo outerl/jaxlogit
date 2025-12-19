@@ -40,6 +40,9 @@ def wide_to_long(
     empty_val : int, float or str, default=np.nan
         Value to fill when alternative not available for a certain variable.
 
+    panels : bool
+        Whether there is panel data that needs to be taken into consideration
+
 
     Returns
     -------
