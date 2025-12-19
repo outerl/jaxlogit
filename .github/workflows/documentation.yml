@@ -6,8 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-    #   contents: write
-      pages: write       # GitHub Pages deployment?
+      pages: write       
       id-token: write
     strategy:
       max-parallel: 1
@@ -22,7 +21,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -41,13 +40,13 @@ jobs:
           path: docs/_build/html
 # Deployment job
   deploy:
+    # if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     permissions:
-    #   contents: write
-      pages: write       # GitHub Pages deployment?
+      pages: write       
       id-token: write
     needs: build
     steps:
