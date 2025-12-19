@@ -3,10 +3,7 @@ import numpy as np
 
 import jax
 import jax.numpy as jnp
-import json
 import regex as re
-
-from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
@@ -280,37 +277,3 @@ def test_transform_rand_betas_jit():
     fn = jax.jit(_transform_rand_betas, static_argnames=["parameter_info", "force_positive_chol_diag"])
     out = fn(betas, True, draws, parameter_info_correlation)
     assert out.shape == (N, Kr, R)
-
-
-def save_simple_data_output():
-    X, y, ids, alts, avail, panels, weights = make_simple_data()
-
-    varnames = [f"x{i}" for i in range(X.shape[1])]
-
-    model = MixedLogit()
-    randvars = {varnames[0]: "n"}
-    set_vars = {}
-
-    config = ConfigData(
-        skip_std_errs=True,
-        init_coeff=None,
-        optim_method="L-BFGS-B",
-        set_vars=set_vars,
-        n_draws=3,
-        weights=weights,
-        panels=panels,
-        avail=avail,
-    )
-
-    model.fit(X=X, y=y, varnames=varnames, ids=ids, alts=alts, randvars=randvars, config=config)
-
-    with open("tests/unit_tests/simple_data_output.json", "w") as f:
-        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
-
-
-def main():
-    save_simple_data_output()
-
-
-if __name__ == "__main__":
-    main()
