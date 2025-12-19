@@ -40,7 +40,7 @@ df = pd.read_csv("https://raw.github.com/arteagac/xlogit/master/examples/data/el
 n_obs = df['chid'].unique().shape[0]
 n_vars = 6
 n_draws = 5000
-maxiter = 1000
+maxiter = 10
 
 size_in_ram = (n_obs * n_vars * n_draws * 8) / (1024 ** 3)  # in GB
 
