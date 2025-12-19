@@ -4,7 +4,9 @@ import pandas as pd
 from scipy.stats import chi2
 
 
-def wide_to_long(dataframe, id_col, alt_list, alt_name, varying=None, sep="_", alt_is_prefix=False, empty_val=np.nan, panels=False):
+def wide_to_long(
+    dataframe, id_col, alt_list, alt_name, varying=None, sep="_", alt_is_prefix=False, empty_val=np.nan, panels=False
+):
     """Reshapes pandas DataFrame from wide to long format.
 
     Parameters

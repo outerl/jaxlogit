@@ -195,8 +195,15 @@ def test_predict():
         optim_method="L-BFGS-B",
     )
     config.init_coeff = model.coeff_
-    prob = model.predict(df[varnames], varnames, df['alt'], df['chid'], {"pf": "n", "cl": "n", "loc": "n", "wk": "n", "tod": "n", "seas": "n"}, config)
-    
+    prob = model.predict(
+        df[varnames],
+        varnames,
+        df["alt"],
+        df["chid"],
+        {"pf": "n", "cl": "n", "loc": "n", "wk": "n", "tod": "n", "seas": "n"},
+        config,
+    )
+
     assert len(prob) == len(expected)
     for i in range(len(prob)):
         assert len(prob[i]) == len(expected[i])
