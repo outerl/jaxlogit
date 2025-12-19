@@ -4,7 +4,9 @@ import pandas as pd
 from scipy.stats import chi2
 
 
-def wide_to_long(dataframe, id_col, alt_list, alt_name, varying=None, sep="_", alt_is_prefix=False, empty_val=np.nan):
+def wide_to_long(
+    dataframe, id_col, alt_list, alt_name, varying=None, sep="_", alt_is_prefix=False, empty_val=np.nan, panels=False
+):
     """Reshapes pandas DataFrame from wide to long format.
 
     Parameters
@@ -37,6 +39,9 @@ def wide_to_long(dataframe, id_col, alt_list, alt_name, varying=None, sep="_", a
 
     empty_val : int, float or str, default=np.nan
         Value to fill when alternative not available for a certain variable.
+
+    panels : bool
+        Whether there is panel data that needs to be taken into consideration
 
 
     Returns
@@ -79,7 +84,13 @@ def wide_to_long(dataframe, id_col, alt_list, alt_name, varying=None, sep="_", a
     for col in non_varying:
         newcols[col] = np.repeat(dataframe[col].values, len(alt_list))
 
-    return pd.DataFrame(newcols)
+    df = pd.DataFrame(newcols)
+    if panels:
+        df.loc[df["choice"] != df["alt"], "choice"] = 0
+        df.loc[df["choice"] == df["alt"], "choice"] = 1
+        assert (df["choice"].sum()) == (df.shape[0] / len(alt_list))
+
+    return df
 
 
 def lrtest(general_model, restricted_model):
