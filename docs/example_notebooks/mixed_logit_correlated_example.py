@@ -109,7 +109,7 @@ res = model.fit(
 model.summary()
 #  %% [markdown] 
 # ## Error components with correlations
-# By default, allowing correlation adds varaibles for the correlation of all normally and log normally distrubuted variables. For variable x and y, it adds a new variable called chol.x.y. Correlation variables representing the correlation between variables that we do not want to be correlated can be set to 0. Here some variables are excluded or set to known values according to research done in [J. Walker's PhD thesis (MIT 2001)](https://transp-or.epfl.ch/courses/dca2012/WalkerPhD.pdf).
+# By default, allowing correlation adds variables for the correlation of all normally and log normally distrubuted variables. For variable x and y, it adds a new variable called chol.x.y. Correlation variables representing the correlation between variables that we do not want to be correlated can be set to 0. Here some variables are excluded or set to known values according to research done in [J. Walker's PhD thesis (MIT 2001)](https://transp-or.epfl.ch/courses/dca2012/WalkerPhD.pdf).
 # %%
 varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
 

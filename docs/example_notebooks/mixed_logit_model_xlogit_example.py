@@ -121,7 +121,7 @@ jax.nn.softplus(model.coeff_[len(model._rvidx):])
 # %% [markdown] id="mWU80LmcODPY"
 # ## Car Dataset
 # %% [markdown] id="q1zgiBGKouPr"
-# The fourth example uses a stated preference panel dataset for choice of car. Three alternatives are considered, with upto 6 choice situations per individual. This again is an unbalanced panel with responses of some individuals less than 6 situations. The dataset contains 8 explanaotry variables: price, operating cost, range, and binary indicators to indicate whether the car is electric, hybrid, and if performance is high or medium respectively. This dataset was taken from Kenneth Train's MATLAB codes for estimation of Mixed Logit models as shown in this link: https://eml.berkeley.edu/Software/abstracts/train1006mxlmsl.html
+# The fourth example uses a stated preference panel dataset for choice of car. Three alternatives are considered, with up to 6 choice situations per individual. This again is an unbalanced panel with responses of some individuals less than 6 situations. The dataset contains 8 explanatry variables: price, operating cost, range, and binary indicators to indicate whether the car is electric, hybrid, and if performance is high or medium respectively. This dataset was taken from Kenneth Train's MATLAB codes for estimation of Mixed Logit models as shown in this link: https://eml.berkeley.edu/Software/abstracts/train1006mxlmsl.html
 # %% [markdown] id="SoSyQfjqkNU3"
 # ### Read data
 # %% id="v8AAMruCj8tt"
@@ -157,6 +157,8 @@ model.fit(
     config=config
 )
 model.summary()
+# %% [markdown]
+# ### Softplus the standard deviations to make them positive.
 # %%
 jax.nn.softplus(model.coeff_[len(model._rvidx):])
 # %% [markdown] id="pEiWWuCciEJ6"

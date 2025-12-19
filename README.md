@@ -1,20 +1,22 @@
-# jaxlogit
-MSLE estimation of linear-in-parameters mixed logit models. This package is based on [xlogit](https://github.com/arteagac/xlogit), with the core computational engine replaced by [jax](https://github.com/jax-ml/jax). Additionally, The documentation structure and many examples are adapted from xlogit's documentation.
+# Jaxlogit
+MSLE estimation of linear-in-parameters mixed logit models. This package is based on [xlogit](https://github.com/arteagac/xlogit), with the core computational engine replaced by [jax](https://github.com/jax-ml/jax). Additionally, the documentation structure and many examples are adapted from `xlogit`'s documentation.
 This package is work-in-progress and the API might change without notice. 
 
 
 ## Quick Start
-This example uses `jaxlogit` to to estimate a mixed logit model for choices of transport method using the swissmetro dataset. It contains stated-preferences for three alternative transportation modes that include car, train and a newly introduced mode: the swissmetro. The dataset is available at http://transp-or.epfl.ch/data/swissmetro.dat and [Bierlaire et. al., (2001)](https://transp-or.epfl.ch/documents/proceedings/BierAxhaAbay01.pdf) provides a detailed discussion of the data as wells as its context and collection process. 
+This example uses `jaxlogit` to to estimate a mixed logit model for choices of transport method using the swissmetro dataset. It contains stated-preferences for three alternative transportation modes that include car, train and a newly introduced mode: the swissmetro. The dataset is available [here](http://transp-or.epfl.ch/data/swissmetro.dat) and [Bierlaire et. al., (2001)](https://transp-or.epfl.ch/documents/proceedings/BierAxhaAbay01.pdf) provides a detailed discussion of the data as well as its context and collection process. 
 
-The explanatory variables are cost and travel time of each of the alternatives, as well as alternative-specific constraints to represent unobserved factors. New functionality used compared to xlogit is considering the correlation between the distributions of explanatory variables. In this example, only correlations between some variables are considered, and some are set to certain values, according to research done in [J. Walker's PhD thesis (MIT 2001)](https://transp-or.epfl.ch/courses/dca2012/WalkerPhD.pdf). This is specified by specifying some correlation parameters to be 0.
+The explanatory variables are cost and travel time of each of the alternatives, as well as alternative-specific constraints to represent unobserved factors. New functionality used compared to xlogit is considering the correlation between the distributions of explanatory variables. In this example, only correlations between some variables are considered, and some are set to certain values, according to research done in [J. Walker's PhD thesis (MIT 2001)](https://transp-or.epfl.ch/courses/dca2012/WalkerPhD.pdf). This is specified by specifying some correlation parameters to be 0. 
+
+The data must be in long format. Wide format data can be transformed into long format data using the ``wide_to_long`` function.
 
 **Required parameters:**
 * ``X``: 2-D array of input data (in long format) with choice situations as rows, and variables as columns
 * ``y``: 1-D array of choices (in long format)
 * ``varnames``: List of variable names that matches the number and order of the columns in ``X``
-* ``alts``:  1-D array of alternative indexes or an alternatives list
+* ``alts``:  1-D array of alternative representing the alternative chosen for each input
 * ``ids``:  1-D array of the ids of the choice situations
-* ``randvars``: dictionary of variables and their mixing distributions. In this example, only ``"n"`` normal variables are used.
+* ``randvars``: dictionary of variables and their mixing distributions. In this example, only ``"n"`` normal variables are used. Valid distributions are ``"n"`` normal, ``"ln"`` log normal and ``"n_trunc"`` truncated normal.
 
 **Optional Parameters in this example:**
 * ``avail``: 2-D array of availability of alternatives for the choice situations. One when available or zero otherwise.
