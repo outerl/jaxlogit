@@ -3,11 +3,10 @@ import numpy as np
 
 import jax
 import jax.numpy as jnp
-import pickle
+import json
 import regex as re
 
-from jaxlogit._variables import ParametersSetup
-from jaxlogit._config_data import ConfigData
+from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 
 from jaxlogit.mixed_logit import (
     MixedLogit,
@@ -16,6 +15,8 @@ from jaxlogit.mixed_logit import (
     neg_loglike,
     probability_individual,
 )
+from jaxlogit._variables import ParametersSetup
+from jaxlogit._config_data import ConfigData
 
 SEED = 0
 
@@ -183,8 +184,8 @@ def test_mixed_logit_fit_against_previous_results(simple_data):
 
     model.fit(X=X, y=y, varnames=varnames, ids=ids, alts=alts, randvars=randvars, config=config)
 
-    with open("tests/simple_data_output.pkl", "rb") as f:
-        previous_model = pickle.load(f)
+    with open("tests/unit_tests/simple_data_output.json", "r") as f:
+        previous_model = json.load(f, object_hook=mixed_logit_decoder)
 
     # assert list(model.coeff_names) == list(previous_model.coeff_names)
     assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
@@ -337,8 +338,8 @@ def save_simple_data_output():
 
     model.fit(X=X, y=y, varnames=varnames, ids=ids, alts=alts, randvars=randvars, config=config)
 
-    with open("tests/simple_data_output.pkl", "wb") as f:
-        pickle.dump(model, f)
+    with open("tests/unit_tests/simple_data_output.json", "w") as f:
+        json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
 def main():
