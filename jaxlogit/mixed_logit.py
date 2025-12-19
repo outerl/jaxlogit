@@ -722,7 +722,7 @@ def probability_individual(
     Bf = betas[parameter_info.non_random_idx]  # Fixed betas
     Vdf = jnp.einsum("njk,k -> nj", Xdf, Bf)  # (N, J)
 
-    if parameter_info.random_idx:
+    if parameter_info.random_idx.size:
         Br = _transform_rand_betas(
             betas, force_positive_chol_diag, draws, parameter_info
         )  # Br shape: (num_obs, num_rand_vars, num_draws)
