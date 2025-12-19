@@ -326,7 +326,6 @@ class MixedLogit(ChoiceModel):
             options={
                 "gtol": tol["gtol"],
                 "maxiter": config.maxiter,
-                "disp": verbose > 1,
             },
             jit_loglik=config.batch_size is None,
         )

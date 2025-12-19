@@ -46,7 +46,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 method="L-BFGS-B",
                 tol=tol,
                 options=options,
-                callback=display_callback if options["disp"] else None,
             )
         elif method == "BFGS":
             return minimize(
