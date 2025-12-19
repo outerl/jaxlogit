@@ -60,7 +60,6 @@ df = wide_to_long(
 )
 df
 
-
 # %% [markdown] 
 # ### Create model specification
 # Following the reshaping, users can create or update the dataset's columns in order to accommodate their model specification needs, if necessary. The code below shows how the columns `ASC_TRAIN` and `ASC_CAR` were created to incorporate alternative-specific constants in the model. In addition, the example illustrates an effective way of establishing variable interactions (e.g., trip costs for commuters with an annual pass) by updating existing columns conditional on values of other columns. Although apparently simple, column operations provide users with an intuitive and highly-flexible mechanism to incorporate model specification aspects, such as variable transformations, interactions, and alternative specific coefficients and constants. By operating the dataframe columns, any utility specification can be accommodated in `xlogit`. As shown in [this specification example](https://xlogit.readthedocs.io/en/latest/notebooks/multinomial_model.html#Create-model-specification), highly-flexible utility specifications can be modeled in `xlogit` by operating the dataframe columns.
@@ -71,7 +70,6 @@ df["ASC_CAR"] = np.ones(len(df)) * (df["alt"] == "CAR")
 df["TT"], df["CO"] = df["TT"] / 100, df["CO"] / 100  # Scale variables
 annual_pass = (df["GA"] == 1) & (df["alt"].isin(["TRAIN", "SM"]))
 df.loc[annual_pass, "CO"] = 0  # Cost zero for pass holders
-
 
 # %% [markdown] 
 # ### Estimate model parameters
@@ -89,7 +87,6 @@ config = ConfigData(
 
 res = model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
 model.summary()
-
 
 # %% [markdown] 
 # ## Example of fixing parameters

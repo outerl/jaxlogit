@@ -55,6 +55,7 @@ docs = [
     'nbsphinx',
     'jupytext',
     'ipykernel',
+    'biogeme',
 ]
 dev = ['jaxlogit[linting, devtools, tests]']
 
