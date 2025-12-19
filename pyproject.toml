@@ -49,6 +49,16 @@ devtools = [
 tests = [
     'pytest',
 ]
+
+docs = [
+    'sphinx',
+    'pydata-sphinx-theme',
+    'myst-parser',
+    'nbsphinx',
+    'jupytext',
+    'ipykernel',
+    'biogeme',
+]
 dev = ['jaxlogit[linting, devtools, tests]']
 
 [tool.black]
