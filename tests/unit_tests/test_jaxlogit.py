@@ -161,40 +161,6 @@ def test_mixed_logit_fit_set_variables(simple_data):
     assert len(result.x) == 4  # two from normal distribution, two from un-parameterised variables
 
 
-@pytest.mark.skip(reason="different python versions and OSs give different results")
-def test_mixed_logit_fit_against_previous_results(simple_data):
-    X, y, ids, alts, avail, panels, weights = simple_data
-
-    varnames = [f"x{i}" for i in range(X.shape[1])]
-
-    model = MixedLogit()
-    randvars = {varnames[0]: "n"}
-    set_vars = {}
-
-    config = ConfigData(
-        skip_std_errs=True,
-        init_coeff=None,
-        optim_method="L-BFGS-B",
-        set_vars=set_vars,
-        n_draws=3,
-        weights=weights,
-        panels=panels,
-        avail=avail,
-    )
-
-    model.fit(X=X, y=y, varnames=varnames, ids=ids, alts=alts, randvars=randvars, config=config)
-
-    with open("tests/unit_tests/simple_data_output.json", "r") as f:
-        previous_model = json.load(f, object_hook=mixed_logit_decoder)
-
-    # assert list(model.coeff_names) == list(previous_model.coeff_names)
-    assert list(model.coeff_) == pytest.approx(list(previous_model.coeff_), rel=1e-3)
-    # assert list(model.stderr) == pytest.approx(list(previous_model.stderr), rel=1e-3)
-    # assert list(model.zvalues) == pytest.approx(list(previous_model.zvalues), rel=1e-3)
-    assert model.loglikelihood == pytest.approx(previous_model.loglikelihood)
-    # could also add model.loglikelihood, model.aic and model.bic
-
-
 def test_loglike_individual_and_total(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
