@@ -115,7 +115,7 @@ model.summary()
         AIC= 8154.876
         BIC= 8195.795
 
-If out of memory, the data can be batched as well. .
+If out of memory, the data can be batched as well.
 
 ## Quick Install
 

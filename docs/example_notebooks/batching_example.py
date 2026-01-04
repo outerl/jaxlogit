@@ -12,11 +12,11 @@
 #     name: python3
 # ---
 
-# %% [markdown] id="TJHlxbR5kEe-"
+# %% [markdown]
 # # Example of running jaxlogit with batched draws
 #
 # jaxlogit's default way of processing random draws for simulation is to generate them once at the beginning and then run calculate the loglikelihood at each step of the optimization routine with these draws. The size of the corresponding array is (number_of_observations x number_of_random_variables x  number_of_draws) which can get very large. In case this is too large for local memory, jaxlogit can dynamcially generate draws on each iteration. The advantage of this is that calculations can now be batched, i.e., processed on smaller subsets and then added up. This reduces memory load that the cost of runtime. Note that jax still calculates gradients so this method also has memory limits.
-# %% colab={"base_uri": "https://localhost:8080/"} id="NQbZt7CVh8f_" outputId="b823e80f-fd47-4dd1-8656-3fd0d6a1e26a"
+# %% 
 import pandas as pd
 import numpy as np
 import jax
@@ -30,7 +30,7 @@ jax.config.update("jax_enable_x64", True)
 #
 # From xlogit's examples. Since this example shows how batching reduces memory load, to speed up test times we skip the calculation of std errors and **reduce the maximum interations to 10**.
 # %%
-df = pd.read_csv("https://raw.github.com/arteagac/xlogit/master/examples/data/electricity_long.csv")
+df = pd.read_csv("https://raw.githubusercontent.com/outerl/jaxlogit/refs/heads/main/examples/electricity_long.csv")
 # %%
 n_obs = df['chid'].unique().shape[0]
 n_vars = 6
