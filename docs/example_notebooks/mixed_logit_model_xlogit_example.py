@@ -12,6 +12,7 @@
 #     name: python3
 # ---
 
+# %% [markdown]
 # # Mixed Logit [markdown]
 # Based on the xlogit example [Mixed Logit](https://xlogit.readthedocs.io/en/latest/notebooks/mixed_logit_model.html).
 # %%
