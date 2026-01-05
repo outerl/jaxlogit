@@ -59,8 +59,8 @@ class ConfigData:
         num_hess: bool, default=False
             Whether numerical hessian should be used for estimation of standard errors
 
-        fixedvars: dict, default=None
-            Specified variable names (keys) of variables to be fixed to the given value (values)
+        set_vars: dict, default=None
+            Specified variable names (keys) of variables to be set to the given value (values)
 
         optim_method: str, default="trust-region"
             Optimization method to use for model estimation. It can be `trust-region`, `BFGS` or `L-BFGS-B`.
@@ -95,7 +95,7 @@ class ConfigData:
     halton_opts: dict | None = None
     tol_opts: dict | None = None
     num_hess: bool = False
-    fixedvars: Any = None
+    set_vars: dict[str, float] | None = None
     optim_method: str = "trust-region"
     skip_std_errs: bool = False
     include_correlations: bool = False

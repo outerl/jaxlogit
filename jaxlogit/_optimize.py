@@ -46,7 +46,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 method="L-BFGS-B",
                 tol=tol,
                 options=options,
-                callback=display_callback if options["disp"] else None,
             )
         elif method == "BFGS":
             return minimize(
@@ -71,6 +70,7 @@ def gradient(funct, x, *args):
 
     # # memory intensive for large x and large sample sizes
     # grad = jax.jacobian(funct, argnums=0)(jnp.array(x), *args)
+    # struggles with very small numbers
 
     # Finite differences, lowest memory usage but slowest
     eps = 1e-6
