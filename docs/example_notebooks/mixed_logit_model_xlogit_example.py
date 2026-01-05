@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Mixed Logit [markdown]
+# # Mixed Logit
 # Based on the xlogit example [Mixed Logit](https://xlogit.readthedocs.io/en/latest/notebooks/mixed_logit_model.html).
 # %%
 import pandas as pd
