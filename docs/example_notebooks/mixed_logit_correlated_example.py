@@ -9,8 +9,7 @@
 
 # %% [markdown] 
 # # Mixed Logit with correlations
-# Using swissmetro data, comparing results to biogeme (Bierlaire, M. (2018). PandasBiogeme: a short introduction. EPFL (Transport and Mobility Laboratory, ENAC))
-# Based on the xlogit example [Mixed Logit](https://xlogit.readthedocs.io/en/latest/notebooks/mixed_logit_model.html).
+# Using swissmetro data, comparing results to biogeme (Bierlaire, M. (2018). PandasBiogeme: a short introduction. EPFL (Transport and Mobility Laboratory, ENAC)). Based on the xlogit example [Mixed Logit](https://xlogit.readthedocs.io/en/latest/notebooks/mixed_logit_model.html).
 # %%
 import pandas as pd
 import numpy as np
@@ -39,7 +38,7 @@ df_wide["CHOICE"] = df_wide["CHOICE"].map({1: "TRAIN", 2: "SM", 3: "CAR"})
 df_wide
 # %% [markdown] 
 # ### Reshape data
-# The imported dataframe is in wide format, and it needs to be reshaped to long format for processing by `jaxlogit`, which offers the `wide_to_long` utility for this reshaping process from `xlogit`. The user specifies the column that uniquely identifies each sample, the names of the alternatives, the columns that vary across alternatives, and whether the alternative names are a prefix or suffix of the column names. Additionally, the user can specify a value (`empty_val`) to be used by default when an alternative is not available for a certain variable. Additional usage examples for the `wide_to_long` function are available in xlogit's documentation at https://xlogit.readthedocs.io/en/latest/notebooks/convert_data_wide_to_long.html. Also, details about the function parameters are available at the [API reference](https://outerl.github.io/jaxlogit/_autosummary/jaxlogit.utils.wide_to_long.html).
+# The imported dataframe is in wide format, and it needs to be reshaped to long format for processing by `jaxlogit`, which offers the `wide_to_long` utility for this reshaping process from `xlogit`. The user specifies the column that uniquely identifies each sample, the names of the alternatives, the columns that vary across alternatives, and whether the alternative names are a prefix or suffix of the column names. Additionally, the user can specify a value (`empty_val`) to be used by default when an alternative is not available for a certain variable. Additional usage examples for the `wide_to_long` function are available in [xlogit's documentation](https://xlogit.readthedocs.io/en/latest/notebooks/convert_data_wide_to_long.html). Also, details about the function parameters are available at the [API reference](https://outerl.github.io/jaxlogit/_autosummary/jaxlogit.utils.wide_to_long.html).
 # %%
 from jaxlogit.utils import wide_to_long
 

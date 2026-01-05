@@ -12,7 +12,7 @@
 #     name: python3
 # ---
 
-# # Mixed Logit 
+# # Mixed Logit [markdown]
 # Based on the xlogit example [Mixed Logit](https://xlogit.readthedocs.io/en/latest/notebooks/mixed_logit_model.html).
 # %%
 import pandas as pd
@@ -94,7 +94,7 @@ df
 # %% [markdown]
 # ### Fit model
 # %% [markdown]
-# Once the data is in the `Python` environment, `jaxlogit` can be used to fit the model, as shown below. The `MultinomialLogit` class is imported from `jaxlogit`, and its constructor is used to initialise a new model. The `fit` method estimates the model using the input data and estimation criteria provided as arguments to the method's call. The arguments of the `fit` methods are described in [`jaxlogit`'s documentation](https://outerl.github.io/jaxlogit/api.html).
+# Once the data is in the `Python` environment, `jaxlogit` can be used to fit the model, as shown below. The `MultinomialLogit` class is imported from `jaxlogit`, and its constructor is used to initialise a new model. The `fit` method estimates the model using the input data and estimation criteria provided as arguments to the method's call. The arguments of the `fit` methods are described in [jaxlogit's documentation](https://outerl.github.io/jaxlogit/api.html).
 #
 # %%
 varnames = ['price', 'catch']
@@ -137,7 +137,7 @@ df['opcost'] = -df['opcost']
 df
 # %% [markdown]
 # ### Fit the model
-#
+# %%
 varnames = ['hiperf', 'medhiperf', 'price', 'opcost', 'range', 'ev', 'hybrid'] 
 model = MixedLogit()
 
