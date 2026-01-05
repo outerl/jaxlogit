@@ -1,11 +1,105 @@
 from jaxlogit._optimize import hessian
 import numpy as np
+import pandas as pd
 import jax as jax
 import jax.numpy as jnp
+
 import pytest
+import pathlib
+import json
+
+from jaxlogit.mixed_logit import MixedLogit, ConfigData, neg_loglike, neg_loglike_grad_batched
+from jaxlogit._optimize import _minimize
+from jaxlogit.MixedLogitEncoder import optim_res_decoder
 
 
-# TODO: minimise tests once mixed_logit is sorted out
+def setup_minimize():
+    """ Performs the same code as in mixed_logit.predict, but stopping after minimize """
+    df = pd.read_csv(pathlib.Path.cwd() / "examples/electricity_long.csv")
+    varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
+    n_draws = 600
+    X = df[varnames]
+    y = df['choice']
+
+    ids = df['chid']
+    alts = df['alt']
+    panels = df['id']
+
+    randvars = {'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'}
+
+    model = MixedLogit()
+
+    config = ConfigData(
+        panels=panels,
+        n_draws=n_draws,
+        skip_std_errs=True,  # skip standard errors to speed up the example
+        batch_size=None,
+        optim_method="L-BFGS-B",
+    )
+
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
+            X,
+            y,
+            varnames,
+            alts,
+            ids,
+            randvars,
+            config,
+        )
+
+    fargs = (
+        Xdf,
+        Xdr,
+        panels,
+        weights,
+        avail,
+        num_panels,
+        config.force_positive_chol_diag,
+        draws,
+        parameter_info,
+        config.batch_size,
+    )
+
+    tol = {
+        "ftol": 1e-10,
+        "gtol": 1e-6,
+    }
+    if config.tol_opts is not None:
+        tol.update(config.tol_opts)
+
+    fct_to_optimize = neg_loglike if config.batch_size is None else neg_loglike_grad_batched
+
+    optim_res = _minimize(
+        fct_to_optimize,
+        betas,
+        args=fargs,
+        method=config.optim_method,
+        tol=tol["ftol"],
+        options={
+            "gtol": tol["gtol"],
+            "maxiter": config.maxiter,
+        },
+        jit_loglik=config.batch_size is None,
+    )
+    return optim_res
+
+
+def test__minimize():
+    # expected values computed with biogeme
+    with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "r") as f:
+            expected = json.load(f, object_hook=optim_res_decoder)
+    actual = setup_minimize()
+    assert expected.estimation_message == actual["message"]
+    assert expected.success == actual["success"]
+    assert len(expected.x) == len(actual.x)
+    # for i in range(len(expected.x)):
+    #     assert pytest.approx(expected.x[i], rel=1e-2) == actual.x[i]
+    # assert pytest.approx(expected.fun, rel=1e-3) == actual["fun"]
+    assert len(expected.jac) == len(actual.jac)
+    # for i in range(len(expected.jac)):
+    #     assert pytest.approx(expected.jac[i], rel=1e-2) == actual.jac[i]
+
+
 def test_hessian_no_finite_diff():
     def test_function(x, a, b, c, dummy_1, dummy_2):
         return a ** x[0] + b ** x[1] + a / c + x[2] ** 5

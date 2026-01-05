@@ -24,3 +24,19 @@ def mixed_logit_decoder(obj):
         return model
     except KeyError:
         return obj
+
+def optim_res_decoder(obj):
+    try:
+        model = MixedLogit()
+        model.estimation_message = np.array(obj["estimation_message"])
+        model.success = np.array(obj["success"])
+        model.status = np.array(obj["status"])
+        model.fun = np.array(obj["fun"])
+        model.x = obj["x"]
+        model.nit = obj["nit"]
+        model.jac = obj["jac"]
+        model.nfev = obj["nfev"]
+        model.njev = obj["njev"]
+        return model
+    except KeyError:
+        return obj
