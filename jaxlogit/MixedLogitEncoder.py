@@ -6,9 +6,12 @@ from jaxlogit.mixed_logit import MixedLogit
 
 class MixedLogitEncoder(JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.ndarray) or isinstance(obj, jnp.ndarray):
-            return obj.tolist()
-        return obj.__dict__
+        try:
+            if isinstance(obj, np.ndarray) or isinstance(obj, jnp.ndarray):
+                return obj.tolist()
+            return obj.__dict__
+        except AttributeError:
+            return f"error with {obj}"
 
 
 def mixed_logit_decoder(obj):
@@ -24,6 +27,7 @@ def mixed_logit_decoder(obj):
         return model
     except KeyError:
         return obj
+
 
 def optim_res_decoder(obj):
     try:

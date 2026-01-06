@@ -1,4 +1,7 @@
-from jaxlogit._optimize import hessian
+import os
+print(os.getcwd())
+
+from jaxlogit._optimize import hessian, _minimize
 import numpy as np
 import pandas as pd
 import jax as jax
@@ -9,23 +12,22 @@ import pathlib
 import json
 
 from jaxlogit.mixed_logit import MixedLogit, ConfigData, neg_loglike, neg_loglike_grad_batched
-from jaxlogit._optimize import _minimize
 from jaxlogit.MixedLogitEncoder import optim_res_decoder
 
 
 def setup_minimize():
-    """ Performs the same code as in mixed_logit.predict, but stopping after minimize """
+    """Performs the same code as in mixed_logit.predict, but stopping after minimize"""
     df = pd.read_csv(pathlib.Path.cwd() / "examples/electricity_long.csv")
-    varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
+    varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
     n_draws = 600
     X = df[varnames]
-    y = df['choice']
+    y = df["choice"]
 
-    ids = df['chid']
-    alts = df['alt']
-    panels = df['id']
+    ids = df["chid"]
+    alts = df["alt"]
+    panels = df["id"]
 
-    randvars = {'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'}
+    randvars = {"pf": "n", "cl": "n", "loc": "n", "wk": "n", "tod": "n", "seas": "n"}
 
     model = MixedLogit()
 
@@ -38,14 +40,14 @@ def setup_minimize():
     )
 
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
-            X,
-            y,
-            varnames,
-            alts,
-            ids,
-            randvars,
-            config,
-        )
+        X,
+        y,
+        varnames,
+        alts,
+        ids,
+        randvars,
+        config,
+    )
 
     fargs = (
         Xdf,
@@ -87,17 +89,34 @@ def setup_minimize():
 def test__minimize():
     # expected values computed with biogeme
     with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "r") as f:
-            expected = json.load(f, object_hook=optim_res_decoder)
+        expected = json.load(f, object_hook=optim_res_decoder)
     actual = setup_minimize()
-    assert expected.estimation_message == actual["message"]
-    assert expected.success == actual["success"]
-    assert len(expected.x) == len(actual.x)
-    # for i in range(len(expected.x)):
-    #     assert pytest.approx(expected.x[i], rel=1e-2) == actual.x[i]
-    # assert pytest.approx(expected.fun, rel=1e-3) == actual["fun"]
-    assert len(expected.jac) == len(actual.jac)
-    # for i in range(len(expected.jac)):
-    #     assert pytest.approx(expected.jac[i], rel=1e-2) == actual.jac[i]
+    assert expected["message"] == actual["message"]
+    assert expected["success"] == actual["success"]
+    assert len(expected["x"]) == len(actual.x)
+    for i in range(len(expected["x"])):
+        assert pytest.approx(expected["x"][i], rel=1e-2) == actual.x[i]
+    assert pytest.approx(expected["fun"], rel=1e-3) == actual["fun"]
+    assert len(expected["jac"]) == len(actual.jac)
+    for i in range(len(expected["jac"])):
+        assert pytest.approx(expected["jac"][i], rel=1e-2) == actual.jac[i]
+    
+    expected_hi = expected["hess_inv"]
+    assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
+    for i in range(len(expected_hi["sk"])):
+        assert len(expected_hi["sk"][i]) == len(actual.hess_inv.sk[i])
+        for j in range(len(expected_hi["sk"][i])):
+            assert expected_hi["sk"][i][j] == actual.hess_inv.sk[i][j]
+        assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
+    assert len(expected_hi["yk"]) == len(actual.hess_inv.yk)
+    for i in range(len(expected_hi["yk"])):
+        assert len(expected_hi["yk"][i]) == len(actual.hess_inv.yk[i])
+        for j in range(len(expected_hi["yk"][i])):
+            assert expected_hi["yk"][i][j] == actual.hess_inv.yk[i][j]
+    assert len(expected_hi["rho"]) == len(actual.hess_inv.rho)
+    for i in range(len(expected_hi["rho"])):
+        assert expected_hi["rho"][i] == actual.hess_inv.rho[i]
+
 
 
 def test_hessian_no_finite_diff():
@@ -137,3 +156,13 @@ def test_hessian_finite_diff():
     assert expected == pytest.approx(
         hessian(test_function, x, False, True, *args, static_argnames=("dummy_1", "dummy_2")), rel=5e-2
     )
+
+
+def main():
+    expected = setup_minimize()
+    with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "w") as f:
+        json.dump(expected, f, indent=4)
+
+
+if __name__ == "__main__":
+    main()
