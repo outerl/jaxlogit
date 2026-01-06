@@ -43,3 +43,46 @@ def test_not_enough_variables_for_correlation():
                 jnp.array([0.1 for _ in variable_types]),
                 correlation_only_config,
             )
+
+
+def test_chol_mask_from_set_standard_deviations():
+    variable_types = ["n", "n", "trunc_n"]
+    variable_names = ["x1", "x2", "x3", "sd.x1", "sd.x2", "sd.x3", "chol.x1.x2"]
+
+    correlation_and_set_vars_config = ConfigData(include_correlations=True, set_vars={"sd.x1": 1, "x3": 1})
+
+    setup = ParametersSetup(
+        np.array(variable_types),
+        jnp.array([True for _ in variable_types]),
+        jnp.array([var == "n" or var == "ln" for var in variable_types]),
+        jnp.array([var == "trunc_n" for var in variable_types]),
+        np.array(variable_names),
+        jnp.array([0.1 for _ in variable_names]),
+        correlation_and_set_vars_config,
+    )
+
+    assert setup.mask_chol is not None
+    assert setup.mask_chol[0] == 0
+    assert setup.values_for_chol_mask is not None
+    assert setup.values_for_chol_mask[0] == 1
+
+
+def test_frozen_parameters():
+    variable_types = ["n", "n", "trunc_n"]
+    variable_names = ["x1", "x2", "x3", "sd.x1", "sd.x2", "sd.x3", "chol.x1.x2"]
+
+    correlation_and_set_vars_config = ConfigData(include_correlations=True, set_vars={"sd.x1": 1, "x3": 1})
+
+    setup = ParametersSetup(
+        np.array(variable_types),
+        jnp.array([True for _ in variable_types]),
+        jnp.array([var == "n" or var == "ln" for var in variable_types]),
+        jnp.array([var == "trunc_n" for var in variable_types]),
+        np.array(variable_names),
+        jnp.array([0.1 for _ in variable_names]),
+        correlation_and_set_vars_config,
+    )
+
+    with pytest.raises(AttributeError, match=r"Trying to set attribute on a frozen instance"):
+        setup.random_idx = jnp.array([False])
+    setup._hash = 1
