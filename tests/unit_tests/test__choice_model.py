@@ -42,6 +42,7 @@ def test__reset_attributes(setup):
 
 
 def test__pre_fit(setup):
+    # Values are random and made up purely for testing purposes
     choiceModel = setup
     choiceModel.coeff_names = ["a"]
     choiceModel.coeff_ = {"key": 1}
@@ -198,7 +199,7 @@ def test__robust_covariance():
 def test_diff_nonchosen_chosen(setup):
     X_ = np.array([np.array([[2, 1], [1, 3], [3, 1]]), np.array([[2, 4], [2, 1], [2, 4]])])
     y = np.array([0, 0, 1, 0, 0, 1])
-    Xd, avail = diff_nonchosen_chosen(X_, y, None)
+    Xd, _ = diff_nonchosen_chosen(X_, y, None)
     expected = np.array([[[-1, 0], [-2, 2]], [[0, 0], [0, -3]]])
     assert np.array_equal(expected, Xd)
 
@@ -222,7 +223,6 @@ def fit_setup(setup):
 
 
 def test_post_fit_basic(fit_setup):
-    # optim_res, coeff_names, sample_size, mask=None, fixedvars=None, skip_std_errors=False
     choiceModel, optim_res, coeff_names, sample_size, fixedvars = fit_setup
     choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
 
@@ -270,7 +270,7 @@ def test_post_fit_stderr(fit_setup):
         for j in range(len(expected[i])):
             assert expected[i][j] == pytest.approx(choiceModel.covariance[i][j])
 
-    # TODO: confirm numbers
+    # this functionality is further tested in the system tests
     expected = np.array([0.12990381, 0.38971147])
     for i in range(len(expected)):
         assert expected[i] == pytest.approx(choiceModel.stderr[i])
