@@ -1,7 +1,6 @@
-import os
-print(os.getcwd())
-
 from jaxlogit._optimize import hessian, _minimize
+from jaxlogit.mixed_logit import MixedLogit, ConfigData, neg_loglike, neg_loglike_grad_batched
+from jaxlogit.MixedLogitEncoder import optim_res_decoder
 import numpy as np
 import pandas as pd
 import jax as jax
@@ -10,9 +9,6 @@ import jax.numpy as jnp
 import pytest
 import pathlib
 import json
-
-from jaxlogit.mixed_logit import MixedLogit, ConfigData, neg_loglike, neg_loglike_grad_batched
-from jaxlogit.MixedLogitEncoder import optim_res_decoder
 
 
 def setup_minimize():
@@ -100,7 +96,7 @@ def test__minimize():
     assert len(expected["jac"]) == len(actual.jac)
     for i in range(len(expected["jac"])):
         assert pytest.approx(expected["jac"][i], rel=1e-2) == actual.jac[i]
-    
+
     expected_hi = expected["hess_inv"]
     assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
     for i in range(len(expected_hi["sk"])):
@@ -116,7 +112,6 @@ def test__minimize():
     assert len(expected_hi["rho"]) == len(actual.hess_inv.rho)
     for i in range(len(expected_hi["rho"])):
         assert expected_hi["rho"][i] == actual.hess_inv.rho[i]
-
 
 
 def test_hessian_no_finite_diff():

@@ -102,6 +102,8 @@ def test__check_long_format_consistency(setup):
 
 
 ys = [np.asarray(pd.Series([1, 0, 0, 1])), np.array([1, 0, 0, 1]), np.array([1, 0, 1, 0])]
+
+
 @pytest.mark.parametrize("y", ys)
 def test__format_choice_var_y(setup, y):
     choiceModel = setup
