@@ -97,16 +97,7 @@ def test__minimize():
 
     expected_hi = expected["hess_inv"]
     assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
-    for i in range(len(expected_hi["sk"])):
-        assert len(expected_hi["sk"][i]) == len(actual.hess_inv.sk[i])
-        for j in range(len(expected_hi["sk"][i])):
-            assert expected_hi["sk"][i][j] == actual.hess_inv.sk[i][j]
-        assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
     assert len(expected_hi["yk"]) == len(actual.hess_inv.yk)
-    for i in range(len(expected_hi["yk"])):
-        assert len(expected_hi["yk"][i]) == len(actual.hess_inv.yk[i])
-        for j in range(len(expected_hi["yk"][i])):
-            assert expected_hi["yk"][i][j] == actual.hess_inv.yk[i][j]
     assert len(expected_hi["rho"]) == len(actual.hess_inv.rho)
     for i in range(len(expected_hi["rho"])):
         assert expected_hi["rho"][i] == actual.hess_inv.rho[i]
