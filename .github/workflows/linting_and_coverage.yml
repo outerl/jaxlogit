@@ -45,7 +45,7 @@ jobs:
           python -m uv pip install -e .[dev]
       
       - name: Run coverage tests
-        run: pytest --cov=. tests/ --cov-branch --cov-report=term-missing --cov-report html:cov_html --cov-report markdown-append:$GITHUB_STEP_SUMMARY --durations=50 --verbose
+        run: pytest --cov=. tests/unit_tests/ --cov-branch --cov-report=term-missing --cov-report html:cov_html --cov-report markdown-append:$GITHUB_STEP_SUMMARY --durations=50 --verbose
       - uses: actions/upload-artifact@v4
         with: 
           name: html-coverage-artifact
