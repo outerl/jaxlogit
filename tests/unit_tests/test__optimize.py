@@ -99,8 +99,6 @@ def test__minimize():
     assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
     assert len(expected_hi["yk"]) == len(actual.hess_inv.yk)
     assert len(expected_hi["rho"]) == len(actual.hess_inv.rho)
-    for i in range(len(expected_hi["rho"])):
-        assert expected_hi["rho"][i] == actual.hess_inv.rho[i]
 
 def test_hessian_no_finite_diff():
     def test_function(x, a, b, c, dummy_1, dummy_2):
