@@ -13,7 +13,7 @@ import json
 
 def setup_minimize():
     """Performs the same code as in mixed_logit.predict, but stopping after minimize"""
-    df = pd.read_csv(pathlib.Path.cwd() / "examples/electricity_long.csv")
+    df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
     varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
     n_draws = 600
     X = df[varnames]
