@@ -83,7 +83,7 @@ def setup_minimize():
 
 
 def test__minimize():
-    # expected values computed with biogeme
+    # expected values based on iteration comparable to other models
     with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "r") as f:
         expected = json.load(f, object_hook=optim_res_decoder)
     actual = setup_minimize()
