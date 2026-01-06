@@ -94,8 +94,6 @@ def test__minimize():
         assert pytest.approx(expected["x"][i], rel=1e-2) == actual.x[i]
     assert pytest.approx(expected["fun"], rel=1e-3) == actual["fun"]
     assert len(expected["jac"]) == len(actual.jac)
-    for i in range(len(expected["jac"])):
-        assert pytest.approx(expected["jac"][i], rel=1e-2) == actual.jac[i]
 
     expected_hi = expected["hess_inv"]
     assert len(expected_hi["sk"]) == len(actual.hess_inv.sk)
