@@ -151,13 +151,3 @@ def test_hessian_finite_diff():
     assert expected == pytest.approx(
         hessian(test_function, x, False, True, *args, static_argnames=("dummy_1", "dummy_2")), rel=5e-2
     )
-
-
-def main():
-    expected = setup_minimize()
-    with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "w") as f:
-        json.dump(expected, f, indent=4)
-
-
-if __name__ == "__main__":
-    main()
