@@ -28,15 +28,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
             x = jnp.array(betas)
             return neg_loglik_and_grad(x, *args)
 
-        nit = 0  # global counter for display callback
-
-        def display_callback(optim_res):
-            nonlocal nit, neg_loglike_scipy, args
-            nit += 1
-            val, grad = neg_loglike_scipy(optim_res, *args)
-            g_norm = jnp.linalg.norm(grad)
-            logger.info(f"Iter {nit}, fun = {val:.3f}, |grad| = {g_norm:.3f}")  # , current sol = {optim_res}")
-
         if method == "L-BFGS-B":
             return minimize(
                 neg_loglike_scipy,
@@ -55,7 +46,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 jac=True,
                 method="BFGS",
                 options=options,
-                callback=display_callback if options["disp"] else None,
             )
         else:
             logger.error(f"Unknown optimization method: {method} exiting gracefully")
