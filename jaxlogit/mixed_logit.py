@@ -10,7 +10,7 @@ from jaxlogit.draws import truncnorm_ppf, generate_draws
 from jaxlogit.utils import get_panel_aware_batch_indices
 from jaxlogit._config_data import ConfigData
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 """
 Notations
@@ -113,7 +113,7 @@ class MixedLogit(ChoiceModel):
         assert len(coef_names) == num_coeffs, (
             f"Wrong number of coefficients set up, this is a data prep bug. Expected {num_coeffs}, got {len(coef_names)}. {coef_names}."
         )
-        logger.debug(f"Set up {num_coeffs} initial coefficients for the model: {dict(zip(coef_names, betas))}")
+        _logger.debug(f"Set up {num_coeffs} initial coefficients for the model: {dict(zip(coef_names, betas))}")
 
         return (
             jnp.array(betas),
@@ -138,7 +138,7 @@ class MixedLogit(ChoiceModel):
 
         # Generate draws
         n_samples = N if config.panels is None else np.max(config.panels) + 1
-        logger.debug(f"Generating {config.n_draws} number of draws for each observation and random variable")
+        _logger.debug(f"Generating {config.n_draws} number of draws for each observation and random variable")
 
         draws = generate_draws(n_samples, config.n_draws, self._rvdist, config.halton, halton_opts=config.halton_opts)
         if draws.size == 0:
@@ -148,7 +148,7 @@ class MixedLogit(ChoiceModel):
             draws = draws[config.panels]  # (N,num_random_params,n_draws)
         draws = jnp.array(draws)
 
-        logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
+        _logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
 
         return draws
 
@@ -247,32 +247,39 @@ class MixedLogit(ChoiceModel):
     ):
         """Fit Mixed Logit models.
 
-        Args:
-            X: array-like, shape (n_samples*n_alts, n_variables)
-                Input data for explanatory variables in long format
+        Parameters
+        ----------
+        X : array-like, shape (n_samples*n_alts, n_variables)
+            Input data for explanatory variables in long format.
+        y : array-like, shape (n_samples*n_alts,)
+            Chosen alternatives or one-hot encoded representation of the choices.
+        varnames : list-like, shape (n_variables,)
+            Names of explanatory variables that must match the number and order of
+            columns in ``X``.
+        alts : array-like, shape (n_samples*n_alts,)
+            Alternative values in long format.
+        ids : array-like, shape (n_samples*n_alts,)
+            Identifiers for the samples in long format.
+        randvars : dict
+            Names (keys) and mixing distributions (values) of variables that have
+            random parameters as coefficients. Possible mixing distributions are:
 
-            y: array-like, shape (n_samples*n_alts,)
-                Chosen alternatives or one-hot encoded representation of the choices
+            - ``'n'``: normal
+            - ``'ln'``: lognormal
+            - ``'t'``: triangular
+            - ``'tn'``: truncated normal
 
-            varnames: list-like, shape (n_variables,)
-                Names of explanatory variables that must match the number and order of columns in ``X``
+        verbose : int, default=1
+            Verbosity of messages to show during estimation.
 
-            alts: array-like, shape (n_samples*n_alts,)
-                Alternative values in long format
+            - 0: No messages
+            - 1: Some messages
+            - 2: All messages
 
-            ids: array-like, shape (n_samples*n_alts,)
-                Identifiers for the samples in long format.
-
-            randvars: dict
-                Names (keys) and mixing distributions (values) of variables that have random parameters as coefficients.
-                Possible mixing distributions are: ``'n'``: normal, ``'ln'``: lognormal, ``'t'``: triangular,
-                ``'tn'``: truncated normal
-
-            verbose: int, default=1
-                Verbosity of messages to show during estimation. 0: No messages, 1: Some messages, 2: All messages
-
-        Returns:
-            Return the estimated model parameters result
+        Returns
+        -------
+        result
+            The estimated model parameters result.
         """
 
         (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
@@ -299,14 +306,14 @@ class MixedLogit(ChoiceModel):
         )
 
         if parameter_info.idx_ln_dist.shape[0] > 0:
-            logger.info(
+            _logger.info(
                 f"Lognormal distributions found for {parameter_info.idx_ln_dist.shape[0]} random variables, applying transformation."
             )
 
         if panels is not None:
-            logger.info(f"Data contains {num_panels} panels.")
+            _logger.info(f"Data contains {num_panels} panels.")
 
-        logger.debug(f"Shape of Xdf: {Xdf.shape}, shape of Xdr: {Xdr.shape}")
+        _logger.debug(f"Shape of Xdf: {Xdf.shape}, shape of Xdr: {Xdr.shape}")
 
         tol = {
             "ftol": 1e-10,
@@ -330,30 +337,30 @@ class MixedLogit(ChoiceModel):
             jit_loglik=config.batch_size is None,
         )
         if optim_res is None:
-            logger.error("Optimization failed, returning None.")
+            _logger.error("Optimization failed, returning None.")
             return None
 
-        logger.info(
+        _logger.info(
             f"Optimization finished, success = {optim_res['success']}, final loglike = {-optim_res['fun']:.2f}"
             + f", final gradient max = {optim_res['jac'].max():.2e}, norm = {jnp.linalg.norm(optim_res['jac']):.2e}."
         )
 
         if config.skip_std_errs:
-            logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
+            _logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
         else:
-            logger.info("Calculating gradient of individual log-likelihood contributions")
+            _logger.info("Calculating gradient of individual log-likelihood contributions")
             grad = jax.jacfwd(loglike_individual)
             optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
 
             try:
-                logger.info(
+                _logger.info(
                     f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
                 )
                 H = hessian(
                     neg_loglike, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian, *fargs
                 )
 
-                logger.info("Inverting Hessian")
+                _logger.info("Inverting Hessian")
                 # remove masked parameters to make it invertible
                 if parameter_info.mask is not None:
                     mask_for_hessian = jnp.array([x for x in range(0, H.shape[0]) if x not in parameter_info.mask])
@@ -368,7 +375,7 @@ class MixedLogit(ChoiceModel):
             # TODO: narrow down to actual error here
             # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res["grad_n"].T, optim_res["grad_n"])) as fallback?
             except Exception as e:
-                logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
+                _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
                 optim_res["hess_inv"] = jnp.eye(len(optim_res["x"]))
 
         self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
