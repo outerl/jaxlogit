@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
 
 # project metadata
 [project]
@@ -30,14 +31,17 @@ dependencies = [
 ]
 
 [dependency-groups]
-examples = ['xlogit', 'scikit-learn']
 
 [project.optional-dependencies]
+examples = ['xlogit', 'scikit-learn']
 
 linting = [
     'ruff==0.9.3',
     'black==24.10.0',
 ]
+
+[project.urls]
+Documentation = "https://outerl.github.io/jaxlogit/"
 
 devtools = [
     'setuptools',
