@@ -32,6 +32,8 @@ dependencies = [
 
 [project.urls]
 Documentation = "https://outerl.github.io/jaxlogit/"
+"Outerl Homepage" = "https://github.com/outerl/jaxlogit"
+"Jan Homepage" = "https://github.com/janzill/jaxlogit"
 
 [dependency-groups]
 
