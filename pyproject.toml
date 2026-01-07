@@ -29,7 +29,9 @@ dependencies = [
     'scipy',
     'regex',
 ]
-dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://outerl.github.io/jaxlogit/"
 
 [dependency-groups]
 
@@ -40,9 +42,6 @@ linting = [
     'ruff==0.9.3',
     'black==24.10.0',
 ]
-
-[project.urls]
-Documentation = "https://outerl.github.io/jaxlogit/"
 
 devtools = [
     'setuptools',
