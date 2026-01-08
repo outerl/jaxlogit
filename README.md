@@ -119,6 +119,6 @@ If out of memory, the data can be batched as well.
 
 ## Quick Install
 
-Clone the [repo](https://github.com/outerl/jaxlogit). Planned to be installable via PyPI.
+Currently available on test PyPI `pip install -i https://test.pypi.org/simple/ jaxlogit`.
 
-
+Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
