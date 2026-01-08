@@ -3,7 +3,7 @@ import numpy as np
 
 import jax
 import jax.numpy as jnp
-import regex as re
+import re
 
 from jaxlogit.mixed_logit import (
     MixedLogit,

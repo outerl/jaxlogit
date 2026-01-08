@@ -27,7 +27,6 @@ dependencies = [
     'numpy',
     'pandas',
     'scipy',
-    'regex',
 ]
 
 [project.urls]
