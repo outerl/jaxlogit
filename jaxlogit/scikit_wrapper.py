@@ -1,5 +1,6 @@
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import validate_data
+from sklearn.exceptions import NotFittedError
 
 from jaxlogit.mixed_logit import MixedLogit
 from jaxlogit._config_data import ConfigData
@@ -7,9 +8,11 @@ from jaxlogit._config_data import ConfigData
 import numpy as np
 
 
-class MixedLogitEstimator(BaseEstimator):
+class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
     def __init__(
         self,
+        varnames=(),
+        randvars=(),
         weights=None,
         avail=None,
         panels=None,
@@ -31,7 +34,84 @@ class MixedLogitEstimator(BaseEstimator):
         batch_size=None,
         verbose=1,
     ):
+        """Initialises a jaxlogit estimator with configurations for the fit and predict functions.
+
+        Parameters
+        ----------
+        varnames : list-like of shape (n_features,), required
+            Names of explanatory variables that must match the number and order of
+            columns in ``X``.
+        randvars : dict, required
+            Names (keys) and mixing distributions (values) of variables that have
+            random parameters as coefficients. Possible mixing distributions are:
+            - ``'n'``: normal
+            - ``'ln'``: lognormal
+            - ``'t'``: triangular
+            - ``'tn'``: truncated normal
+        weights : array-like, shape (n_samples,), optional
+            Sample weights in long format.
+        avail : array-like, shape (n_samples*n_alts,), optional
+            Availability of alternatives for the choice situations. One when
+            available or zero otherwise.
+        panels : array-like, shape (n_samples*n_alts,), optional
+            Identifiers in long format to create panels in combination with ``ids``.
+        init_coeff : numpy.ndarray, shape (n_variables,), optional
+            Initial coefficients for estimation.
+        maxiter : int, default=2000
+            Maximum number of iterations.
+        random_state : int, optional
+            Random seed for numpy random generator.
+        n_draws : int, default=1000
+            Number of random draws to approximate the mixing distributions of the
+            random coefficients.
+        halton : bool, default=True
+            Whether the estimation uses halton draws.
+        halton_opts : dict, optional
+            Options for generation of halton draws. The dictionary accepts the
+            following options (keys):
+
+            - shuffle : bool, default=False
+                Whether the Halton draws should be shuffled.
+            - drop : int, default=100
+                Number of initial Halton draws to discard to minimize correlations
+                between Halton sequences.
+            - primes : list
+                List of primes to be used as base for generation of Halton sequences.
+        tol_opts : dict, optional
+            Options for tolerance of optimization routine. The dictionary accepts
+            the following options (keys):
+
+            - ftol : float, default=1e-10
+                Tolerance for objective function (log-likelihood).
+            - gtol : float, default=1e-5
+                Tolerance for gradient function.
+        num_hess : bool, default=False
+            Whether numerical hessian should be used for estimation of standard errors.
+        set_vars : dict, optional
+            Specified variable names (keys) of variables to be set to the given
+            value (values).
+        optim_method : {'trust-region', 'BFGS', 'L-BFGS-B'}, default='L-BFGS-B'
+            Optimization method to use for model estimation.
+        skip_std_errs : bool, default=False
+            Whether estimation of standard errors should be skipped.
+        include_correlations : bool, default=False
+            Whether correlations between variables should be included as explanatory
+            variables.
+        force_positive_chol_diag : bool, default=True
+            Whether to force positive diagonal elements in Cholesky decomposition.
+        hessian_by_row : bool, default=True
+            Whether to calculate the hessian row by row in a for loop to save
+            memory at the expense of runtime.
+        finite_diff_hessian : bool, default=False
+            Whether the hessian should be computed using finite difference. If True,
+            this will stay within memory limits.
+        batch_size : int, optional
+            Size of batches used to avoid GPU memory overflow.
+
+        """
         # Store all parameters as attributes
+        self.varnames = varnames
+        self.randvars = randvars
         self.weights = weights
         self.avail = avail
         self.panels = panels
@@ -77,29 +157,50 @@ class MixedLogitEstimator(BaseEstimator):
             batch_size=self.batch_size,
         )
 
-    def fit(self, X, y, varnames=None, alts=None, ids=None, randvars=None):
+    def predict(self, X, y=None, alts=None, ids=None):
+        if self.coeff_ is None:
+            raise NotFittedError
+
+        if self.varnames == ():
+            if alts is not None:
+                self.varnames = np.unique(alts)
+            else:
+                number_of_variables = X.shape[1]
+                self.varnames = [f"x{i}" for i in range(number_of_variables)]
+                alts = np.tile(self.varnames, X.shape[0] // number_of_variables)
+        if ids is None:
+            ids = np.repeat(np.arange(X.shape[0] // len(self.varnames)), len(self.varnames))
+
+        randvars = dict(self.randvars)
+
+        # Input validation
+        X = validate_data(self, X, reset=False)
+
+        # create config from estimator attributes
+        config = self._get_config()
+        config.init_coeff = self.coeff_
+
+        # initialize and fit the underlying MixedLogit model
+        self.model_ = MixedLogit()
+        # print(X, X[varnames])
+        mean_probabilities = self.model_.predict(X, self.varnames, alts, ids, randvars, config)
+
+        return mean_probabilities
+
+    def fit(self, X, y, alts=None, ids=None):
         """Fit Mixed Logit model.
 
         Parameters
         ----------
         X : array-like of shape (n_samples*n_alts, n_features)
-            Input data for explanatory variables in long format.
+            Input data for explanatory variables in long format with alternative and ids in line.
         y : array-like of shape (n_samples*n_alts,)
             Chosen alternatives or one-hot encoded representation of the choices.
-        varnames : list-like of shape (n_features,), required
-            Names of explanatory variables that must match the number and order of
-            columns in ``X``.
-        alts : array-like of shape (n_samples*n_alts,), required
-            Alternative values in long format.
-        ids : array-like of shape (n_samples*n_alts,), required
-            Identifiers for the samples in long format.
-        randvars : dict, required
-            Names (keys) and mixing distributions (values) of variables that have
-            random parameters as coefficients. Possible mixing distributions are:
-            - ``'n'``: normal
-            - ``'ln'``: lognormal
-            - ``'t'``: triangular
-            - ``'tn'``: truncated normal
+        # alts : array-like of shape (n_samples*n_alts,), required
+        #     Alternative values in long format.
+        # ids : array-like of shape (n_samples*n_alts,), required
+        #     Identifiers for the samples in long format.
+
 
         Returns
         -------
@@ -111,35 +212,47 @@ class MixedLogitEstimator(BaseEstimator):
         Additional configuration options such as `weights`, `avail`, `panels`,
         `maxiter`, `n_draws`, and optimization settings are specified in `__init__`.
         """
-        # Validate required parameters
-        if varnames is None:
-            raise ValueError(
-                "varnames is required. Provide a list of variable names that match the number and order of columns in X."
-            )
-        if alts is None:
-            raise ValueError("alts is required. Provide alternative identifiers in long format.")
+        if self.varnames == ():
+            if alts is not None:
+                self.varnames = np.unique(alts)
+            else:
+                number_of_variables = X.shape[1]
+                self.varnames = [f"x{i}" for i in range(number_of_variables)]
+                alts = np.tile(self.varnames, X.shape[0] // number_of_variables)
         if ids is None:
-            raise ValueError("ids is required. Provide sample identifiers in long format.")
-        if randvars is None:
-            raise ValueError(
-                "randvars is required. Provide a dict with variable names as keys "
-                "and mixing distributions ('n', 'ln', 't', 'tn') as values."
-            )
+            ids = np.repeat(np.arange(X.shape[0] // len(self.varnames)), len(self.varnames))
 
-        # Validate data format
+        randvars = dict(self.randvars)
+        # Validate required parameters
+        # if varnames is None:
+        #     raise ValueError(
+        #         "varnames is required. Provide a list of variable names that match the number and order of columns in X."
+        #     )
+        # if alts is None:
+        #     raise ValueError("alts is required. Provide alternative identifiers in long format.")
+        # if ids is None:
+        #     raise ValueError("ids is required. Provide sample identifiers in long format.")
+        # if randvars is None:
+        #     raise ValueError(
+        #         "randvars is required. Provide a dict with variable names as keys "
+        #         "and mixing distributions ('n', 'ln', 't', 'tn') as values."
+        #     )
+
+        # validate data format
         X, y = validate_data(self, X=X, y=y, accept_sparse=False, dtype="numeric")
 
-        # Create config from estimator attributes
+        # create config from estimator attributes
         config = self._get_config()
 
-        # Initialize and fit the underlying MixedLogit model
+        # initialize and fit the underlying MixedLogit model
         self.model_ = MixedLogit()
-        self.model_.fit(X, y, varnames, alts, ids, randvars, config, self.verbose)
+        # print(X, X[varnames])
+        self.model_.fit(X, y, self.varnames, alts, ids, randvars, config, self.verbose)
 
-        # Store sklearn-required attributes
+        # store sklearn-required attributes
         self.classes_ = np.unique(y)  # Required by ClassifierMixin
 
-        # Expose fitted model attributes at wrapper level
+        # expose fitted model attributes at wrapper level
         self.convergence = self.model_.convergence
         self.coeff_ = self.model_.coeff_
         self.covariance = self.model_.covariance
@@ -158,7 +271,7 @@ class MixedLogitEstimator(BaseEstimator):
         self.mask = self.model_.mask
         self.fixedvars = self.model_.fixedvars
 
-        # Conditionally expose gradient and hessian if available
+        # expose gradient and hessian if available
         if hasattr(self.model_, "grad_n"):
             self.grad_n = self.model_.grad_n
         if hasattr(self.model_, "hess_inv"):
@@ -167,7 +280,7 @@ class MixedLogitEstimator(BaseEstimator):
         return self
 
 
-if __name__ == "__main__":
-    from sklearn.utils.estimator_checks import check_estimator
+# if __name__ == "__main__":
+#     from sklearn.utils.estimator_checks import check_estimator
 
-    check_estimator(MixedLogitEstimator())
+#     check_estimator(MixedLogitEstimator())
