@@ -27,8 +27,6 @@
 # # Setup
 
 # %%
-
-
 import pandas as pd
 import numpy as np
 import jax
@@ -58,8 +56,6 @@ jax.config.update("jax_enable_x64", True)
 # Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 600 or more draws with this data set.
 
 # %%
-
-
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
 n_draws = 500
 
@@ -67,8 +63,6 @@ n_draws = 500
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
 
 # %%
-
-
 df_long = pd.read_csv(pathlib.Path.cwd().parent.parent / "examples" / "electricity_long.csv")
 choice_df = df_long.loc[df_long['choice'] == 1, ['id', 'chid', 'alt']]
 choice_df = choice_df.rename(columns={'alt': 'choice'})
@@ -97,8 +91,6 @@ database_test = db.Database('electricity', df_wide_test)
 # jaxlogit and xlogit setup:
 
 # %%
-
-
 X_train = df_train[varnames]
 y_train = df_train['choice']
 
@@ -115,8 +107,6 @@ panels_test = df_test['id']
 
 
 # %%
-
-
 randvars = {'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'}
 
 model_jax = MixedLogit()
@@ -135,8 +125,6 @@ init_coeff = None
 # Biogeme setup:
 
 # %%
-
-
 X = {
     name: {
         j: Variable(f"{name}_{j}")
@@ -182,8 +170,6 @@ V = {
 # Jaxlogit:
 
 # %%
-
-
 model_jax.fit(
     X=X_train,
     y=y_train,
@@ -200,8 +186,6 @@ init_coeff_j = model_jax.coeff_
 # xlogit:
 
 # %%
-
-
 model_x.fit(
     X=X_train,
     y=y_train,
@@ -222,8 +206,6 @@ init_coeff_x = model_x.coeff_
 # Biogeme:
 
 # %%
-
-
 prob = models.logit(V, None, choice)
 logprob = log(MonteCarlo(PanelLikelihoodTrajectory(prob)))
 
@@ -238,8 +220,6 @@ print(results)
 # # Compare parameters:
 
 # %%
-
-
 print("{:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit", "xlogit", "Biogeme"))
 print("-" * 58)
 fmt = "{:13} {:13.7f} {:13.7f} {:13.7f}"
@@ -257,8 +237,6 @@ print("-" * 58)
 # jaxlogit:
 
 # %%
-
-
 model = model_jax 
 config = ConfigData(
     panels=panels_test,
@@ -271,16 +249,12 @@ config.init_coeff = init_coeff_j
 
 
 # %%
-
-
 prob_jj = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
 
 # %% [markdown] 
 # xlogit:
 
 # %%
-
-
 _, prob_xx = model_x.predict(X_test, varnames, alts_test, ids_test, isvars=None, panels=panels_test, n_draws=n_draws, return_proba=True)
 
 # %% [markdown] 
@@ -288,8 +262,6 @@ _, prob_xx = model_x.predict(X_test, varnames, alts_test, ids_test, isvars=None,
 
 
 # %%
-
-
 P = {
     j: MonteCarlo(models.logit(V, None, j))
     for j in [1, 2, 3, 4]
@@ -309,8 +281,6 @@ probs = biogeme_sim.simulate(results.get_beta_values())
 # Compute the brier score:
 
 # %%
-
-
 print("{:>9} {:>9} {:>9}".format("Jaxlogit", "xlogit", "Biogeme"))
 print("-" * 31)
 fmt = "{:9f} {:9f} {:9f}"
