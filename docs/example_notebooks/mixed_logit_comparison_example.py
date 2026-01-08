@@ -167,7 +167,7 @@ V = {
 
 # %% [markdown] 
 # ## Make the models
-# ###J axlogit:
+# ### Jaxlogit:
 
 # %%
 model_jax.fit(
