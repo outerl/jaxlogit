@@ -85,37 +85,37 @@ database_test = db.Database('electricity', df_wide_test)
 # In[ ]:
 
 
-X_train = df_train[varnames]
-y_train = df_train['choice']
+# X_train = df_train[varnames]
+# y_train = df_train['choice']
 
-ids_train = df_train['chid']
-alts_train = df_train['alt']
-panels_train = df_train['id']
+# ids_train = df_train['chid']
+# alts_train = df_train['alt']
+# panels_train = df_train['id']
 
-X_test = df_test[varnames]
-y_test = df_test['choice']
+# X_test = df_test[varnames]
+# y_test = df_test['choice']
 
-ids_test = df_test['chid']
-alts_test = df_test['alt']
-panels_test = df_test['id']
+# ids_test = df_test['chid']
+# alts_test = df_test['alt']
+# panels_test = df_test['id']
 
 
 # In[ ]:
 
 
-randvars = {'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'}
+# randvars = {'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'}
 
-model_jax = MixedLogit()
-model_x = xlogit.MixedLogit()
+# model_jax = MixedLogit()
+# model_x = xlogit.MixedLogit()
 
-config = ConfigData(
-    panels=panels_train,
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=None,
-    optim_method="L-BFGS-B",
-)
-init_coeff = None
+# config = ConfigData(
+#     panels=panels_train,
+#     n_draws=n_draws,
+#     skip_std_errs=True,  # skip standard errors to speed up the example
+#     batch_size=None,
+#     optim_method="L-BFGS-B",
+# )
+# init_coeff = None
 
 
 # Biogeme setup:
@@ -170,17 +170,17 @@ V = {
 # In[ ]:
 
 
-model_jax.fit(
-    X=X_train,
-    y=y_train,
-    varnames=varnames,
-    ids=ids_train,
-    alts=alts_train,
-    randvars=randvars,
-    config=config
-)
-display(model_jax.summary())
-init_coeff_j = model_jax.coeff_
+# model_jax.fit(
+#     X=X_train,
+#     y=y_train,
+#     varnames=varnames,
+#     ids=ids_train,
+#     alts=alts_train,
+#     randvars=randvars,
+#     config=config
+# )
+# display(model_jax.summary())
+# init_coeff_j = model_jax.coeff_
 
 
 # xlogit:
@@ -188,21 +188,21 @@ init_coeff_j = model_jax.coeff_
 # In[ ]:
 
 
-model_x.fit(
-    X=X_train,
-    y=y_train,
-    varnames=varnames,
-    ids=ids_train,
-    alts=alts_train,
-    randvars=randvars,
-    panels=panels_train,
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=None,
-    optim_method="L-BFGS-B",
-)
-display(model_x.summary())
-init_coeff_x = model_x.coeff_
+# model_x.fit(
+#     X=X_train,
+#     y=y_train,
+#     varnames=varnames,
+#     ids=ids_train,
+#     alts=alts_train,
+#     randvars=randvars,
+#     panels=panels_train,
+#     n_draws=n_draws,
+#     skip_std_errs=True,  # skip standard errors to speed up the example
+#     batch_size=None,
+#     optim_method="L-BFGS-B",
+# )
+# display(model_x.summary())
+# init_coeff_x = model_x.coeff_
 
 
 # Biogeme:
@@ -226,17 +226,17 @@ print(results)
 # In[ ]:
 
 
-print("{:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit", "xlogit", "Biogeme"))
-print("-" * 58)
-fmt = "{:13} {:13.7f} {:13.7f} {:13.7f}"
-coeff_names = {'pf': 'pf_mean', 'sd.pf': 'pf_sd', 'cl': 'cl_mean', 'sd.cl': 'cl_sd', 'loc': 'loc_mean', 'sd.loc': 'loc_sd', 'wk': 'wk_mean', 'sd.wk': 'wk_sd', 'tod': 'tod_mean', 'sd.tod': 'tod_sd', 'seas': 'seas_mean', 'sd.seas': 'seas_sd'}
-for i in range(len(model_jax.coeff_)):
-    name = model_jax.coeff_names[i]
-    print(fmt.format(name[:13], 
-                     model_jax.coeff_[i], 
-                     model_x.coeff_[i], 
-                     results.get_beta_values()[coeff_names[name]]))
-print("-" * 58)
+# print("{:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit", "xlogit", "Biogeme"))
+# print("-" * 58)
+# fmt = "{:13} {:13.7f} {:13.7f} {:13.7f}"
+# coeff_names = {'pf': 'pf_mean', 'sd.pf': 'pf_sd', 'cl': 'cl_mean', 'sd.cl': 'cl_sd', 'loc': 'loc_mean', 'sd.loc': 'loc_sd', 'wk': 'wk_mean', 'sd.wk': 'wk_sd', 'tod': 'tod_mean', 'sd.tod': 'tod_sd', 'seas': 'seas_mean', 'sd.seas': 'seas_sd'}
+# for i in range(len(model_jax.coeff_)):
+#     name = model_jax.coeff_names[i]
+#     print(fmt.format(name[:13], 
+#                      model_jax.coeff_[i], 
+#                      model_x.coeff_[i], 
+#                      results.get_beta_values()[coeff_names[name]]))
+# print("-" * 58)
 
 
 # # Predict
@@ -245,21 +245,21 @@ print("-" * 58)
 # In[ ]:
 
 
-model = model_jax 
-config = ConfigData(
-    panels=panels_test,
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=None,
-    optim_method="L-BFGS-B",
-)
-config.init_coeff = init_coeff_j
+# model = model_jax 
+# config = ConfigData(
+#     panels=panels_test,
+#     n_draws=n_draws,
+#     skip_std_errs=True,  # skip standard errors to speed up the example
+#     batch_size=None,
+#     optim_method="L-BFGS-B",
+# )
+# config.init_coeff = init_coeff_j
 
 
 # In[ ]:
 
 
-prob_jj = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
+# prob_jj = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
 
 
 # xlogit:
@@ -267,7 +267,7 @@ prob_jj = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
 # In[ ]:
 
 
-_, prob_xx = model_x.predict(X_test, varnames, alts_test, ids_test, isvars=None, panels=panels_test, n_draws=n_draws, return_proba=True)
+# _, prob_xx = model_x.predict(X_test, varnames, alts_test, ids_test, isvars=None, panels=panels_test, n_draws=n_draws, return_proba=True)
 
 
 # Biogeme:
@@ -304,11 +304,11 @@ probs = biogeme_sim.simulate(results.get_beta_values())
 # In[ ]:
 
 
-print("{:>9} {:>9} {:>9}".format("Jaxlogit", "xlogit", "Biogeme"))
-print("-" * 31)
-fmt = "{:9f} {:9f} {:9f}"
-print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_jj.shape[0], -1)), prob_jj),
-                 sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_xx.shape[0], -1)), prob_xx),
-                 sklearn.metrics.brier_score_loss(df_wide_test['choice'], probs)))
-print("-" * 31)
+# print("{:>9} {:>9} {:>9}".format("Jaxlogit", "xlogit", "Biogeme"))
+# print("-" * 31)
+# fmt = "{:9f} {:9f} {:9f}"
+# print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_jj.shape[0], -1)), prob_jj),
+#                  sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_xx.shape[0], -1)), prob_xx),
+#                  sklearn.metrics.brier_score_loss(df_wide_test['choice'], probs)))
+# print("-" * 31)
 
