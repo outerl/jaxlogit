@@ -41,13 +41,13 @@ jax.config.update("jax_enable_x64", True)
 
 # # Get the full electricity dataset
 # 
-# Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 700 or more draws with this data set.
+# Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 600 or more draws with this data set.
 
 # In[ ]:
 
 
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
-n_draws = 600
+n_draws = 500
 
 
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
