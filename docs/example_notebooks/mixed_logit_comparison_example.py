@@ -1,5 +1,19 @@
-#!/usr/bin/env python
-# coding: utf-8
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.18.1
+#   kernelspec:
+#     display_name: venv (3.10.12)
+#     language: python
+#     name: python3
+# ---
+
+# %% [markdown] 
+# # Comparison of Jaxlogit, Xlogit, and Biogeme
 
 # # Summary of time taken and brier scores for jaxlogit, xlogit, and biogeme
 # Where the estimation is using draws = 600 (suboptimal but highest without running out of memory in biogeme), and training and test data is separated.
