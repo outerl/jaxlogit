@@ -47,7 +47,7 @@ jax.config.update("jax_enable_x64", True)
 
 
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
-n_draws = 500
+n_draws = 600
 
 
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
@@ -74,7 +74,8 @@ df_train = df_train.sort_values(['chid', 'alt'])
 df_test = wide_to_long(df_wide_test, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
 df_test = df_test.sort_values(['chid', 'alt'])
 
-database_train = db.Database('electricity', df_wide_train)
+df_small_train, _ = sklearn.model_selection.train_test_split(df, train_size=0.4)
+database_train = db.Database('electricity', df_small_train)
 database_train.panel('id')
 database_test = db.Database('electricity', df_wide_test)
 
