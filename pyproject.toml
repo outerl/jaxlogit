@@ -37,7 +37,7 @@ Documentation = "https://outerl.github.io/jaxlogit/"
 [dependency-groups]
 
 [project.optional-dependencies]
-examples = ['xlogit', 'scikit-learn']
+examples = ['xlogit', 'scikit-learn', 'biogeme']
 
 linting = [
     'ruff==0.9.3',

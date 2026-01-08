@@ -46,7 +46,7 @@ jax.config.update("jax_enable_x64", True)
 # In[ ]:
 
 
-df = pd.read_csv(pathlib.Path.cwd() / "electricity_long.csv")
+df = pd.read_csv(pathlib.Path.cwd().parent.parent / "examples" / "electricity_long.csv")
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
 n_draws = 600
 
