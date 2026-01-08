@@ -16,7 +16,7 @@
 # # Comparison of Jaxlogit, Xlogit, and Biogeme
 
 # # Summary of time taken and brier scores for jaxlogit, xlogit, and biogeme
-# Where the estimation is using draws = 600 (suboptimal but highest without running out of memory in biogeme), and training and test data is separated.
+# Where the estimation is using draws = 500, and training and test data is separated. While this number of draws is low, on Github's servers, Biogeme can only handle this many draws and about 30% of the dataset.
 # 
 # | | jaxlogit | xlogit | biogeme |
 # |---|---|---|---|
