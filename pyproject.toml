@@ -1,13 +1,14 @@
 [build-system]
-requires = ["setuptools"]
 
 # project metadata
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 [project]
 name = "jaxlogit"
 description = "MSLE estimation of linear-in-parameters logit kernel models"
 readme = "README.md"
 requires-python = ">=3.9"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     { name = "Jan Zill", email = "jan@outerloop.io" }
 ]
@@ -26,13 +27,17 @@ dependencies = [
     'numpy',
     'pandas',
     'scipy',
-    'regex',
 ]
 
+[project.urls]
+Documentation = "https://outerl.github.io/jaxlogit/"
+"Outerl Homepage" = "https://github.com/outerl/jaxlogit"
+"Jan Homepage" = "https://github.com/janzill/jaxlogit"
+
 [dependency-groups]
-examples = ['xlogit', 'scikit-learn']
 
 [project.optional-dependencies]
+examples = ['xlogit', 'scikit-learn']
 
 linting = [
     'ruff==0.9.3',
@@ -112,3 +117,5 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20
+
+[tool.hatch]
