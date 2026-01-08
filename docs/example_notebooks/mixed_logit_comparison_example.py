@@ -61,7 +61,7 @@ jax.config.update("jax_enable_x64", True)
 
 
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
-n_draws = 600
+n_draws = 500
 
 
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
