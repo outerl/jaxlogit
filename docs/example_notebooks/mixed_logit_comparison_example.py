@@ -74,7 +74,7 @@ df_train = df_train.sort_values(['chid', 'alt'])
 df_test = wide_to_long(df_wide_test, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
 df_test = df_test.sort_values(['chid', 'alt'])
 
-df_small_train, _ = sklearn.model_selection.train_test_split(df, train_size=0.4)
+df_small_train, _ = sklearn.model_selection.train_test_split(df, train_size=0.1)
 database_train = db.Database('electricity', df_small_train)
 database_train.panel('id')
 database_test = db.Database('electricity', df_wide_test)
@@ -275,28 +275,28 @@ print(results)
 # In[ ]:
 
 
-database_train = db.Database('electricity', df_wide_train)
-database_train.panel('id')
-database_test = db.Database('electricity', df_wide_test)
+# database_train = db.Database('electricity', df_wide_train)
+# database_train.panel('id')
+# database_test = db.Database('electricity', df_wide_test)
 
 
 # In[ ]:
 
 
-P = {
-    j: MonteCarlo(models.logit(V, None, j))
-    for j in [1, 2, 3, 4]
-}
+# P = {
+#     j: MonteCarlo(models.logit(V, None, j))
+#     for j in [1, 2, 3, 4]
+# }
 
-simulate = {
-    f'Prob_alt{j}': P[j]
-    for j in [1, 2, 3, 4]
-}
+# simulate = {
+#     f'Prob_alt{j}': P[j]
+#     for j in [1, 2, 3, 4]
+# }
 
-biogeme_sim = bio.BIOGEME(database_test, simulate)
-biogeme_sim.model_name = 'per_choice_probs'
+# biogeme_sim = bio.BIOGEME(database_test, simulate)
+# biogeme_sim.model_name = 'per_choice_probs'
 
-probs = biogeme_sim.simulate(results.get_beta_values())
+# probs = biogeme_sim.simulate(results.get_beta_values())
 
 
 # Compute the brier score:
@@ -310,5 +310,5 @@ probs = biogeme_sim.simulate(results.get_beta_values())
 # print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_jj.shape[0], -1)), prob_jj),
 #                  sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_xx.shape[0], -1)), prob_xx),
 #                  sklearn.metrics.brier_score_loss(df_wide_test['choice'], probs)))
-print("-" * 31)
+# print("-" * 31)
 
