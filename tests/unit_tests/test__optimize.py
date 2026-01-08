@@ -100,6 +100,7 @@ def test__minimize():
     assert len(expected_hi["yk"]) == len(actual.hess_inv.yk)
     assert len(expected_hi["rho"]) == len(actual.hess_inv.rho)
 
+
 def test_hessian_no_finite_diff():
     def test_function(x, a, b, c, dummy_1, dummy_2):
         return a ** x[0] + b ** x[1] + a / c + x[2] ** 5
