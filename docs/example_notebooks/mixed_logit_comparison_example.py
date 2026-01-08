@@ -310,5 +310,5 @@ probs = biogeme_sim.simulate(results.get_beta_values())
 # print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_jj.shape[0], -1)), prob_jj),
 #                  sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_xx.shape[0], -1)), prob_xx),
 #                  sklearn.metrics.brier_score_loss(df_wide_test['choice'], probs)))
-# print("-" * 31)
+print("-" * 31)
 
