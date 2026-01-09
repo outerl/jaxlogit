@@ -3,6 +3,10 @@ MSLE estimation of linear-in-parameters mixed logit models. This package is base
 This package is work-in-progress and the API might change without notice. 
 
 
+## Why use Jaxlogit?
+While there are many packages out there that can compute mixed logit models, jaxlogit is unique in its processing speed and capabilities, which come from using jax and just in time compilation. You can see the comparison [here](https://github.com/outerl/jaxlogit/blob/main/examples/mixed_logit_comparison_example.ipynb). Because jaxlogit specialises in linear models, it can use accelerated linear algebra to do the matrix multiplication, which significantly increases the speed. Jaxlogit can also work with large quanities of data by calculating them in batches, reducing memory load. This can be seen in [this example](https://outerl.github.io/jaxlogit/example_notebooks/batching_example.html).
+
+
 ## Quick Start
 This example uses `jaxlogit` to to estimate a mixed logit model for choices of transport method using the swissmetro dataset. It contains stated-preferences for three alternative transportation modes that include car, train and a newly introduced mode: the swissmetro. The dataset is available [here](http://transp-or.epfl.ch/data/swissmetro.dat) and [Bierlaire et. al., (2001)](https://transp-or.epfl.ch/documents/proceedings/BierAxhaAbay01.pdf) provides a detailed discussion of the data as well as its context and collection process. 
 
@@ -119,6 +123,6 @@ If out of memory, the data can be batched as well.
 
 ## Quick Install
 
-Clone the [repo](https://github.com/outerl/jaxlogit). Planned to be installable via PyPI.
+Currently available on test PyPI `pip install -i https://test.pypi.org/simple/ jaxlogit`.
 
-
+Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
