@@ -88,7 +88,7 @@ database_train.panel('id')
 database_test = db.Database('electricity', df_wide_test)
 
 # %% [markdown] 
-# ### jaxlogit and xlogit setup:
+# jaxlogit and xlogit setup:
 
 # %%
 X_train = df_train[varnames]
@@ -122,7 +122,7 @@ config = ConfigData(
 init_coeff = None
 
 # %% [markdown] 
-# ### Biogeme setup:
+# Biogeme setup:
 
 # %%
 X = {
@@ -167,7 +167,7 @@ V = {
 
 # %% [markdown] 
 # ## Make the models
-# ### Jaxlogit:
+# Jaxlogit:
 
 # %%
 model_jax.fit(
@@ -183,7 +183,7 @@ display(model_jax.summary())
 init_coeff_j = model_jax.coeff_
 
 # %% [markdown] 
-# ### xlogit:
+# xlogit:
 
 # %%
 model_x.fit(
@@ -203,7 +203,7 @@ display(model_x.summary())
 init_coeff_x = model_x.coeff_
 
 # %% [markdown] 
-# ### Biogeme:
+# Biogeme:
 
 # %%
 prob = models.logit(V, None, choice)
@@ -234,7 +234,7 @@ print("-" * 58)
 
 # %% [markdown] 
 # ## Predict
-# ### jaxlogit:
+# jaxlogit:
 
 # %%
 model = model_jax 
@@ -252,13 +252,13 @@ config.init_coeff = init_coeff_j
 prob_jj = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
 
 # %% [markdown] 
-# ### xlogit:
+# xlogit:
 
 # %%
 _, prob_xx = model_x.predict(X_test, varnames, alts_test, ids_test, isvars=None, panels=panels_test, n_draws=n_draws, return_proba=True)
 
 # %% [markdown] 
-# ### Biogeme:
+# Biogeme:
 
 
 # %%
@@ -278,7 +278,7 @@ biogeme_sim.model_name = 'per_choice_probs'
 probs = biogeme_sim.simulate(results.get_beta_values())
 
 # %% [markdown] 
-# ### Compute the brier score:
+# Compute the brier score:
 
 # %%
 print("{:>9} {:>9} {:>9}".format("Jaxlogit", "xlogit", "Biogeme"))
