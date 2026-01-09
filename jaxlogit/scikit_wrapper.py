@@ -157,19 +157,29 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
             batch_size=self.batch_size,
         )
 
+    def generate_varnames_alts_ids(self, X, alts, ids):
+        print(f"{self.varnames=}, {alts=}, {ids=}")
+
+        data_length = X.shape[0]
+        number_of_variables = X.shape[1]
+        if not self.varnames:
+            if alts is not None:
+                self.varnames = np.unique(alts)
+            else:
+                self.varnames = [f"x{i}" for i in range(number_of_variables)]
+        if alts is None:
+            alts = np.tile(self.classes_, data_length // len(self.classes_))
+
+        if ids is None:
+            ids = np.repeat(np.arange(data_length // len(self.classes_)), len(self.classes_))
+
+        return alts, ids
+
     def predict(self, X, y=None, alts=None, ids=None):
         if self.coeff_ is None:
             raise NotFittedError
 
-        if self.varnames == ():
-            if alts is not None:
-                self.varnames = np.unique(alts)
-            else:
-                number_of_variables = X.shape[1]
-                self.varnames = [f"x{i}" for i in range(number_of_variables)]
-                alts = np.tile(self.varnames, X.shape[0] // number_of_variables)
-        if ids is None:
-            ids = np.repeat(np.arange(X.shape[0] // len(self.varnames)), len(self.varnames))
+        alts, ids = self.generate_varnames_alts_ids(X, alts, ids)
 
         randvars = dict(self.randvars)
 
@@ -178,6 +188,7 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
 
         # create config from estimator attributes
         config = self._get_config()
+        print("Setting init coeffs to", self.coeff_)
         config.init_coeff = self.coeff_
 
         # initialize and fit the underlying MixedLogit model
@@ -185,7 +196,13 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         # print(X, X[varnames])
         mean_probabilities = self.model_.predict(X, self.varnames, alts, ids, randvars, config)
 
-        return mean_probabilities
+        predicted_alternatives_indicies = np.argmax(mean_probabilities, axis=1)
+
+        predicted_alternatives = np.array([self.classes_[index] for index in predicted_alternatives_indicies])
+
+        long_format_predicted_alternatives = np.repeat(predicted_alternatives, len(self.classes_))
+
+        return long_format_predicted_alternatives
 
     def fit(self, X, y, alts=None, ids=None):
         """Fit Mixed Logit model.
@@ -212,15 +229,11 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         Additional configuration options such as `weights`, `avail`, `panels`,
         `maxiter`, `n_draws`, and optimization settings are specified in `__init__`.
         """
-        if self.varnames == ():
-            if alts is not None:
-                self.varnames = np.unique(alts)
-            else:
-                number_of_variables = X.shape[1]
-                self.varnames = [f"x{i}" for i in range(number_of_variables)]
-                alts = np.tile(self.varnames, X.shape[0] // number_of_variables)
-        if ids is None:
-            ids = np.repeat(np.arange(X.shape[0] // len(self.varnames)), len(self.varnames))
+        if alts is None:
+            self.classes_ = np.unique(y)
+        else:
+            self.classes_ = np.unique(alts)
+        alts, ids = self.generate_varnames_alts_ids(X, alts, ids)
 
         randvars = dict(self.randvars)
         # Validate required parameters
@@ -248,9 +261,6 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         self.model_ = MixedLogit()
         # print(X, X[varnames])
         self.model_.fit(X, y, self.varnames, alts, ids, randvars, config, self.verbose)
-
-        # store sklearn-required attributes
-        self.classes_ = np.unique(y)  # Required by ClassifierMixin
 
         # expose fitted model attributes at wrapper level
         self.convergence = self.model_.convergence
@@ -280,7 +290,7 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         return self
 
 
-# if __name__ == "__main__":
-#     from sklearn.utils.estimator_checks import check_estimator
+if __name__ == "__main__":
+    from sklearn.utils.estimator_checks import check_estimator
 
-#     check_estimator(MixedLogitEstimator())
+    check_estimator(MixedLogitEstimator())
