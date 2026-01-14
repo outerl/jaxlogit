@@ -126,3 +126,7 @@ If out of memory, the data can be batched as well.
 Currently available on test PyPI `pip install -i https://test.pypi.org/simple/ jaxlogit`.
 
 Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
+
+## Benchmark
+As shown in the plot below, jaxlogit with batching uses significantly less memory than xlogit. The results were obtained using at ...
+![Graph comparing memory usage of jaxlogit and xlogit](docs/graphs/memory_comparison_batches.png)
