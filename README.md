@@ -128,5 +128,5 @@ Currently available on test PyPI `pip install -i https://test.pypi.org/simple/ j
 Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
 
 ## Benchmark
-As shown in the plot below, jaxlogit with batching uses significantly less memory than xlogit. The results were obtained using at ...
+As shown in the plot below, jaxlogit with batching uses significantly less memory than xlogit. The results were obtained using an AMD Ryzen 9 600HX graphics card.
 ![Graph comparing memory usage of jaxlogit and xlogit](docs/graphs/memory_comparison_batches.png)
