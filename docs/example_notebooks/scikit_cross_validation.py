@@ -37,7 +37,7 @@ df_wide["custom_id"] = np.arange(len(df_wide))  # Add unique identifier
 df_wide
 # %% [markdown] 
 # ### Reshape data
-# This scikit learn interface uses the data in wide format. Here are data transformations and adding alternative specific constraints using pandas dataframes. Data for each alternative is in the form `alternative_variable`, so for the cost of the train option, it would be `TRAIN_CO`.
+# This scikit learn interface uses the data in wide format. Here are data transformations and adding alternative specific constraints using pandas dataframes. Data headings for each alternative and variable pair is in the form `alternative_variable`, so for the cost of the train option, it would be `TRAIN_CO`.
 # %%
 varnames = ["CO", "TT"]
 alternatives = ["TRAIN", "CAR", "SM"]

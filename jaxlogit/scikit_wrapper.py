@@ -41,6 +41,8 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
+        alternatives : list-like
+            Names of valid alternatives that were chosen.
         varnames : list-like of shape (n_features,), required
             Names of explanatory variables that must match the number and order of
             columns in ``X``.
@@ -180,11 +182,11 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         df = wide_to_long(
             X,
             id_col="custom_id",
-            alt_name="alt",
+            alt_name="alt",  # can be hard coded
             sep="_",
-            alt_list=["TRAIN", "SM", "CAR"],
+            alt_list=self.classes_,
             empty_val=0,
-            varying=["TT", "CO", "ASC_CAR", "ASC_TRAIN"],
+            varying=self.varnames,
             alt_is_prefix=True,
         )
 
@@ -199,8 +201,6 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         predicted_alternatives_indicies = np.argmax(mean_probabilities, axis=1)
 
         predicted_alternatives = np.array([self.classes_[index] for index in predicted_alternatives_indicies])
-
-        # long_format_predicted_alternatives = np.repeat(predicted_alternatives, len(self.classes_))
 
         return predicted_alternatives
 
