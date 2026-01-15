@@ -31,6 +31,7 @@ df_wide = pd.read_table("http://transp-or.epfl.ch/data/swissmetro.dat", sep="\t"
 
 # Keep only observations for commute and business purposes that contain known choices
 df_wide = df_wide[(df_wide["PURPOSE"].isin([1, 3]) & (df_wide["CHOICE"] != 0))]
+df_wide["CHOICE"] = df_wide["CHOICE"].map({1: "TRAIN", 2: "SM", 3: "CAR"})
 
 df_wide["custom_id"] = np.arange(len(df_wide))  # Add unique identifier
 df_wide

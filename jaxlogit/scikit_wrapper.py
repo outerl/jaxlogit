@@ -161,27 +161,9 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
             batch_size=self.batch_size,
         )
 
-    def generate_varnames_alts_ids(self, X, alts, ids):
-        data_length = X.shape[0]
-        number_of_variables = X.shape[1]
-        if not self.varnames:
-            if alts is not None:
-                self.varnames = np.unique(alts)
-            else:
-                self.varnames = [f"x{i}" for i in range(number_of_variables)]
-        if alts is None:
-            alts = np.tile(self.classes_, data_length // len(self.classes_))
-
-        if ids is None:
-            ids = np.repeat(np.arange(data_length // len(self.classes_)), len(self.classes_))
-
-        return alts, ids
-
     def predict(self, X, y=None):
         if self.coeff_ is None:
             raise NotFittedError
-
-        # alts, ids = self.generate_varnames_alts_ids(X, alts, ids)
 
         randvars = dict(self.randvars)
 
@@ -222,7 +204,7 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
 
         return predicted_alternatives
 
-    def fit(self, X, y, alts=None, ids=None):
+    def fit(self, X, y):
         """Fit Mixed Logit model.
 
         Parameters
