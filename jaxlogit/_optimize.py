@@ -3,6 +3,9 @@ import logging
 import jax
 import jax.numpy as jnp
 
+from jax.scipy.optimize import minimize as jminimize
+from scipy.optimize import minimize
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,15 +16,6 @@ STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
     if method in ["L-BFGS-B", "BFGS"]:
-        from scipy.optimize import minimize
-
-        if jit_loglik:
-            neg_loglik_and_grad = jax.jit(
-                jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
-            )
-        else:
-            # If we are batching, we provide both
-            neg_loglik_and_grad = loglik_fn
 
         def neg_loglike_scipy(betas, *args):
             """Wrapper for neg_loglike to use with scipy."""
@@ -29,6 +23,14 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
             return neg_loglik_and_grad(x, *args)
 
         if method == "L-BFGS-B":
+            if jit_loglik:
+                neg_loglik_and_grad = jax.jit(
+                    jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
+                )
+            else:
+                # If we are batching, we provide both
+                neg_loglik_and_grad = loglik_fn
+
             return minimize(
                 neg_loglike_scipy,
                 x,
@@ -39,12 +41,18 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 options=options,
             )
         elif method == "BFGS":
-            return minimize(
+            if jit_loglik:
+                neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
+            else:
+                # If we are batching, we provide both
+                neg_loglik_and_grad = loglik_fn
+
+            return jminimize(
                 neg_loglike_scipy,
                 x,
                 args=args,
-                jac=True,
                 method="BFGS",
+                tol=tol,
                 options=options,
             )
         else:
