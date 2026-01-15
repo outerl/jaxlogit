@@ -1,9 +1,11 @@
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import validate_data
 from sklearn.exceptions import NotFittedError
+
 
 from jaxlogit.mixed_logit import MixedLogit
 from jaxlogit._config_data import ConfigData
+from jaxlogit.utils import wide_to_long
+
 
 import numpy as np
 
@@ -11,6 +13,7 @@ import numpy as np
 class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
     def __init__(
         self,
+        alternatives=(),
         varnames=(),
         randvars=(),
         weights=None,
@@ -110,6 +113,7 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
 
         """
         # Store all parameters as attributes
+        self.alternatives = alternatives
         self.varnames = varnames
         self.randvars = randvars
         self.weights = weights
@@ -158,8 +162,6 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         )
 
     def generate_varnames_alts_ids(self, X, alts, ids):
-        print(f"{self.varnames=}, {alts=}, {ids=}")
-
         data_length = X.shape[0]
         number_of_variables = X.shape[1]
         if not self.varnames:
@@ -175,34 +177,50 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
 
         return alts, ids
 
-    def predict(self, X, y=None, alts=None, ids=None):
+    def predict(self, X, y=None):
         if self.coeff_ is None:
             raise NotFittedError
 
-        alts, ids = self.generate_varnames_alts_ids(X, alts, ids)
+        # alts, ids = self.generate_varnames_alts_ids(X, alts, ids)
 
         randvars = dict(self.randvars)
 
         # Input validation
-        X = validate_data(self, X, reset=False)
+        # X = validate_data(self, X, reset=False)
 
         # create config from estimator attributes
         config = self._get_config()
-        print("Setting init coeffs to", self.coeff_)
         config.init_coeff = self.coeff_
+
+        X.insert(loc=0, column="CHOICE", value=np.tile("None", len(X)))
+        X.insert(loc=0, column="custom_id", value=np.arange(len(X)))
+
+        df = wide_to_long(
+            X,
+            id_col="custom_id",
+            alt_name="alt",
+            sep="_",
+            alt_list=["TRAIN", "SM", "CAR"],
+            empty_val=0,
+            varying=["TT", "CO", "ASC_CAR", "ASC_TRAIN"],
+            alt_is_prefix=True,
+        )
+
+        X.drop(columns=["CHOICE", "custom_id"], inplace=True)
 
         # initialize and fit the underlying MixedLogit model
         self.model_ = MixedLogit()
-        # print(X, X[varnames])
-        mean_probabilities = self.model_.predict(X, self.varnames, alts, ids, randvars, config)
+        mean_probabilities = self.model_.predict(
+            df[self.varnames], self.varnames, self.alts, self.ids, randvars, config
+        )
 
         predicted_alternatives_indicies = np.argmax(mean_probabilities, axis=1)
 
         predicted_alternatives = np.array([self.classes_[index] for index in predicted_alternatives_indicies])
 
-        long_format_predicted_alternatives = np.repeat(predicted_alternatives, len(self.classes_))
+        # long_format_predicted_alternatives = np.repeat(predicted_alternatives, len(self.classes_))
 
-        return long_format_predicted_alternatives
+        return predicted_alternatives
 
     def fit(self, X, y, alts=None, ids=None):
         """Fit Mixed Logit model.
@@ -229,38 +247,46 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         Additional configuration options such as `weights`, `avail`, `panels`,
         `maxiter`, `n_draws`, and optimization settings are specified in `__init__`.
         """
-        if alts is None:
+        if self.alternatives is None or self.alternatives == ():
             self.classes_ = np.unique(y)
         else:
-            self.classes_ = np.unique(alts)
-        alts, ids = self.generate_varnames_alts_ids(X, alts, ids)
+            self.classes_ = self.alternatives
 
         randvars = dict(self.randvars)
+
         # Validate required parameters
-        # if varnames is None:
-        #     raise ValueError(
-        #         "varnames is required. Provide a list of variable names that match the number and order of columns in X."
-        #     )
-        # if alts is None:
-        #     raise ValueError("alts is required. Provide alternative identifiers in long format.")
-        # if ids is None:
-        #     raise ValueError("ids is required. Provide sample identifiers in long format.")
-        # if randvars is None:
-        #     raise ValueError(
-        #         "randvars is required. Provide a dict with variable names as keys "
-        #         "and mixing distributions ('n', 'ln', 't', 'tn') as values."
-        #     )
 
         # validate data format
-        X, y = validate_data(self, X=X, y=y, accept_sparse=False, dtype="numeric")
+        # X, y = validate_data(self, X=X, y=y, accept_sparse=False, dtype="numeric")
 
         # create config from estimator attributes
         config = self._get_config()
 
+        # send to long format
+        X.insert(loc=0, column="CHOICE", value=y)
+        X.insert(loc=0, column="custom_id", value=np.arange(len(X)))
+
+        df = wide_to_long(
+            X,
+            id_col="custom_id",
+            alt_name="alt",  # can be hard coded
+            sep="_",
+            alt_list=self.classes_,
+            empty_val=0,
+            varying=self.varnames,
+            alt_is_prefix=True,
+        )
+
+        self.alts = df["alt"]
+        self.ids = df["custom_id"]
+
+        X.drop(columns=["CHOICE", "custom_id"], inplace=True)
+
         # initialize and fit the underlying MixedLogit model
         self.model_ = MixedLogit()
-        # print(X, X[varnames])
-        self.model_.fit(X, y, self.varnames, alts, ids, randvars, config, self.verbose)
+        self.model_.fit(
+            df[self.varnames], df["CHOICE"], self.varnames, self.alts, self.ids, randvars, config, self.verbose
+        )
 
         # expose fitted model attributes at wrapper level
         self.convergence = self.model_.convergence
@@ -288,9 +314,3 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
             self.hess_inv = self.model_.hess_inv
 
         return self
-
-
-if __name__ == "__main__":
-    from sklearn.utils.estimator_checks import check_estimator
-
-    check_estimator(MixedLogitEstimator())
