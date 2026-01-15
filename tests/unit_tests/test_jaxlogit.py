@@ -58,7 +58,7 @@ def test_bad_random_variables(simple_data):
         skip_std_errs=True,
     )
     with pytest.raises(
-        ValueError, match="Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, tn"
+        ValueError, match="Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, n_trunc"
     ):
         model.fit(X, y, varnames, alts, ids, randvars, config)
 
