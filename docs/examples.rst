@@ -9,3 +9,4 @@ Here are the Examples.
    example_notebooks/mixed_logit_correlated_example
    example_notebooks/mixed_logit_model_xlogit_example
    example_notebooks/batching_example
+   docs/example_notebooks/scikit_cross_validation

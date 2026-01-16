@@ -63,6 +63,7 @@ docs = [
     'jupytext',
     'ipykernel',
     'biogeme',
+    'scikit-learn',
 ]
 dev = ['jaxlogit[linting, devtools, tests]']
 
