@@ -3,8 +3,11 @@ import numpy as np
 import pandas as pd
 import pytest
 from pytest import approx
-from jaxlogit.mixed_logit import MixedLogit
+from jaxlogit.mixed_logit import MixedLogit, loglike_individual
 from time import time
+from jax.scipy.optimize import OptimizeResults
+import jax
+import jax.numpy as jnp
 
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
 y = np.array([0, 1, 0, 1, 0, 1])
@@ -208,14 +211,7 @@ def test_diff_nonchosen_chosen(setup):
 def fit_setup(setup):
     choiceModel = setup
     choiceModel._fit_start_time = time() - 5
-    optim_res = {
-        "success": True,
-        "message": "optimisation message",
-        "x": np.array([10, 11, 12]),
-        "fun": 5.12,
-        "nit": 9,
-        "nfev": 100,
-    }
+    optim_res = OptimizeResults(np.array([10, 11, 12]), True, -1, 5.12, None, np.array([[1, 0.5], [0.5, 4]]), 100, 9, None)
     coeff_names = ["a", "b", "c"]
     sample_size = 2
     fixedvars = {"a": 1.0}
@@ -249,18 +245,11 @@ def test_post_fit_skip_stderr(fit_setup):
 
 def test_post_fit_stderr(fit_setup):
     choiceModel, optim_res, coeff_names, sample_size, fixedvars = fit_setup
-    optim_res = {
-        "success": True,
-        "message": "optimisation message",
-        "x": np.array([10, 11]),
-        "fun": 5.12,
-        "nit": 9,
-        "nfev": 100,
-    }
+    optim_res = OptimizeResults(np.array([10, 11]), True, -1, 5.12, None, np.array([[1, 0.5], [0.5, 4]]), 100, 9, None)
+    grad_n = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
     coeff_names = ["a", "b"]
     # reuse values from test_robust_covariance
-    optim_res.hess_inv = np.array([[1, 0.5], [0.5, 4]])
-    choiceModel._post_fit(optim_res, coeff_names, sample_size, 2, fixedvars, False)
+    choiceModel._post_fit(optim_res, coeff_names, sample_size, 2, fixedvars, False, hess_inv= optim_res.hess_inv, grad_n=grad_n)
 
     assert np.array_equal(choiceModel.hess_inv, optim_res.hess_inv)
     expected = np.array([[0.016875, 0.050625], [0.050625, 0.15187502]])

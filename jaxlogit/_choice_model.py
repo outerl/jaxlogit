@@ -73,7 +73,7 @@ class ChoiceModel(ABC):  # noqa: B024
         mask=None,
         fixedvars=None,
         skip_std_errors=False,
-        grad_n=False,
+        grad_n=None,
         hess_inv=None
     ):
         logger.info("Post fit processing")

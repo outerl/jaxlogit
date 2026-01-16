@@ -134,7 +134,7 @@ def test_mixed_logit_fit_no_panels_weights(simple_data):
     )
     result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
     assert result is not None
-    assert "fun" in result
+    assert result.fun is not None
 
 
 def test_mixed_logit_fit_set_variables(simple_data):
