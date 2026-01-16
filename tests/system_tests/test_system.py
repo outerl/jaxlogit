@@ -14,15 +14,15 @@ from jaxlogit.mixed_logit import (
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 
 
-def estimate_model_parameters():
-    model, df, varnames, config = setup_correlated_example()
+def estimate_model_parameters(method):
+    model, df, varnames, config = setup_correlated_example(method)
     config.skip_std_errs = False
     model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
     return model
 
 
-def fix_parameters():
-    model, df, varnames, config = setup_correlated_example()
+def fix_parameters(method):
+    model, df, varnames, config = setup_correlated_example(method)
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     set_vars = {"ASC_SM": 0.0}
@@ -39,8 +39,8 @@ def fix_parameters():
     return model
 
 
-def error_components():
-    model, df, varnames, config = setup_correlated_example()
+def error_components(method):
+    model, df, varnames, config = setup_correlated_example(method)
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     randvars = {"ASC_CAR": "n", "ASC_TRAIN": "n", "ASC_SM": "n"}
@@ -58,7 +58,7 @@ def error_components():
         set_vars=set_vars,
         n_draws=1500,
         include_correlations=True,  # Enable correlation between random parameters
-        optim_method="BFGS",
+        optim_method=method,
     )
 
     model = MixedLogit()
@@ -88,7 +88,7 @@ def save_correlated_example():
             json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
-def setup_correlated_example():
+def setup_correlated_example(method):
     jax.config.update("jax_enable_x64", True)
 
     df_wide = pd.read_table("http://transp-or.epfl.ch/data/swissmetro.dat", sep="\t")
@@ -117,7 +117,7 @@ def setup_correlated_example():
     varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
     model = MixedLogit()
 
-    config = ConfigData(n_draws=1500, avail=(df["AV"]), panels=(df["ID"]), optim_method="BFGS", skip_std_errs=True)
+    config = ConfigData(n_draws=1500, avail=(df["AV"]), panels=(df["ID"]), optim_method=method, skip_std_errs=True)
 
     return model, df, varnames, config
 
@@ -167,12 +167,14 @@ def setup_batching_example():
 def test_previous_results(example: callable, file: str):
     with open(pathlib.Path(__file__).parent / "test_data" / file, "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    model = example()
+    model = example("BFGS")
+    compare_models(model, previous_model)
+    model = example("L-BFGS")
     compare_models(model, previous_model)
 
 
 def test_json():
-    before = estimate_model_parameters()
+    before = estimate_model_parameters("BFGS")
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "w") as f:
         json.dump(before, f, indent=4, cls=MixedLogitEncoder)
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "r") as f:
