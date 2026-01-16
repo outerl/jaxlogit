@@ -267,7 +267,7 @@ class MixedLogit(ChoiceModel):
             - ``'n'``: normal
             - ``'ln'``: lognormal
             - ``'t'``: triangular
-            - ``'tn'``: truncated normal
+            - ``'n_trunc'``: truncated normal
 
         verbose : int, default=1
             Verbosity of messages to show during estimation.
@@ -428,8 +428,8 @@ class MixedLogit(ChoiceModel):
             raise ValueError("The 'randvars' parameter is required for Mixed Logit estimation")
         if not set(randvars.keys()).issubset(Xnames):
             raise ValueError("Some variable names in 'randvars' were not found in the list of variable names")
-        if not set(randvars.values()).issubset(["n", "ln", "t", "tn", "n_trunc", "u"]):
-            raise ValueError("Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, tn")
+        if not set(randvars.values()).issubset(["n", "ln", "t", "n_trunc", "u"]):
+            raise ValueError("Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, n_trunc")
 
     def summary(self):
         """Show estimation results in console."""
