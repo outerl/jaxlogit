@@ -74,7 +74,7 @@ class ChoiceModel(ABC):  # noqa: B024
         fixedvars=None,
         skip_std_errors=False,
         grad_n=None,
-        hess_inv=None
+        hess_inv=None,
     ):
         logger.info("Post fit processing")
         self.convergence = optim_res.success
@@ -94,8 +94,15 @@ class ChoiceModel(ABC):  # noqa: B024
             self.zvalues = self.coeff_ / self.stderr
         self.pvalues = 2 * t.cdf(-np.abs(self.zvalues), df=sample_size)
         self.loglikelihood = -optim_res.fun
-        status_meaning = {1: "max BFGS iters reached", 3: "zoom failed", 4: "saddle point reached", 5: "max line search iters reached", -1: "undefined", 0: "unknown"}
-        self.estimation_message = status_meaning[int(optim_res.status)] # TODO: fix
+        status_meaning = {
+            1: "max BFGS iters reached",
+            3: "zoom failed",
+            4: "saddle point reached",
+            5: "max line search iters reached",
+            -1: "undefined",
+            0: "unknown",
+        }
+        self.estimation_message = status_meaning[int(optim_res.status)]  # TODO: fix
         self.coeff_names = coeff_names
         self.total_iter = optim_res.nit
         self.estim_time_sec = time() - self._fit_start_time

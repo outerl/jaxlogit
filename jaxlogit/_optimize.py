@@ -4,7 +4,6 @@ import jax
 import jax.numpy as jnp
 
 from jax.scipy.optimize import minimize as jminimize
-from scipy.optimize import minimize
 
 
 logger = logging.getLogger(__name__)

@@ -9,7 +9,6 @@ import jax.numpy as jnp
 import pytest
 import pathlib
 import json
-import sys
 
 
 def setup_minimize():
@@ -34,7 +33,7 @@ def setup_minimize():
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=None,
         # optim_method="L-BFGS-B",
-        optim_method="BFGS"
+        optim_method="BFGS",
     )
 
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
