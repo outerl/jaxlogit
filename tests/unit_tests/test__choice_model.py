@@ -5,6 +5,7 @@ import pytest
 from pytest import approx
 from jaxlogit.mixed_logit import MixedLogit
 from time import time
+from jax.scipy.optimize import OptimizeResults
 
 X = np.array([[2, 1], [1, 3], [3, 1], [2, 4], [2, 1], [2, 4]])
 y = np.array([0, 1, 0, 1, 0, 1])
@@ -208,14 +209,9 @@ def test_diff_nonchosen_chosen(setup):
 def fit_setup(setup):
     choiceModel = setup
     choiceModel._fit_start_time = time() - 5
-    optim_res = {
-        "success": True,
-        "message": "optimisation message",
-        "x": np.array([10, 11, 12]),
-        "fun": 5.12,
-        "nit": 9,
-        "nfev": 100,
-    }
+    optim_res = OptimizeResults(
+        np.array([10, 11, 12]), True, -1, 5.12, None, np.array([[1, 0.5], [0.5, 4]]), 100, 9, None
+    )
     coeff_names = ["a", "b", "c"]
     sample_size = 2
     fixedvars = {"a": 1.0}
@@ -227,11 +223,11 @@ def test_post_fit_basic(fit_setup):
     choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
 
     assert np.array_equal(coeff_names, choiceModel.coeff_names)
-    assert optim_res["message"] == choiceModel.estimation_message
-    assert choiceModel.total_iter == optim_res["nit"]
+    # assert optim_res.message == choiceModel.estimation_message
+    assert choiceModel.total_iter == optim_res.nit
     assert 5 == pytest.approx(choiceModel.estim_time_sec, abs=2)
     assert sample_size == choiceModel.sample_size
-    assert choiceModel.total_fun_eval == optim_res["nfev"]
+    assert choiceModel.total_fun_eval == optim_res.nfev
     assert choiceModel.loglikelihood == -5.12
     assert choiceModel.aic == -2 * choiceModel.loglikelihood + 2 * 2
     assert choiceModel.bic == pytest.approx(-2 * choiceModel.loglikelihood + 2 * np.log(sample_size))
@@ -249,22 +245,15 @@ def test_post_fit_skip_stderr(fit_setup):
 
 def test_post_fit_stderr(fit_setup):
     choiceModel, optim_res, coeff_names, sample_size, fixedvars = fit_setup
-    optim_res = {
-        "success": True,
-        "message": "optimisation message",
-        "x": np.array([10, 11]),
-        "fun": 5.12,
-        "nit": 9,
-        "nfev": 100,
-    }
+    optim_res = OptimizeResults(np.array([10, 11]), True, -1, 5.12, None, np.array([[1, 0.5], [0.5, 4]]), 100, 9, None)
+    grad_n = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
     coeff_names = ["a", "b"]
     # reuse values from test_robust_covariance
-    optim_res["hess_inv"] = np.array([[1, 0.5], [0.5, 4]])
-    optim_res["grad_n"] = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
-    choiceModel._post_fit(optim_res, coeff_names, sample_size, 2, fixedvars, False)
+    choiceModel._post_fit(
+        optim_res, coeff_names, sample_size, 2, fixedvars, False, hess_inv=optim_res.hess_inv, grad_n=grad_n
+    )
 
-    assert np.array_equal(choiceModel.grad_n, optim_res["grad_n"])
-    assert np.array_equal(choiceModel.hess_inv, optim_res["hess_inv"])
+    assert np.array_equal(choiceModel.hess_inv, optim_res.hess_inv)
     expected = np.array([[0.016875, 0.050625], [0.050625, 0.15187502]])
     for i in range(len(expected)):
         for j in range(len(expected[i])):
