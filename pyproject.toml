@@ -27,7 +27,7 @@ dependencies = [
     'numpy',
     'pandas',
     'scipy',
-    'sklearn',
+    'scikit-learn',
 ]
 
 [project.urls]
