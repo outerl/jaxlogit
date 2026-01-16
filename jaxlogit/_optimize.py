@@ -31,15 +31,7 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 # If we are batching, we provide both
                 neg_loglik_and_grad = loglik_fn
 
-            return minimize(
-                neg_loglike_scipy,
-                x,
-                args=args,
-                jac=True,
-                method="L-BFGS-B",
-                tol=tol,
-                options=options,
-            )
+            raise ValueError("Not currently supporting the method 'L-BFGS-B'")
         elif method == "BFGS":
             if jit_loglik:
                 neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
@@ -49,7 +41,7 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
 
             return jminimize(
                 neg_loglike_scipy,
-                x,
+                jnp.array(x),
                 args=args,
                 method="BFGS",
                 tol=tol,

@@ -53,7 +53,8 @@ def test_bad_random_variables(simple_data):
         panels=panels,
         weights=weights,
         n_draws=3,
-        optim_method="L-BFGS-B",
+        # optim_method="L-BFGS-B",
+        optim_method="BFGS",
         init_coeff=None,
         skip_std_errs=True,
     )
@@ -90,7 +91,8 @@ def test_mixed_logit_fit_different_variables(simple_data):
                 weights=weights,
                 n_draws=3,
                 set_vars=set_vars,
-                optim_method="L-BFGS-B",
+                # optim_method="L-BFGS-B",
+                optim_method="BFGS",
                 init_coeff=None,
                 include_correlations=include_correlations,
                 skip_std_errs=True,
@@ -108,7 +110,7 @@ def test_mixed_logit_fit_different_variables(simple_data):
             result = model.fit(X, y, varnames, alts, ids, randvars, config)
 
             assert result is not None
-            assert "fun" in result
+            assert result.fun is not None
             number_normal_and_lognormal = rand_var_types.count("n") + rand_var_types.count("ln")
             assert (
                 len(result.x)
@@ -128,7 +130,7 @@ def test_mixed_logit_fit_no_panels_weights(simple_data):
     set_vars = {}
 
     no_weights_or_panel_config = ConfigData(
-        avail=avail, n_draws=3, set_vars=set_vars, optim_method="L-BFGS-B", init_coeff=None, skip_std_errs=False
+        avail=avail, n_draws=3, set_vars=set_vars, optim_method="BFGS", init_coeff=None, skip_std_errs=False
     )
     result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
     assert result is not None
@@ -147,14 +149,15 @@ def test_mixed_logit_fit_set_variables(simple_data):
         weights=weights,
         n_draws=3,
         set_vars=set_vars,
-        optim_method="L-BFGS-B",
+        # optim_method="L-BFGS-B",
+        optim_method="BFGS",
         init_coeff=None,
         skip_std_errs=True,
     )
     model = MixedLogit()
     result = model.fit(X, y, varnames, alts, ids, randvars, config)
     assert result is not None
-    assert "fun" in result
+    assert result.fun is not None
     assert len(result.x) == 4  # two from normal distribution, two from un-parameterised variables
 
 

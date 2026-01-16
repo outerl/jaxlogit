@@ -341,8 +341,8 @@ class MixedLogit(ChoiceModel):
             return None
 
         _logger.info(
-            f"Optimization finished, success = {optim_res['success']}, final loglike = {-optim_res['fun']:.2f}"
-            + f", final gradient max = {optim_res['jac'].max():.2e}, norm = {jnp.linalg.norm(optim_res['jac']):.2e}."
+            f"Optimization finished, success = {optim_res.success}, final loglike = {-optim_res.fun:.2f}"
+            + f", final gradient max = {optim_res.jac.max():.2e}, norm = {jnp.linalg.norm(optim_res.jac):.2e}."
         )
 
         if config.skip_std_errs:
@@ -350,14 +350,14 @@ class MixedLogit(ChoiceModel):
         else:
             _logger.info("Calculating gradient of individual log-likelihood contributions")
             grad = jax.jacfwd(loglike_individual)
-            optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
+            optim_res.grad_n = grad(jnp.array(optim_res.x), *fargs[:-1])
 
             try:
                 _logger.info(
                     f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
                 )
                 H = hessian(
-                    neg_loglike, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian, *fargs
+                    neg_loglike, jnp.array(optim_res.x), config.hessian_by_row, config.finite_diff_hessian, *fargs
                 )
 
                 _logger.info("Inverting Hessian")
@@ -371,12 +371,12 @@ class MixedLogit(ChoiceModel):
                 else:
                     h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
 
-                optim_res["hess_inv"] = h_inv
+                optim_res.hess_inv = h_inv
             # TODO: narrow down to actual error here
-            # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res["grad_n"].T, optim_res["grad_n"])) as fallback?
+            # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res.grad_n.T, optim_res.grad_n)) as fallback?
             except Exception as e:
                 _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
-                optim_res["hess_inv"] = jnp.eye(len(optim_res["x"]))
+                optim_res.hess_inv = jnp.eye(len(optim_res.x))
 
         self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
         return optim_res

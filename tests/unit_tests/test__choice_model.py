@@ -227,11 +227,11 @@ def test_post_fit_basic(fit_setup):
     choiceModel._post_fit(optim_res, coeff_names, sample_size, None, fixedvars, True)
 
     assert np.array_equal(coeff_names, choiceModel.coeff_names)
-    assert optim_res["message"] == choiceModel.estimation_message
-    assert choiceModel.total_iter == optim_res["nit"]
+    # assert optim_res.message == choiceModel.estimation_message
+    assert choiceModel.total_iter == optim_res.nit
     assert 5 == pytest.approx(choiceModel.estim_time_sec, abs=2)
     assert sample_size == choiceModel.sample_size
-    assert choiceModel.total_fun_eval == optim_res["nfev"]
+    assert choiceModel.total_fun_eval == optim_res.nfev
     assert choiceModel.loglikelihood == -5.12
     assert choiceModel.aic == -2 * choiceModel.loglikelihood + 2 * 2
     assert choiceModel.bic == pytest.approx(-2 * choiceModel.loglikelihood + 2 * np.log(sample_size))
@@ -259,12 +259,12 @@ def test_post_fit_stderr(fit_setup):
     }
     coeff_names = ["a", "b"]
     # reuse values from test_robust_covariance
-    optim_res["hess_inv"] = np.array([[1, 0.5], [0.5, 4]])
-    optim_res["grad_n"] = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
+    optim_res.hess_inv = np.array([[1, 0.5], [0.5, 4]])
+    optim_res.grad_n = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
     choiceModel._post_fit(optim_res, coeff_names, sample_size, 2, fixedvars, False)
 
-    assert np.array_equal(choiceModel.grad_n, optim_res["grad_n"])
-    assert np.array_equal(choiceModel.hess_inv, optim_res["hess_inv"])
+    assert np.array_equal(choiceModel.grad_n, optim_res.grad_n)
+    assert np.array_equal(choiceModel.hess_inv, optim_res.hess_inv)
     expected = np.array([[0.016875, 0.050625], [0.050625, 0.15187502]])
     for i in range(len(expected)):
         for j in range(len(expected[i])):

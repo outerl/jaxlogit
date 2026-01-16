@@ -75,15 +75,15 @@ class ChoiceModel(ABC):  # noqa: B024
         skip_std_errors=False,
     ):
         logger.info("Post fit processing")
-        self.convergence = optim_res["success"]
-        self.coeff_ = optim_res["x"]
+        self.convergence = optim_res.success
+        self.coeff_ = optim_res.x
 
         if skip_std_errors:
-            self.covariance = jnp.eye(len(optim_res["x"]), len(optim_res["x"]))
+            self.covariance = jnp.eye(len(optim_res.x), len(optim_res.x))
         else:
-            self.grad_n = optim_res["grad_n"]
-            self.hess_inv = optim_res["hess_inv"]
-            self.covariance = jax.lax.stop_gradient(self._robust_covariance(optim_res["hess_inv"], optim_res["grad_n"]))
+            self.grad_n = optim_res.grad_n
+            self.hess_inv = optim_res.hess_inv
+            self.covariance = jax.lax.stop_gradient(self._robust_covariance(optim_res.hess_inv, optim_res.grad_n))
             if mask is not None:
                 self.covariance = self.covariance.at[mask, mask].set(0)
         self.stderr = jnp.sqrt(jnp.diag(self.covariance))
@@ -91,22 +91,23 @@ class ChoiceModel(ABC):  # noqa: B024
         with np.errstate(divide="ignore"):
             self.zvalues = self.coeff_ / self.stderr
         self.pvalues = 2 * t.cdf(-np.abs(self.zvalues), df=sample_size)
-        self.loglikelihood = -optim_res["fun"]
-        self.estimation_message = optim_res["message"]
+        self.loglikelihood = -optim_res.fun
+        status_meaning = {1: "max BFGS iters reached", 3: "zoom failed", 4: "saddle point reached", 5: "max line search iters reached", -1: "undefined", 0: "unknown"}
+        self.estimation_message = status_meaning[int(optim_res.status)] # TODO: fix
         self.coeff_names = coeff_names
-        self.total_iter = optim_res["nit"]
+        self.total_iter = optim_res.nit
         self.estim_time_sec = time() - self._fit_start_time
         self.sample_size = sample_size
         corr_ = 0 if fixedvars is None else len(fixedvars)
         self.aic = 2.0 * (len(self.coeff_) - corr_ - self.loglikelihood)
         self.bic = np.log(sample_size) * (len(self.coeff_) - corr_) - 2.0 * self.loglikelihood
-        self.total_fun_eval = optim_res["nfev"]
+        self.total_fun_eval = optim_res.nfev
         self.mask = mask
         self.fixedvars = fixedvars
 
         if not self.convergence:
             logger.warning("**** The optimization did not converge after {} iterations. ****".format(self.total_iter))
-            logger.info("Message: " + optim_res["message"])
+            logger.info("Message: " + self.estimation_message)
 
     def _robust_covariance(self, hess_inv, grad_n):
         """Estimates the robust covariance matrix.
