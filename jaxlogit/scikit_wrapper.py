@@ -176,21 +176,19 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         config = self._get_config()
         config.init_coeff = self.coeff_
 
-        X.insert(loc=0, column="CHOICE", value=np.tile("None", len(X)))
-        X.insert(loc=0, column="custom_id", value=np.arange(len(X)))
+        modified_X = X.assign(CHOICE=np.tile("None", len(X)))
+        modified_X.insert(loc=0, column="custom_id", value=np.arange(len(X)))
 
         df = wide_to_long(
-            X,
-            id_col="custom_id",
-            alt_name="alt",  # can be hard coded
+            modified_X,
+            id_col="custom_id",  # internal names can be hard coded
+            alt_name="alt",
             sep="_",
             alt_list=self.classes_,
             empty_val=0,
             varying=self.varnames,
             alt_is_prefix=True,
         )
-
-        X.drop(columns=["CHOICE", "custom_id"], inplace=True)
 
         # initialize and fit the underlying MixedLogit model
         self.model_ = MixedLogit()
@@ -245,13 +243,13 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         config = self._get_config()
 
         # send to long format
-        X.insert(loc=0, column="CHOICE", value=y)
-        X.insert(loc=0, column="custom_id", value=np.arange(len(X)))
+        modified_X = X.assign(CHOICE=y)
+        modified_X.insert(loc=0, column="custom_id", value=np.arange(len(X)))
 
         df = wide_to_long(
-            X,
-            id_col="custom_id",
-            alt_name="alt",  # can be hard coded
+            modified_X,
+            id_col="custom_id",  # internal names can be hard coded
+            alt_name="alt",
             sep="_",
             alt_list=self.classes_,
             empty_val=0,
@@ -261,8 +259,6 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
 
         self.alts = df["alt"]
         self.ids = df["custom_id"]
-
-        X.drop(columns=["CHOICE", "custom_id"], inplace=True)
 
         # initialize and fit the underlying MixedLogit model
         self.model_ = MixedLogit()

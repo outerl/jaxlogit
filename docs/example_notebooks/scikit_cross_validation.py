@@ -15,7 +15,6 @@ import pandas as pd
 import numpy as np
 import jax
 
-from jaxlogit.mixed_logit import MixedLogit, ConfigData
 #  64bit precision
 jax.config.update("jax_enable_x64", True)
 
@@ -26,7 +25,7 @@ jax.config.update("jax_enable_x64", True)
 # 
 # ### Read data
 # The dataset is imported and filtered.
-# # %%
+# %%
 df_wide = pd.read_table("http://transp-or.epfl.ch/data/swissmetro.dat", sep="\t")
 
 # Keep only observations for commute and business purposes that contain known choices
@@ -62,7 +61,7 @@ all_varnames = [alternative + seperator + varname for alternative in alternative
 all_varnames
 # %% [markdown] 
 # ### Creating and fitting a model
-# Options for the model are given in the creation of the esimtator. Note that variable names must be included here. 
+# Options for the model are given in the creation of the esimtator. Note that variable names must be included here. Panel data is currently not supported.
 #
 # Then the model can be fit when given the data.
 # %%
