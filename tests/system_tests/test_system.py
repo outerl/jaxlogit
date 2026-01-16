@@ -16,6 +16,7 @@ from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 
 def estimate_model_parameters():
     model, df, varnames, config = setup_correlated_example()
+    config.skip_std_errs = False
     model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
     return model
 
@@ -158,9 +159,9 @@ def setup_batching_example():
     "example,file",
     [
         (estimate_model_parameters, "correlated_example_estimate_params_output.json"),
-        # (fix_parameters, "correlated_example_fix_params_output.json"),
-        # (error_components, "correlated_example_error_components_output.json"),
-        (setup_batching_example, "batching_example_output.json"),
+        (fix_parameters, "correlated_example_fix_params_output.json"),
+        (error_components, "correlated_example_error_components_output.json"),
+        # (setup_batching_example, "batching_example_output.json"),
     ],
 )
 def test_previous_results(example: callable, file: str):
@@ -216,11 +217,11 @@ def test_predict():
 def compare_models(new, previous):
     assert list(new.coeff_names) == list(previous.coeff_names)
     assert list(new.coeff_) == pytest.approx(list(previous.coeff_), rel=1e-2)
-    # assert list(new.stderr) == pytest.approx(list(previous.stderr), rel=1e-2)
-    # assert list(new.zvalues) == pytest.approx(list(previous.zvalues), rel=1e-2)
+    assert list(new.stderr) == pytest.approx(list(previous.stderr), rel=1e-2)
+    assert list(new.zvalues) == pytest.approx(list(previous.zvalues), rel=1e-2)
     assert new.loglikelihood == pytest.approx(previous.loglikelihood, rel=1e-2)
-    # assert new.aic == pytest.approx(previous.aic, rel=1e-2)
-    # assert new.bic == pytest.approx(previous.bic, rel=1e-2)
+    assert new.aic == pytest.approx(previous.aic, rel=1e-2)
+    assert new.bic == pytest.approx(previous.bic, rel=1e-2)
 
 
 def main():

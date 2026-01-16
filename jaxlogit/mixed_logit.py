@@ -345,12 +345,14 @@ class MixedLogit(ChoiceModel):
             + f", final gradient max = {optim_res.jac.max():.2e}, norm = {jnp.linalg.norm(optim_res.jac):.2e}."
         )
 
+        grad_n = None
+        h_inv = optim_res.hess_inv
         if config.skip_std_errs:
             _logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
         else:
             _logger.info("Calculating gradient of individual log-likelihood contributions")
             grad = jax.jacfwd(loglike_individual)
-            optim_res.grad_n = grad(jnp.array(optim_res.x), *fargs[:-1])
+            grad_n = grad(jnp.array(optim_res.x), *fargs[:-1])
 
             try:
                 _logger.info(
@@ -371,14 +373,14 @@ class MixedLogit(ChoiceModel):
                 else:
                     h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
 
-                optim_res.hess_inv = h_inv
+                h_inv = h_inv
             # TODO: narrow down to actual error here
             # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res.grad_n.T, optim_res.grad_n)) as fallback?
             except Exception as e:
                 _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
-                optim_res.hess_inv = jnp.eye(len(optim_res.x))
+                h_inv = jnp.eye(len(optim_res.x))
 
-        self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
+        self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs, grad_n=grad_n, hess_inv=h_inv)
         return optim_res
 
     def _setup_randvars_info(self, randvars, Xnames):

@@ -73,6 +73,8 @@ class ChoiceModel(ABC):  # noqa: B024
         mask=None,
         fixedvars=None,
         skip_std_errors=False,
+        grad_n=False,
+        hess_inv=None
     ):
         logger.info("Post fit processing")
         self.convergence = optim_res.success
@@ -81,9 +83,9 @@ class ChoiceModel(ABC):  # noqa: B024
         if skip_std_errors:
             self.covariance = jnp.eye(len(optim_res.x), len(optim_res.x))
         else:
-            self.grad_n = optim_res.grad_n
-            self.hess_inv = optim_res.hess_inv
-            self.covariance = jax.lax.stop_gradient(self._robust_covariance(optim_res.hess_inv, optim_res.grad_n))
+            self.grad_n = grad_n
+            self.hess_inv = hess_inv if not None else optim_res.hess_inv
+            self.covariance = jax.lax.stop_gradient(self._robust_covariance(self.hess_inv, grad_n))
             if mask is not None:
                 self.covariance = self.covariance.at[mask, mask].set(0)
         self.stderr = jnp.sqrt(jnp.diag(self.covariance))

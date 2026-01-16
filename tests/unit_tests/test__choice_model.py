@@ -260,10 +260,8 @@ def test_post_fit_stderr(fit_setup):
     coeff_names = ["a", "b"]
     # reuse values from test_robust_covariance
     optim_res.hess_inv = np.array([[1, 0.5], [0.5, 4]])
-    optim_res.grad_n = np.array([[0, 0], [0.05, 0.05], [-0.05, -0.05]])
     choiceModel._post_fit(optim_res, coeff_names, sample_size, 2, fixedvars, False)
 
-    assert np.array_equal(choiceModel.grad_n, optim_res.grad_n)
     assert np.array_equal(choiceModel.hess_inv, optim_res.hess_inv)
     expected = np.array([[0.016875, 0.050625], [0.050625, 0.15187502]])
     for i in range(len(expected)):

@@ -15,30 +15,28 @@ STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_
 
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
-    if method in ["L-BFGS-B", "BFGS"]:
+    if method in ["L-BFGS", "BFGS"]:
+        if jit_loglik:
+            neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
+        else:
+            # If we are batching, we provide both
+            neg_loglik_and_grad = loglik_fn
 
         def neg_loglike_scipy(betas, *args):
             """Wrapper for neg_loglike to use with scipy."""
             x = jnp.array(betas)
             return neg_loglik_and_grad(x, *args)
 
-        if method == "L-BFGS-B":
-            if jit_loglik:
-                neg_loglik_and_grad = jax.jit(
-                    jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
-                )
-            else:
-                # If we are batching, we provide both
-                neg_loglik_and_grad = loglik_fn
-
-            raise ValueError("Not currently supporting the method 'L-BFGS-B'")
+        if method == "L-BFGS":
+            return jminimize(
+                neg_loglike_scipy,
+                jnp.array(x),
+                args=args,
+                method="l-bfgs-experimental-do-not-rely-on-this",
+                tol=tol,
+                options=options,
+            )
         elif method == "BFGS":
-            if jit_loglik:
-                neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
-            else:
-                # If we are batching, we provide both
-                neg_loglik_and_grad = loglik_fn
-
             return jminimize(
                 neg_loglike_scipy,
                 jnp.array(x),
@@ -48,10 +46,10 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 options=options,
             )
         else:
-            logger.error(f"Unknown optimization method: {method} exiting gracefully")
+            logger.error(f"Unknown optimization method2: {method} exiting gracefully")
             return None
     else:
-        logger.error(f"Unknown optimization method: {method} exiting gracefully")
+        logger.error(f"Unknown optimization method1: {method} exiting gracefully")
         return None
 
 
