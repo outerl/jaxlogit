@@ -151,11 +151,6 @@ class ParametersSetup:
                 return False
         return True
 
-    def __setattr__(self, name, value):
-        if getattr(self, "_frozen", False):
-            raise AttributeError("Object is frozen")
-        super().__setattr__(name, value)
-
     @classmethod
     def _from_state(cls, children, *, frozen):
         obj = cls.__new__(cls)  # bypass __init__
