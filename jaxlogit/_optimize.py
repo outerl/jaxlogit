@@ -2,6 +2,7 @@ import logging
 
 import jax
 import jax.numpy as jnp
+import jaxopt
 
 from jax.scipy.optimize import minimize as jminimize
 
@@ -14,7 +15,7 @@ STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_
 
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
-    if method in ["L-BFGS", "BFGS"]:
+    if method in ["L-BFGS", "BFGS", "L-BFGS-B"]:
         if jit_loglik:
             neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
         else:
@@ -44,6 +45,24 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
                 tol=tol,
                 options=options,
             )
+        elif method == "L-BFGS-B":
+            if jit_loglik:
+                neg_loglik_and_grad = jax.jit(
+                    jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
+                )
+            else:
+                # If we are batching, we provide both
+                neg_loglik_and_grad = loglik_fn
+
+            bounds = (
+                jnp.full_like(x, -jnp.inf),
+                jnp.full_like(x, jnp.inf),
+            )
+            
+            obj = jaxopt.LBFGSB(neg_loglik_and_grad, value_and_grad=True, maxiter=options["maxiter"])
+            result = obj.run(x, args=args, bounds=bounds)
+            print(result)
+            return result
         else:
             logger.error(f"Unknown optimization method2: {method} exiting gracefully")
             return None
