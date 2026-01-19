@@ -3,11 +3,13 @@ import jax.numpy as jnp
 from ._config_data import ConfigData
 import numpy as np
 import jax
+from jax.tree_util import register_pytree_node_class
 
 
 logger = logging.getLogger(__name__)
 
 
+@register_pytree_node_class
 class ParametersSetup:
     """EverythingParameters of the distributions for coefficients of explanatory variables.
 
@@ -148,3 +150,58 @@ class ParametersSetup:
             if not are_equal:
                 return False
         return True
+
+    def __setattr__(self, name, value):
+        if getattr(self, "_frozen", False):
+            raise AttributeError("Object is frozen")
+        super().__setattr__(name, value)
+
+    @classmethod
+    def _from_state(cls, children, *, frozen):
+        obj = cls.__new__(cls)  # bypass __init__
+        (
+            obj.random_idx,
+            obj.non_random_idx,
+            obj.rand_idx_norm,
+            obj.rand_idx_truncnorm,
+            obj.rand_idx_stddev,
+            obj.rand_idx_chol,
+            obj.draws_idx_norm,
+            obj.draws_idx_truncnorm,
+            obj.idx_ln_dist,
+            obj.mask,
+            obj.mask_chol,
+            obj.values_for_mask,
+            obj.values_for_chol_mask,
+        ) = children
+        obj._frozen = frozen
+
+        return obj
+
+    def tree_flatten(self):
+        children = (
+            self.random_idx,
+            self.non_random_idx,
+            self.rand_idx_norm,
+            self.rand_idx_truncnorm,
+            self.rand_idx_stddev,
+            self.rand_idx_chol,
+            self.draws_idx_norm,
+            self.draws_idx_truncnorm,
+            self.idx_ln_dist,
+            self.mask,
+            self.mask_chol,
+            self.values_for_mask,
+            self.values_for_chol_mask,
+        )
+        aux_data = {
+            "frozen": self._frozen,
+        }
+        return children, aux_data
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        return cls._from_state(
+            children,
+            frozen=aux_data["frozen"],
+        )
