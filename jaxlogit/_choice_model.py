@@ -96,6 +96,7 @@ class ChoiceModel(ABC):  # noqa: B024
         self.loglikelihood = -optim_res.fun
         status_meaning = {
             1: "max BFGS iters reached",
+            2: "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             3: "zoom failed",
             4: "saddle point reached",
             5: "max line search iters reached",

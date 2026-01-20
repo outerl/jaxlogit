@@ -548,7 +548,19 @@ def neg_loglike(
     draws,
     parameter_info: ParametersSetup,
     batch_size,
+    args=None,
 ):
+    if args is not None:
+        (Xdf,
+    Xdr,
+    panels,
+    weights,
+    avail,
+    num_panels,
+    force_positive_chol_diag,
+    draws,
+    parameter_info,
+    batch_size) = args
     loglik_individ = loglike_individual(
         betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info
     )

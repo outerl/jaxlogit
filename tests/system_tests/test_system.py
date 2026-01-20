@@ -26,7 +26,7 @@ def fix_parameters(method):
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     set_vars = {"ASC_SM": 0.0}
-    config = ConfigData(avail=df["AV"], panels=df["ID"], set_vars=set_vars, n_draws=1500, optim_method="BFGS")
+    config = ConfigData(avail=df["AV"], panels=df["ID"], set_vars=set_vars, n_draws=1000, optim_method="L-BFGS-B-scipy")
     model.fit(
         X=df[varnames],
         y=df["CHOICE"],
@@ -56,7 +56,7 @@ def error_components(method):
         avail=df["AV"],
         panels=df["ID"],
         set_vars=set_vars,
-        n_draws=1500,
+        n_draws=1000,
         include_correlations=True,  # Enable correlation between random parameters
         optim_method=method,
     )
@@ -117,7 +117,7 @@ def setup_correlated_example(method):
     varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
     model = MixedLogit()
 
-    config = ConfigData(n_draws=1500, avail=(df["AV"]), panels=(df["ID"]), optim_method=method, skip_std_errs=True)
+    config = ConfigData(n_draws=1000, avail=(df["AV"]), panels=(df["ID"]), optim_method=method, skip_std_errs=True)
 
     return model, df, varnames, config
 
@@ -128,9 +128,9 @@ def save_batching_example():
         json.dump(model, f, indent=4, cls=MixedLogitEncoder)
 
 
-def setup_batching_example():
+def setup_batching_example(method):
     df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
-    n_draws = 5000
+    n_draws = 1000
     varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
     model = MixedLogit()
 
@@ -140,7 +140,7 @@ def setup_batching_example():
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=539,
         # optim_method="L-BFGS-B",
-        optim_method="BFGS",
+        optim_method="L-BFGS-B-scipy",
     )
 
     model.fit(
@@ -161,20 +161,20 @@ def setup_batching_example():
         (estimate_model_parameters, "correlated_example_estimate_params_output.json"),
         (fix_parameters, "correlated_example_fix_params_output.json"),
         (error_components, "correlated_example_error_components_output.json"),
-        # (setup_batching_example, "batching_example_output.json"),
+        (setup_batching_example, "batching_example_output.json"),
     ],
 )
 def test_previous_results(example: callable, file: str):
     with open(pathlib.Path(__file__).parent / "test_data" / file, "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    model = example("BFGS")
+    model = example("L-BFGS-B-scipy")
     compare_models(model, previous_model)
-    model = example("L-BFGS")
+    model = example("L-BFGS-B-scipy")
     compare_models(model, previous_model)
 
 
 def test_json():
-    before = estimate_model_parameters("BFGS")
+    before = estimate_model_parameters("BFGS-scipy")
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "w") as f:
         json.dump(before, f, indent=4, cls=MixedLogitEncoder)
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "r") as f:
@@ -197,7 +197,7 @@ def test_predict():
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=539,
         # optim_method="L-BFGS-B",
-        optim_method="BFGS",
+        optim_method="L-BFGS-B-scipy",
     )
     config.init_coeff = model.coeff_
     prob = model.predict(

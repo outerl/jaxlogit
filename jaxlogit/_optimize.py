@@ -3,8 +3,12 @@ import logging
 import jax
 import jax.numpy as jnp
 import jaxopt
+import optax
+import optax.tree
 
+from scipy.optimize import minimize, OptimizeResult
 from jax.scipy.optimize import minimize as jminimize
+from jax.scipy.optimize import OptimizeResults as OR
 
 
 logger = logging.getLogger(__name__)
@@ -13,61 +17,125 @@ logger = logging.getLogger(__name__)
 STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_info"]
 
 
+def optax_minimize(loglik_fn, x, args, options):
+    def func(x):
+        return loglik_fn(x, *args)
+    solver = optax.lbfgs()
+    opt_state = solver.init(x)
+    value_and_grad = optax.value_and_grad_from_state(func)
+    success = False
+    for _ in range(options["maxiter"]):
+        value, grad = value_and_grad(x, state=opt_state)
+        updates, opt_state = solver.update(
+            grad, opt_state, x, value=value, grad=grad, value_fn=func
+        )
+        x = optax.apply_updates(x, updates)
+        iter_num = optax.tree.get(opt_state, 'count')
+        grad = optax.tree.get(opt_state, 'grad')
+        err = optax.tree.norm(grad)
+        if err < options["gtol"]:
+            success = True
+            break
+    return OR(x, success, 0, value, None, None, None, None, iter_num)
+
+
+def scipy_result_to_jax(result: OptimizeResult):
+    print(result["message"])
+    return OR(result["x"], result["success"], result["status"], result["fun"],
+              result["jac"], result["hess_inv"], result["nfev"], result["njev"],
+              result["nit"])
+
+
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
-    if method in ["L-BFGS", "BFGS", "L-BFGS-B"]:
+    if jit_loglik:
+        neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
+    else:
+        # If we are batching, we provide both
+        neg_loglik_and_grad = loglik_fn
+
+    def neg_loglike_scipy(betas, *args):
+        """Wrapper for neg_loglike to use with scipy."""
+        x = jnp.array(betas)
+        return neg_loglik_and_grad(x, *args)
+
+    if method == "L-BFGS-jax":
+        return jminimize(
+            neg_loglike_scipy,
+            jnp.array(x),
+            args=args,
+            method="l-bfgs-experimental-do-not-rely-on-this",
+            tol=tol,
+            options=options,
+        )
+    elif method == "BFGS-jax":
+        return jminimize(
+            neg_loglike_scipy,
+            jnp.array(x),
+            args=args,
+            method="BFGS",
+            tol=tol,
+            options=options,
+        )
+    elif method == "L-BFGS-B-jaxopt": # Not fully working yet
         if jit_loglik:
-            neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
+            neg_loglik_and_grad = jax.jit(
+                jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
+            )
         else:
             # If we are batching, we provide both
             neg_loglik_and_grad = loglik_fn
 
-        def neg_loglike_scipy(betas, *args):
-            """Wrapper for neg_loglike to use with scipy."""
-            x = jnp.array(betas)
-            return neg_loglik_and_grad(x, *args)
-
-        if method == "L-BFGS":
-            return jminimize(
-                neg_loglike_scipy,
-                jnp.array(x),
-                args=args,
-                method="l-bfgs-experimental-do-not-rely-on-this",
-                tol=tol,
-                options=options,
+        bounds = (
+            jnp.full_like(x, -jnp.inf),
+            jnp.full_like(x, jnp.inf),
+        )
+        
+        obj = jaxopt.LBFGSB(neg_loglik_and_grad, value_and_grad=True, maxiter=options["maxiter"])
+        result = obj.run(x, bounds, *args)
+        print(result)
+        return result
+    elif method == "L-BFGS-optax":
+        return optax_minimize(loglik_fn, x, args, options)
+    elif method == "L-BFGS-B-scipy":
+        print("using scipy")
+        if jit_loglik:
+            neg_loglik_and_grad = jax.jit(
+                jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
             )
-        elif method == "BFGS":
-            return jminimize(
-                neg_loglike_scipy,
-                jnp.array(x),
-                args=args,
-                method="BFGS",
-                tol=tol,
-                options=options,
-            )
-        elif method == "L-BFGS-B":
-            if jit_loglik:
-                neg_loglik_and_grad = jax.jit(
-                    jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
-                )
-            else:
-                # If we are batching, we provide both
-                neg_loglik_and_grad = loglik_fn
-
-            bounds = (
-                jnp.full_like(x, -jnp.inf),
-                jnp.full_like(x, jnp.inf),
-            )
-            
-            obj = jaxopt.LBFGSB(neg_loglik_and_grad, value_and_grad=True, maxiter=options["maxiter"])
-            result = obj.run(x, args=args, bounds=bounds)
-            print(result)
-            return result
         else:
-            logger.error(f"Unknown optimization method2: {method} exiting gracefully")
-            return None
+            # If we are batching, we provide both
+            neg_loglik_and_grad = loglik_fn
+        return scipy_result_to_jax(minimize(
+            neg_loglike_scipy,
+            x,
+            args=args,
+            jac=True,
+            method="L-BFGS-B",
+            tol=tol,
+            options=options,
+        ))
+    elif method == "BFGS-scipy":
+        print("using scipy")
+        if jit_loglik:
+            neg_loglik_and_grad = jax.jit(
+                jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
+            )
+        else:
+            # If we are batching, we provide both
+            neg_loglik_and_grad = loglik_fn
+        return scipy_result_to_jax(minimize(
+            neg_loglike_scipy,
+            x,
+            args=args,
+            jac=True,
+            method="BFGS",
+            tol=tol,
+            options=options,
+        ))
+        
     else:
-        logger.error(f"Unknown optimization method1: {method} exiting gracefully")
+        logger.error(f"Unknown optimization method: {method} exiting gracefully")
         return None
 
 

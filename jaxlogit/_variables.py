@@ -170,6 +170,7 @@ class ParametersSetup:
             obj.values_for_chol_mask,
         ) = children
         obj._frozen = frozen
+        obj._hash = None
 
         return obj
 
