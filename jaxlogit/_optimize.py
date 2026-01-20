@@ -48,12 +48,8 @@ def scipy_result_to_jax(result: OptimizeResult):
 
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
-    if jit_loglik:
-        neg_loglik_and_grad = jax.jit(loglik_fn, static_argnames=STATIC_LOGLIKE_ARGNAMES)
-    else:
-        # If we are batching, we provide both
-        neg_loglik_and_grad = loglik_fn
-
+    neg_loglik_and_grad = loglik_fn
+    
     def neg_loglike_scipy(betas, *args):
         """Wrapper for neg_loglike to use with scipy."""
         x = jnp.array(betas)
@@ -61,7 +57,7 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
 
     if method == "L-BFGS-jax":
         return jminimize(
-            neg_loglike_scipy,
+            loglik_fn,
             jnp.array(x),
             args=args,
             method="l-bfgs-experimental-do-not-rely-on-this",
@@ -116,7 +112,6 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
             options=options,
         ))
     elif method == "BFGS-scipy":
-        print("using scipy")
         if jit_loglik:
             neg_loglik_and_grad = jax.jit(
                 jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES

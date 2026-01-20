@@ -340,10 +340,10 @@ class MixedLogit(ChoiceModel):
             _logger.error("Optimization failed, returning None.")
             return None
 
-        _logger.info(
-            f"Optimization finished, success = {optim_res.success}, final loglike = {-optim_res.fun:.2f}"
-            + f", final gradient max = {optim_res.jac.max():.2e}, norm = {jnp.linalg.norm(optim_res.jac):.2e}."
-        )
+        # _logger.info(
+        #     f"Optimization finished, success = {optim_res.success}, final loglike = {-optim_res.fun:.2f}"
+        #     + f", final gradient max = {optim_res.jac.max():.2e}, norm = {jnp.linalg.norm(optim_res.jac):.2e}."
+        # )
 
         grad_n = None
         h_inv = optim_res.hess_inv
