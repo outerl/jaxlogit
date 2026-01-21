@@ -694,8 +694,6 @@ def loglike_individual(
     num_draws = max(1, draws.shape[2])
     loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / num_draws, LOG_PROB_MIN, jnp.inf))
 
-    assert (num_draws == 1500) or (num_draws == 1000)
-
     if weights is not None:
         loglik = loglik * weights
 
@@ -721,7 +719,7 @@ def probability_individual(
     else:
         UTIL_MAX = 87
 
-    R = max(1, draws.shape[2])
+    R = draws.shape[2]
 
     # mask for asserted parameters.
     if parameter_info.mask is not None:
