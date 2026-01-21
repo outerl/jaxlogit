@@ -719,7 +719,7 @@ def probability_individual(
     else:
         UTIL_MAX = 87
 
-    R = draws.shape[2]
+    R = max(1, draws.shape[2])
 
     # mask for asserted parameters.
     if parameter_info.mask is not None:
