@@ -27,7 +27,6 @@ dependencies = [
     'numpy',
     'pandas',
     'scipy',
-    'jaxopt',
 ]
 
 [project.urls]
