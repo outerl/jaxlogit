@@ -129,7 +129,7 @@ def save_batching_example():
 
 def setup_batching_example():
     df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
-    n_draws = 5000
+    n_draws = 1000
     varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
     model = MixedLogit()
 
