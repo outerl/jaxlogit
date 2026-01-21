@@ -17,13 +17,14 @@ logger = logging.getLogger(__name__)
 STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_info"]
 
 
-def optax_minimize(loglik_fn, x, args, options):
+def optax_minimize(loglik_fn, x, args, options, tol):
     def func(x):
         return loglik_fn(x, *args)
     solver = optax.lbfgs()
     opt_state = solver.init(x)
     value_and_grad = optax.value_and_grad_from_state(func)
     success = False
+    last_x = x
     for _ in range(options["maxiter"]):
         value, grad = value_and_grad(x, state=opt_state)
         updates, opt_state = solver.update(
@@ -36,11 +37,14 @@ def optax_minimize(loglik_fn, x, args, options):
         if err < options["gtol"]:
             success = True
             break
+        if abs(x - last_x).any() < tol:
+            success = True
+            break
+        last_x = x
     return OR(x, success, 0, value, None, None, None, None, iter_num)
 
 
 def scipy_result_to_jax(result: OptimizeResult):
-    print(result["message"])
     return OR(result["x"], result["success"], result["status"], result["fun"],
               result["jac"], result["hess_inv"], result["nfev"], result["njev"],
               result["nit"])
@@ -49,10 +53,11 @@ def scipy_result_to_jax(result: OptimizeResult):
 def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
     logger.info(f"Running minimization with method {method}")
     neg_loglik_and_grad = loglik_fn
+    x = jnp.array(x)
     
     def neg_loglike_scipy(betas, *args):
         """Wrapper for neg_loglike to use with scipy."""
-        x = jnp.array(betas)
+        # x = jnp.array(betas)
         return neg_loglik_and_grad(x, *args)
 
     if method == "L-BFGS-jax":
@@ -89,12 +94,10 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
         
         obj = jaxopt.LBFGSB(neg_loglik_and_grad, value_and_grad=True, maxiter=options["maxiter"])
         result = obj.run(x, bounds, *args)
-        print(result)
         return result
     elif method == "L-BFGS-optax":
-        return optax_minimize(loglik_fn, x, args, options)
+        return optax_minimize(loglik_fn, x, args, options, tol)
     elif method == "L-BFGS-B-scipy":
-        print("using scipy")
         if jit_loglik:
             neg_loglik_and_grad = jax.jit(
                 jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
