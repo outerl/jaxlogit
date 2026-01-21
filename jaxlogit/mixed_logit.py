@@ -691,8 +691,10 @@ def loglike_individual(
                 UTIL_MAX,
             )
         )
-    num_draws = max(1, draws.shape[2])
-    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / num_draws, LOG_PROB_MIN, jnp.inf))
+    # num_draws = max(1, draws.shape[2])
+    # loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / num_draws, LOG_PROB_MIN, jnp.inf))
+
+    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / draws.shape[2], LOG_PROB_MIN, jnp.inf))
 
     if weights is not None:
         loglik = loglik * weights
