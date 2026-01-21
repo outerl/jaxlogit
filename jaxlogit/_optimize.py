@@ -95,12 +95,12 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
 
     def neg_loglike_scipy(betas, *args):
         """Wrapper for neg_loglike to use with scipy."""
-        # x = jnp.array(betas)
+        x = jnp.array(betas)
         return neg_loglik_and_grad(x, *args)
 
     if method == "L-BFGS-jax":
         return jminimize(
-            loglik_fn,
+            neg_loglike_scipy,
             jnp.array(x),
             args=args,
             method="l-bfgs-experimental-do-not-rely-on-this",
