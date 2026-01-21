@@ -74,6 +74,7 @@ def test_no_random_variables(simple_data):
     assert not jnp.any(jnp.isneginf(probs))
 
 
+# consmetic change
 def test_bad_random_variables(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
