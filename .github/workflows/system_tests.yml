@@ -1,11 +1,9 @@
 name: System tests on all platforms
 
-# on:
-#   push:
-#     branches:
-#       - main
-
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   testing:
