@@ -42,6 +42,38 @@ def simple_data():
     return make_simple_data()
 
 
+def test_no_random_variables(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {}
+    config = ConfigData(
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        n_draws=3,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+    result = model.fit(X, y, varnames, alts, ids, randvars, config)
+    assert result is not None
+    assert "fun" in result
+
+    predict_config = ConfigData(
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        init_coeff=result["x"],
+    )
+    probs = model.predict(X, varnames, alts, ids, randvars, predict_config)
+    assert probs.shape == (X.shape[0] / X.shape[1], X.shape[1])  # this is true for non-panel data
+    assert not jnp.any(jnp.isnan(probs))
+    assert not jnp.any(jnp.isinf(probs))
+    assert not jnp.any(jnp.isneginf(probs))
+
+
 def test_bad_random_variables(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
@@ -198,6 +230,42 @@ def test_loglike_individual_and_total(simple_data):
     nll = neg_loglike(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info, 0)
     assert np.isscalar(nll) or (isinstance(nll, jnp.ndarray) and nll.shape == ())
     assert np.allclose(-nll, jnp.sum(ll_indiv), atol=1e-5)
+
+
+def test_no_random_variables_loglikes(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+    import pandas as pd
+
+    df = pd.DataFrame({name: X[:, i] for i, name in enumerate(varnames)})
+    df["choice"] = y
+    df["custom_id"] = ids
+    df["alt"] = alts
+    df["avail"] = avail
+    df["person_id_contiguous"] = panels
+    df["weight"] = weights
+
+    model = MixedLogit()
+    randvars = {}
+
+    set_vars = {}
+    config = ConfigData(
+        avail=np.array(df["avail"]),
+        panels=np.array(df["person_id_contiguous"]),
+        weights=np.array(df["weight"]),
+        n_draws=3,
+        set_vars=set_vars,
+        init_coeff=None,
+        include_correlations=False,
+    )
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
+        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config
+    )
+
+    ll_indiv = loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info)
+    assert not jnp.any(jnp.isnan(ll_indiv))
+    assert not jnp.any(jnp.isinf(ll_indiv))
+    assert not jnp.any(jnp.isneginf(ll_indiv))
 
 
 def test_probability_individual(simple_data):
