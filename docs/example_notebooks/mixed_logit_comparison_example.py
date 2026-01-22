@@ -40,7 +40,8 @@ from jaxlogit.utils import wide_to_long
 import biogeme.biogeme_logging as blog
 import biogeme.biogeme as bio
 from biogeme import models
-from biogeme.expressions import Beta, Draws, log, MonteCarlo, PanelLikelihoodTrajectory
+from biogeme.expressions import Beta, log, MonteCarlo, PanelLikelihoodTrajectory
+from biogeme.expressions.draws import Draws
 import biogeme.database as db
 from biogeme.expressions import Variable
 
