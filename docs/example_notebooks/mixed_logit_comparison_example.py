@@ -27,6 +27,9 @@
 # ## Setup
 
 # %%
+import os
+os.chdir("/home/evelyn/projects_shared/jaxlogit")
+
 import pandas as pd
 import numpy as np
 import jax
@@ -47,6 +50,8 @@ except ImportError:
     from biogeme.expressions import bioDraws as Draws # TODO fix
 import biogeme.database as db
 from biogeme.expressions import Variable
+
+os.chdir("/home/evelyn/projects_shared/jaxlogit/docs/example_notebooks")
 
 logger = blog.get_screen_logger()
 logger.setLevel(blog.INFO)
@@ -201,7 +206,7 @@ model_x.fit(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B-scipy",
+    optim_method="L-BFGS-B",
 )
 display(model_x.summary())
 init_coeff_x = model_x.coeff_
