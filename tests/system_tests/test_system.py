@@ -16,14 +16,14 @@ jax.config.update("jax_enable_x64", True)
 
 
 def estimate_model_parameters(method):
-    model, df, varnames, config = setup_correlated_example(method)
-    config.skip_std_errs = False
+    model, df, varnames = setup_correlated_example(method)
+    config = ConfigData(n_draws=1000, avail=(df["AV"]), panels=(df["ID"]), optim_method=method, skip_std_errs=False)
     model.fit(df[varnames], df["CHOICE"], varnames, df["alt"], df["custom_id"], {"TT": "n"}, config)
     return model
 
 
 def fix_parameters(method):
-    model, df, varnames, config = setup_correlated_example(method)
+    model, df, varnames = setup_correlated_example(method)
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     set_vars = {"ASC_SM": 0.0}
@@ -105,7 +105,7 @@ def setup_correlated_example(method):
         empty_val=0,
         varying=["TT", "CO", "HE", "AV", "SEATS"],
         alt_is_prefix=True,
-    )
+    ).copy(deep=True)
 
     df["ASC_TRAIN"] = np.ones(len(df)) * (df["alt"] == "TRAIN")
     df["ASC_CAR"] = np.ones(len(df)) * (df["alt"] == "CAR")
@@ -116,9 +116,7 @@ def setup_correlated_example(method):
     varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
     model = MixedLogit()
 
-    config = ConfigData(n_draws=1000, avail=(df["AV"]), panels=(df["ID"]), optim_method=method, skip_std_errs=True)
-
-    return model, df, varnames, config
+    return model, df, varnames
 
 
 def save_batching_example():
