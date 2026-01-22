@@ -116,7 +116,7 @@ def setup_correlated_example():
     varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
     model = MixedLogit()
 
-    config = ConfigData(n_draws=1500, avail=(df["AV"]), panels=(df["ID"]), optim_method="BFGS")
+    config = ConfigData(n_draws=1500, avail=(df["AV"]), panels=(df["ID"]), optim_method="L-BFGS-B")
 
     return model, df, varnames, config
 
@@ -128,6 +128,8 @@ def save_batching_example():
 
 
 def setup_batching_example():
+    jax.config.update("jax_enable_x64", True)
+
     df = pd.read_csv(pathlib.Path(__file__).parent.parent.parent / "examples/electricity_long.csv")
     n_draws = 1000
     varnames = ["pf", "cl", "loc", "wk", "tod", "seas"]
