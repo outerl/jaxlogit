@@ -114,12 +114,8 @@ def test_hessian_no_finite_diff():
     args = (a, b, c, dummy_1, dummy_2)
     x = np.repeat(0.1, 3)
     expected = np.array([np.array([3.0426044, 0.0, 0.0]), np.array([0.0, 0.5149368, 0.0]), np.array([0.0, 0.0, 0.02])])
-    assert expected == pytest.approx(
-        hessian(test_function, x, False, False, *args, static_argnames=("dummy_1", "dummy_2"))
-    )  # not hessian_by_row
-    assert expected == pytest.approx(
-        hessian(test_function, x, True, False, *args, static_argnames=("dummy_1", "dummy_2"))
-    )  # hessian_by_row
+    assert expected == pytest.approx(hessian(test_function, x, False, False, args))  # not hessian_by_row
+    assert expected == pytest.approx(hessian(test_function, x, True, False, args))  # hessian_by_row
 
 
 def test_hessian_finite_diff():
@@ -135,6 +131,4 @@ def test_hessian_finite_diff():
     args = (a, b, c, dummy_1, dummy_2)
     x = jnp.array([0.1, 0.1, 0.1])
     expected = np.array([np.array([3.0426044, 0.0, 0.0]), np.array([0.0, 0.5149368, 0.0]), np.array([0.0, 0.0, 0.02])])
-    assert expected == pytest.approx(
-        hessian(test_function, x, False, True, *args, static_argnames=("dummy_1", "dummy_2")), rel=5e-2
-    )
+    assert expected == pytest.approx(hessian(test_function, x, False, True, args), rel=5e-2)

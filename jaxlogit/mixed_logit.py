@@ -352,31 +352,31 @@ class MixedLogit(ChoiceModel):
             grad = jax.jacfwd(loglike_individual)
             optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
 
-            try:
-                _logger.info(
-                    f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
-                )
-                H = hessian(
-                    neg_loglike, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian, *fargs
-                )
+            _logger.info(
+                f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
+            )
 
-                _logger.info("Inverting Hessian")
-                # remove masked parameters to make it invertible
-                if parameter_info.mask is not None:
-                    mask_for_hessian = jnp.array([x for x in range(0, H.shape[0]) if x not in parameter_info.mask])
-                    h_free = H[jnp.ix_(mask_for_hessian, mask_for_hessian)]
-                    h_inv_nonfixed = jax.lax.stop_gradient(jnp.linalg.inv(h_free))
-                    h_inv = jnp.zeros_like(H)
-                    h_inv = h_inv.at[jnp.ix_(mask_for_hessian, mask_for_hessian)].set(h_inv_nonfixed)
-                else:
-                    h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
+            H = hessian(
+                neg_loglike,
+                jnp.array(optim_res["x"]),
+                config.hessian_by_row,
+                config.finite_diff_hessian,
+                fargs,
+            )
 
-                optim_res["hess_inv"] = h_inv
-            # TODO: narrow down to actual error here
+            _logger.info("Inverting Hessian")
+            # remove masked parameters to make it invertible
+            if parameter_info.mask is not None:
+                mask_for_hessian = jnp.array([x for x in range(0, H.shape[0]) if x not in parameter_info.mask])
+                h_free = H[jnp.ix_(mask_for_hessian, mask_for_hessian)]
+                h_inv_nonfixed = jax.lax.stop_gradient(jnp.linalg.inv(h_free))
+                h_inv = jnp.zeros_like(H)
+                h_inv = h_inv.at[jnp.ix_(mask_for_hessian, mask_for_hessian)].set(h_inv_nonfixed)
+            else:
+                h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
+
+            optim_res["hess_inv"] = h_inv
             # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res["grad_n"].T, optim_res["grad_n"])) as fallback?
-            except Exception as e:
-                _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
-                optim_res["hess_inv"] = jnp.eye(len(optim_res["x"]))
 
         self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
         return optim_res
@@ -694,6 +694,8 @@ def loglike_individual(
     num_draws = max(1, draws.shape[2])
     loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / num_draws, LOG_PROB_MIN, jnp.inf))
 
+    # loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / draws.shape[2], LOG_PROB_MIN, jnp.inf))
+
     if weights is not None:
         loglik = loglik * weights
 
@@ -720,6 +722,7 @@ def probability_individual(
         UTIL_MAX = 87
 
     R = max(1, draws.shape[2])
+    # R = draws.shape[2]
 
     # mask for asserted parameters.
     if parameter_info.mask is not None:
