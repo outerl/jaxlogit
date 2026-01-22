@@ -3,13 +3,11 @@ import jax.numpy as jnp
 from ._config_data import ConfigData
 import numpy as np
 import jax
-from jax.tree_util import register_pytree_node_class
 
 
 logger = logging.getLogger(__name__)
 
 
-@register_pytree_node_class
 class ParametersSetup:
     """EverythingParameters of the distributions for coefficients of explanatory variables.
 

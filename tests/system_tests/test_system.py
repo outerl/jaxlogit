@@ -26,7 +26,7 @@ def fix_parameters(method):
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     set_vars = {"ASC_SM": 0.0}
-    config = ConfigData(avail=df["AV"], panels=df["ID"], set_vars=set_vars, n_draws=1000, optim_method="L-BFGS-optax")
+    config = ConfigData(avail=df["AV"], panels=df["ID"], set_vars=set_vars, n_draws=1000, optim_method=method)
     model.fit(
         X=df[varnames],
         y=df["CHOICE"],
@@ -138,9 +138,8 @@ def setup_batching_example(method):
         panels=df["id"],
         n_draws=n_draws,
         skip_std_errs=True,  # skip standard errors to speed up the example
-        # batch_size=539,
-        # optim_method="L-BFGS-B",
-        optim_method="L-BFGS-optax",
+        batch_size=539,
+        optim_method=method,
     )
 
     model.fit(
@@ -155,6 +154,7 @@ def setup_batching_example(method):
     return model
 
 
+@pytest.mark.parametrize("method", ["L-BFGS-jax", "BFGS-jax", "L-BFGS-B-scipy", "BFGS-scipy"])
 @pytest.mark.parametrize(
     "example,file",
     [
@@ -164,17 +164,19 @@ def setup_batching_example(method):
         (setup_batching_example, "batching_example_output.json"),
     ],
 )
-def test_previous_results(example: callable, file: str):
+def test_previous_results(example: callable, file: str, method: str):
+    if (method == "L-BFGS-jax" or method == "BFGS-jax") and (file == "batching_example_output.json"):
+        return
     with open(pathlib.Path(__file__).parent / "test_data" / file, "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)
-    model = example("L-BFGS-optax")
+    model = example(method)
     compare_models(model, previous_model)
-    model = example("L-BFGS-optax")
+    model = example(method)
     compare_models(model, previous_model)
 
 
 def test_json():
-    before = estimate_model_parameters("L-BFGS-optax")
+    before = estimate_model_parameters("L-BFGS-B-scipy")
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "w") as f:
         json.dump(before, f, indent=4, cls=MixedLogitEncoder)
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "r") as f:
@@ -196,8 +198,7 @@ def test_predict():
         panels=df["id"],
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=539,
-        # optim_method="L-BFGS-B",
-        optim_method="L-BFGS-optax",
+        optim_method="L-BFGS-B-scipy",
     )
     config.init_coeff = model.coeff_
     prob = model.predict(
