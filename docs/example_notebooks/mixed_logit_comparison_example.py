@@ -41,7 +41,10 @@ import biogeme.biogeme_logging as blog
 import biogeme.biogeme as bio
 from biogeme import models
 from biogeme.expressions import Beta, log, MonteCarlo, PanelLikelihoodTrajectory
-from biogeme.expressions.draws import Draws
+try:
+    from biogeme.expressions import Draws
+except ImportError:
+    from biogeme.expressions import bioDraws as Draws # TODO fix
 import biogeme.database as db
 from biogeme.expressions import Variable
 
