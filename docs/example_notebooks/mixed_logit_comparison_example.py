@@ -27,8 +27,6 @@
 # ## Setup
 
 # %%
-import os
-os.chdir("/home/evelyn/projects_shared/jaxlogit")
 
 import pandas as pd
 import numpy as np
@@ -50,8 +48,6 @@ except ImportError:
     from biogeme.expressions import bioDraws as Draws # TODO fix
 import biogeme.database as db
 from biogeme.expressions import Variable
-
-os.chdir("/home/evelyn/projects_shared/jaxlogit/docs/example_notebooks")
 
 logger = blog.get_screen_logger()
 logger.setLevel(blog.INFO)
