@@ -42,7 +42,7 @@ def simple_data():
     return make_simple_data()
 
 
-def test_no_random_variables(simple_data):
+def test_no_random_variables_draws(simple_data):
     X, y, ids, alts, avail, panels, weights = simple_data
     varnames = [f"x{i}" for i in range(X.shape[1])]
 
@@ -66,6 +66,37 @@ def test_no_random_variables(simple_data):
         panels=panels,
         weights=weights,
         init_coeff=result.x,
+    )
+    probs = model.predict(X, varnames, alts, ids, randvars, predict_config)
+    assert probs.shape == (X.shape[0] / X.shape[1], X.shape[1])  # this is true for non-panel data
+    assert not jnp.any(jnp.isnan(probs))
+    assert not jnp.any(jnp.isinf(probs))
+    assert not jnp.any(jnp.isneginf(probs))
+
+
+def test_no_random_variables(simple_data):
+    X, y, ids, alts, avail, panels, weights = simple_data
+    varnames = [f"x{i}" for i in range(X.shape[1])]
+
+    model = MixedLogit()
+    randvars = {}
+    config = ConfigData(
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        optim_method="L-BFGS-B",
+        init_coeff=None,
+        skip_std_errs=True,
+    )
+    result = model.fit(X, y, varnames, alts, ids, randvars, config)
+    assert result is not None
+    assert "fun" in result
+
+    predict_config = ConfigData(
+        avail=avail,
+        panels=panels,
+        weights=weights,
+        init_coeff=result["x"],
     )
     probs = model.predict(X, varnames, alts, ids, randvars, predict_config)
     assert probs.shape == (X.shape[0] / X.shape[1], X.shape[1])  # this is true for non-panel data
