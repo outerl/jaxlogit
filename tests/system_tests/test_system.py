@@ -25,14 +25,7 @@ def fix_parameters():
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     set_vars = {"ASC_SM": 0.0}
-    config = ConfigData(
-        avail=df["AV"],
-        panels=df["ID"],
-        set_vars=set_vars,
-        n_draws=1500,
-        optim_method="BFGS",
-        skip_std_errs=True,  # skip standard errors to speed up the example
-    )
+    config = ConfigData(avail=df["AV"], panels=df["ID"], set_vars=set_vars, n_draws=1500, optim_method="BFGS")
     model.fit(
         X=df[varnames],
         y=df["CHOICE"],
@@ -123,13 +116,7 @@ def setup_correlated_example():
     varnames = ["ASC_CAR", "ASC_TRAIN", "CO", "TT"]
     model = MixedLogit()
 
-    config = ConfigData(
-        n_draws=1500,
-        avail=(df["AV"]),
-        panels=(df["ID"]),
-        optim_method="L-BFGS-B",
-        skip_std_errs=True,  # skip standard errors to speed up the example
-    )
+    config = ConfigData(n_draws=1500, avail=(df["AV"]), panels=(df["ID"]), optim_method="L-BFGS-B")
 
     return model, df, varnames, config
 
