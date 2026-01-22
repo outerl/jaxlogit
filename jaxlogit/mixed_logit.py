@@ -352,16 +352,16 @@ class MixedLogit(ChoiceModel):
             grad = jax.jacfwd(loglike_individual)
             optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
 
-            # try:
             _logger.info(
                 f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
             )
 
-            def neg_loglike_with_args(x):
-                return neg_loglike(x, *fargs)
-
             H = hessian(
-                neg_loglike_with_args, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian
+                neg_loglike,
+                jnp.array(optim_res["x"]),
+                config.hessian_by_row,
+                config.finite_diff_hessian,
+                fargs,
             )
 
             _logger.info("Inverting Hessian")
@@ -376,11 +376,7 @@ class MixedLogit(ChoiceModel):
                 h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
 
             optim_res["hess_inv"] = h_inv
-            # TODO: narrow down to actual error here
             # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res["grad_n"].T, optim_res["grad_n"])) as fallback?
-            # except Exception as e:
-            # _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
-            # optim_res["hess_inv"] = jnp.eye(len(optim_res["x"]))
 
         self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
         return optim_res
