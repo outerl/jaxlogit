@@ -80,14 +80,14 @@ df = df_wide.merge(
     validate='one_to_one'
 )
 
-df_wide_train, df_wide_test = sklearn.model_selection.train_test_split(df, train_size=0.8)
+df_wide_train, df_wide_test = sklearn.model_selection.train_test_split(df, train_size=0.2)
 df_train = wide_to_long(df_wide_train, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
 df_train = df_train.sort_values(['chid', 'alt'])
 df_test = wide_to_long(df_wide_test, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
 df_test = df_test.sort_values(['chid', 'alt'])
 
-df_small_train, _ = sklearn.model_selection.train_test_split(df, train_size=0.25)
-database_train = db.Database('electricity', df_small_train)
+df_wide_train = df_wide_train.sort_values('chid')
+database_train = db.Database('electricity', df_wide_train)
 database_train.panel('id')
 database_test = db.Database('electricity', df_wide_test)
 
