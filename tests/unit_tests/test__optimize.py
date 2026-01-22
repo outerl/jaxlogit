@@ -82,7 +82,6 @@ def setup_minimize():
     return optim_res
 
 
-
 def test__minimize():
     # expected values based on iteration comparable to other models
     with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "r") as f:

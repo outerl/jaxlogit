@@ -151,7 +151,6 @@ class ParametersSetup:
                 return False
         return True
 
-
     @classmethod
     def _from_state(cls, children, *, frozen):
         obj = cls.__new__(cls)  # bypass __init__

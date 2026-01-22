@@ -121,7 +121,7 @@ config = ConfigData(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B",
+    optim_method="L-BFGS-B-scipy",
 )
 init_coeff = None
 
@@ -201,7 +201,7 @@ model_x.fit(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B",
+    optim_method="L-BFGS-B-scipy",
 )
 display(model_x.summary())
 init_coeff_x = model_x.coeff_
@@ -247,7 +247,7 @@ config = ConfigData(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B",
+    optim_method="L-BFGS-B-scipy",
 )
 config.init_coeff = init_coeff_j
 

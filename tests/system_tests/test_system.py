@@ -12,6 +12,7 @@ from jaxlogit.mixed_logit import (
     ConfigData,
 )
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
+
 jax.config.update("jax_enable_x64", True)
 
 SEED = 999

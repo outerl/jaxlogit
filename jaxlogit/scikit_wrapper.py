@@ -28,7 +28,7 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
         tol_opts=None,
         num_hess=False,
         set_vars=None,
-        optim_method="L-BFGS-B",
+        optim_method="L-BFGS-B-scipy",
         skip_std_errs=False,
         include_correlations=False,
         force_positive_chol_diag=True,
