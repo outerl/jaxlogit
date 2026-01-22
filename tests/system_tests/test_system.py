@@ -14,8 +14,8 @@ from jaxlogit.mixed_logit import (
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 jax.config.update("jax_enable_x64", True)
 
-# SEED = 999
-# np.random.seed(SEED)
+SEED = 999
+np.random.seed(SEED)
 
 
 def estimate_model_parameters(method):
