@@ -356,8 +356,12 @@ class MixedLogit(ChoiceModel):
             _logger.info(
                 f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
             )
+
+            def neg_loglike_with_args(x):
+                return neg_loglike(x, *fargs)
+
             H = hessian(
-                neg_loglike, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian, *fargs
+                neg_loglike_with_args, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian
             )
 
             _logger.info("Inverting Hessian")
