@@ -14,6 +14,9 @@ from jaxlogit.mixed_logit import (
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
 jax.config.update("jax_enable_x64", True)
 
+# SEED = 999
+# np.random.seed(SEED)
+
 
 def estimate_model_parameters(method):
     model, df, varnames = setup_correlated_example(method)
@@ -41,7 +44,7 @@ def fix_parameters(method):
 
 
 def error_components(method):
-    model, df, varnames, config = setup_correlated_example(method)
+    model, df, varnames = setup_correlated_example(method)
     varnames = ["ASC_CAR", "ASC_TRAIN", "ASC_SM", "CO", "TT"]
     df["ASC_SM"] = np.ones(len(df)) * (df["alt"] == "SM")
     randvars = {"ASC_CAR": "n", "ASC_TRAIN": "n", "ASC_SM": "n"}
@@ -52,6 +55,7 @@ def error_components(method):
         "chol.ASC_CAR.ASC_TRAIN": 0.0,
         "chol.ASC_CAR.ASC_SM": 0.0,
     }  # Identification of error components, see J. Walker's PhD thesis (MIT 2001)
+    df = df.copy(deep=True)
 
     config = ConfigData(
         avail=df["AV"],
