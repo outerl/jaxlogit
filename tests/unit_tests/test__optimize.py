@@ -32,8 +32,7 @@ def setup_minimize():
         n_draws=n_draws,
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=None,
-        # optim_method="L-BFGS-B",
-        optim_method="BFGS",
+        optim_method="L-BFGS-B-scipy",
     )
 
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
@@ -83,7 +82,7 @@ def setup_minimize():
     return optim_res
 
 
-@pytest.mark.skip
+
 def test__minimize():
     # expected values based on iteration comparable to other models
     with open(pathlib.Path(__file__).parent / "test_data" / "optimize_minimize_output.json", "r") as f:

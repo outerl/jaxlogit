@@ -12,6 +12,7 @@ from jaxlogit.mixed_logit import (
     ConfigData,
 )
 from jaxlogit.MixedLogitEncoder import MixedLogitEncoder, mixed_logit_decoder
+jax.config.update("jax_enable_x64", True)
 
 
 def estimate_model_parameters(method):
@@ -89,8 +90,6 @@ def save_correlated_example():
 
 
 def setup_correlated_example(method):
-    jax.config.update("jax_enable_x64", True)
-
     df_wide = pd.read_table("http://transp-or.epfl.ch/data/swissmetro.dat", sep="\t")
     # Keep only observations for commute and business purposes that contain known choices
     df_wide = df_wide[(df_wide["PURPOSE"].isin([1, 3]) & (df_wide["CHOICE"] != 0))]
