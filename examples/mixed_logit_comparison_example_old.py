@@ -1,17 +1,35 @@
-# %% [markdown]
-# # Summary of time taken and brier scores for jaxlogit, xlogit, and biogeme
-# Where the estimation is using draws = 600 (suboptimal but highest without running out of memory in biogeme), and training and test data is separated.
-# 
-# | | jaxlogit-scipy | jaxlogit-jax | xlogit | biogeme |
-# |---|---|---|---|---|
-# |Making Model | 33.1s | 22.2s | 18.5s | 4:30 |
-# |Estimating | 1.6s | 0.2s | 0.0s | 14.3s |
-# |Brier Score | 0.624247 | 0.624247 | 0.624570 | 0.624163 |
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.18.1
+#   kernelspec:
+#     display_name: venv (3.10.12)
+#     language: python
+#     name: python3
+# ---
 
-# %% [markdown]
-# # Setup
+# %% [markdown] 
+# # Comparison of Jaxlogit, Xlogit, and Biogeme
+
+# ## Summary of time taken and brier scores for jaxlogit, xlogit, and biogeme
+# Where the estimation is using draws = 500, and training and test data is separated. While this number of draws is low, on Github's servers, Biogeme can only handle this many draws and about 30% of the dataset.
+# 
+# | | jaxlogit | xlogit | biogeme |
+# |---|---|---|---|
+# |Making Model | 37.7s | 16.9s | 4:15 |
+# |Estimating | 1.6s | 0.0s | 15.4s |
+# |Brier Score | 0.6345 | 0.6345 | 0.6345 |
+
+# ## Setup
 
 # %%
+
+import os
+os.chdir("/home/evelyn/projects_shared/jaxlogit")
 
 import pandas as pd
 import numpy as np
@@ -26,7 +44,11 @@ from jaxlogit.utils import wide_to_long
 import biogeme.biogeme_logging as blog
 import biogeme.biogeme as bio
 from biogeme import models
-from biogeme.expressions import Beta, Draws, log, MonteCarlo, PanelLikelihoodTrajectory
+from biogeme.expressions import Beta, log, MonteCarlo, PanelLikelihoodTrajectory
+try:
+    from biogeme.expressions import Draws
+except ImportError:
+    from biogeme.expressions import bioDraws as Draws # TODO fix
 import biogeme.database as db
 from biogeme.expressions import Variable
 
@@ -35,21 +57,22 @@ logger.setLevel(blog.INFO)
 
 #  64bit precision
 jax.config.update("jax_enable_x64", True)
-# %% [markdown]
+os.chdir("/home/evelyn/projects_shared/jaxlogit/docs/example_notebooks")
+
+# %% [markdown] 
 # # Get the full electricity dataset
 # 
-# Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 700 or more draws with this data set.
+# Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 600 or more draws with this data set.
 
 # %%
-df = pd.read_csv(pathlib.Path.cwd() / "electricity_long.csv")
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
-n_draws = 600
+n_draws = 500
 
-# %% [markdown]
+# %% [markdown] 
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
 
 # %%
-df_long = pd.read_csv(pathlib.Path.cwd() / "electricity_long.csv")
+df_long = pd.read_csv(pathlib.Path.cwd().parent.parent / "examples" / "electricity_long.csv")
 choice_df = df_long.loc[df_long['choice'] == 1, ['id', 'chid', 'alt']]
 choice_df = choice_df.rename(columns={'alt': 'choice'})
 df_wide = df_long.pivot(index=['id', 'chid'], columns='alt', values=varnames)
@@ -62,7 +85,7 @@ df = df_wide.merge(
     validate='one_to_one'
 )
 
-df_wide_train, df_wide_test = sklearn.model_selection.train_test_split(df, train_size=0.8)
+df_wide_train, df_wide_test = sklearn.model_selection.train_test_split(df, train_size=0.2)
 df_train = wide_to_long(df_wide_train, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
 df_train = df_train.sort_values(['chid', 'alt'])
 df_test = wide_to_long(df_wide_test, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
@@ -73,7 +96,7 @@ database_train = db.Database('electricity', df_wide_train)
 database_train.panel('id')
 database_test = db.Database('electricity', df_wide_test)
 
-# %% [markdown]
+# %% [markdown] 
 # jaxlogit and xlogit setup:
 
 # %%
@@ -91,15 +114,23 @@ ids_test = df_test['chid']
 alts_test = df_test['alt']
 panels_test = df_test['id']
 
+
 # %%
 randvars = {'pf': 'n', 'cl': 'n', 'loc': 'n', 'wk': 'n', 'tod': 'n', 'seas': 'n'}
 
 model_jax = MixedLogit()
 model_x = xlogit.MixedLogit()
 
+config = ConfigData(
+    panels=panels_train,
+    n_draws=n_draws,
+    skip_std_errs=True,  # skip standard errors to speed up the example
+    batch_size=None,
+    optim_method="L-BFGS-B-scipy",
+)
 init_coeff = None
 
-# %% [markdown]
+# %% [markdown] 
 # Biogeme setup:
 
 # %%
@@ -143,40 +174,11 @@ V = {
     for j in [1,2,3,4]
 }
 
-# %% [markdown]
-# # Make the models
+# %% [markdown] 
+# ## Make the models
 # Jaxlogit:
 
 # %%
-model_jax_scipy = MixedLogit()
-config = ConfigData(
-    panels=panels_train,
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=None,
-    optim_method="L-BFGS-B-scipy",
-)
-model_jax_scipy.fit(
-    X=X_train,
-    y=y_train,
-    varnames=varnames,
-    ids=ids_train,
-    alts=alts_train,
-    randvars=randvars,
-    config=config
-)
-display(model_jax_scipy.summary())
-init_coeff_scipy = model_jax_scipy.coeff_
-
-# %%
-model_jax = MixedLogit()
-config = ConfigData(
-    panels=panels_train,
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=None,
-    optim_method="L-BFGS-jax",
-)
 model_jax.fit(
     X=X_train,
     y=y_train,
@@ -187,9 +189,9 @@ model_jax.fit(
     config=config
 )
 display(model_jax.summary())
-init_coeff_jax = model_jax.coeff_
+init_coeff_j = model_jax.coeff_
 
-# %% [markdown]
+# %% [markdown] 
 # xlogit:
 
 # %%
@@ -209,7 +211,7 @@ model_x.fit(
 display(model_x.summary())
 init_coeff_x = model_x.coeff_
 
-# %% [markdown]
+# %% [markdown] 
 # Biogeme:
 
 # %%
@@ -223,30 +225,28 @@ the_biogeme.model_name = 'model_b'
 results = the_biogeme.estimate()
 print(results)
 
-# %% [markdown]
-# # Compare parameters:
+# %% [markdown] 
+# ## Compare parameters:
 
 # %%
-print("{:>13} {:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit-scipy", "Jaxlogit-jax", "xlogit", "biogeme"))
+print("{:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit", "xlogit", "Biogeme"))
 print("-" * 58)
-fmt = "{:13} {:13.7f} {:13.7f} {:13.7f} {:13.7f}"
-biogeme_values = results.getBetaValues()
+fmt = "{:13} {:13.7f} {:13.7f} {:13.7f}"
 coeff_names = {'pf': 'pf_mean', 'sd.pf': 'pf_sd', 'cl': 'cl_mean', 'sd.cl': 'cl_sd', 'loc': 'loc_mean', 'sd.loc': 'loc_sd', 'wk': 'wk_mean', 'sd.wk': 'wk_sd', 'tod': 'tod_mean', 'sd.tod': 'tod_sd', 'seas': 'seas_mean', 'sd.seas': 'seas_sd'}
 for i in range(len(model_jax.coeff_)):
     name = model_jax.coeff_names[i]
     print(fmt.format(name[:13], 
-                     model_jax_scipy.coeff_[i], 
                      model_jax.coeff_[i], 
-                     model_x.coeff_[i],
-                     biogeme_values[coeff_names[name]]))
+                     model_x.coeff_[i], 
+                     results.get_beta_values()[coeff_names[name]]))
 print("-" * 58)
 
-# %% [markdown]
-# # Predict
+# %% [markdown] 
+# ## Predict
 # jaxlogit:
 
 # %%
-model = model_jax_scipy 
+model = model_jax 
 config = ConfigData(
     panels=panels_test,
     n_draws=n_draws,
@@ -254,29 +254,21 @@ config = ConfigData(
     batch_size=None,
     optim_method="L-BFGS-B-scipy",
 )
-config.init_coeff = init_coeff_scipy
-prob_j_scipy = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
+config.init_coeff = init_coeff_j
+
 
 # %%
-model = model_jax
-config = ConfigData(
-    panels=panels_test,
-    n_draws=n_draws,
-    skip_std_errs=True,  # skip standard errors to speed up the example
-    batch_size=None,
-    optim_method="L-BFGS-jax",
-)
-config.init_coeff = init_coeff_jax
-prob_j_jax = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
+prob_jj = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
 
-# %% [markdown]
+# %% [markdown] 
 # xlogit:
 
 # %%
 _, prob_xx = model_x.predict(X_test, varnames, alts_test, ids_test, isvars=None, panels=panels_test, n_draws=n_draws, return_proba=True)
 
-# %% [markdown]
+# %% [markdown] 
 # Biogeme:
+
 
 # %%
 P = {
@@ -294,17 +286,15 @@ biogeme_sim.model_name = 'per_choice_probs'
 
 probs = biogeme_sim.simulate(results.get_beta_values())
 
-# %% [markdown]
+# %% [markdown] 
 # Compute the brier score:
 
 # %%
-print("{:>9} {:>9} {:>9} {:>9}".format("Jaxlogit-scipy", "Jaxlogit-jax", "xlogit", "Biogeme"))
+print("{:>9} {:>9} {:>9}".format("Jaxlogit", "xlogit", "Biogeme"))
 print("-" * 31)
-fmt = "{:9f} {:9f} {:9f} {:9f}"
-print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_j_scipy.shape[0], -1)), prob_j_scipy),
-                 sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_j_jax.shape[0], -1)), prob_j_jax),
+fmt = "{:9f} {:9f} {:9f}"
+print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_jj.shape[0], -1)), prob_jj),
                  sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_xx.shape[0], -1)), prob_xx),
                  sklearn.metrics.brier_score_loss(df_wide_test['choice'], probs)))
 print("-" * 31)
-
 
