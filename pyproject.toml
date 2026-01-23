@@ -62,7 +62,7 @@ docs = [
     'nbsphinx',
     'jupytext',
     'ipykernel',
-    'biogeme',
+    'biogeme >= 3.3.0',
     'xlogit',
     'scikit-learn',
 ]
