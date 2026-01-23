@@ -84,19 +84,19 @@ def test_no_random_variables(simple_data):
         avail=avail,
         panels=panels,
         weights=weights,
-        optim_method="L-BFGS-B",
+        optim_method="L-BFGS-jax",
         init_coeff=None,
         skip_std_errs=True,
     )
     result = model.fit(X, y, varnames, alts, ids, randvars, config)
     assert result is not None
-    assert "fun" in result
+    assert result.fun is not None
 
     predict_config = ConfigData(
         avail=avail,
         panels=panels,
         weights=weights,
-        init_coeff=result["x"],
+        init_coeff=result.x,
     )
     probs = model.predict(X, varnames, alts, ids, randvars, predict_config)
     assert probs.shape == (X.shape[0] / X.shape[1], X.shape[1])  # this is true for non-panel data

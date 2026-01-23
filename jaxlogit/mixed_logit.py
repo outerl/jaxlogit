@@ -380,9 +380,6 @@ class MixedLogit(ChoiceModel):
                 h_inv = h_inv
             # TODO: narrow down to actual error here
             # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res.grad_n.T, optim_res.grad_n)) as fallback?
-            except Exception as e:
-                _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
-                h_inv = jnp.eye(len(optim_res.x))
 
         self._post_fit(
             optim_res,
