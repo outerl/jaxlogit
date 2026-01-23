@@ -229,7 +229,7 @@ print(results)
 print("{:>13} {:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit-scipy", "Jaxlogit-jax", "xlogit", "biogeme"))
 print("-" * 58)
 fmt = "{:13} {:13.7f} {:13.7f} {:13.7f} {:13.7f}"
-biogeme_values = results.getBetaValues()
+biogeme_values = results.get_beta_values()
 coeff_names = {'pf': 'pf_mean', 'sd.pf': 'pf_sd', 'cl': 'cl_mean', 'sd.cl': 'cl_sd', 'loc': 'loc_mean', 'sd.loc': 'loc_sd', 'wk': 'wk_mean', 'sd.wk': 'wk_sd', 'tod': 'tod_mean', 'sd.tod': 'tod_sd', 'seas': 'seas_mean', 'sd.seas': 'seas_sd'}
 for i in range(len(model_jax.coeff_)):
     name = model_jax.coeff_names[i]
