@@ -1,6 +1,6 @@
 # %% [markdown]
 # # Summary of time taken and brier scores for jaxlogit, xlogit, and biogeme
-# Where the estimation is using draws = 600 (suboptimal but highest without running out of memory in biogeme), and training and test data is separated.
+# Where the estimation is using draws = 500 (suboptimal but highest without running out of memory in biogeme), and training and test data is separated.
 # 
 # | | jaxlogit-scipy | jaxlogit-jax | xlogit | biogeme |
 # |---|---|---|---|---|
@@ -42,7 +42,7 @@ jax.config.update("jax_enable_x64", True)
 
 # %%
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
-n_draws = 600
+n_draws = 500
 
 # %% [markdown]
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
@@ -61,7 +61,7 @@ df = df_wide.merge(
     validate='one_to_one'
 )
 
-df_wide_train, df_wide_test = sklearn.model_selection.train_test_split(df, train_size=0.3)
+df_wide_train, df_wide_test = sklearn.model_selection.train_test_split(df, train_size=0.2)
 df_train = wide_to_long(df_wide_train, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
 df_train = df_train.sort_values(['chid', 'alt'])
 df_test = wide_to_long(df_wide_test, "chid", [1,2,3,4], "alt", varying=varnames, panels=True)
