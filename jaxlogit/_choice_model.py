@@ -176,7 +176,7 @@ class ChoiceModel(ABC):  # noqa: B024
             else:
                 raise ValueError("inconsistent 'y' values. Make sure the data has one choice per sample")
 
-    def _validate_inputs(self, X, y, alts, varnames, weights, predict_mode=False):
+    def _validate_inputs(self, X, y, alts, varnames, weights, batch_size, method, predict_mode=False):
         """Validate potential mistakes in the input data."""
         if varnames is None:
             raise ValueError("The parameter varnames is required")
@@ -191,6 +191,8 @@ class ChoiceModel(ABC):  # noqa: B024
         if weights is not None:
             if (X.shape[0] * X.shape[1]) % weights.size:
                 raise ValueError("The length of weights must be divisble by the first two dimensions of X")
+        if batch_size is not None and "jax" in method:
+            raise ValueError("Batching is not compatible with {method} at the moment")
 
     def summary(self):
         """Show estimation results in console."""

@@ -164,7 +164,7 @@ def setup_batching_example(method):
     ],
 )
 def test_previous_results(example: callable, file: str, method: str):
-    if (method == "L-BFGS-jax" or method == "BFGS-jax") and (file == "batching_example_output.json"):
+    if example == setup_batching_example and "jax" in method:
         return
     with open(pathlib.Path(__file__).parent / "test_data" / file, "r") as f:
         previous_model = json.load(f, object_hook=mixed_logit_decoder)

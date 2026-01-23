@@ -11,7 +11,7 @@ from jax.scipy.optimize import OptimizeResults as OR
 logger = logging.getLogger(__name__)
 
 # static_argnames in loglikelihood function, TODO: maybe replace with partial and get rid of all additional args
-STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "parameter_info"]
+STATIC_LOGLIKE_ARGNAMES = ["num_panels", "force_positive_chol_diag", "batch_size"]
 
 
 def scipy_result_to_jax(result: OptimizeResult):
