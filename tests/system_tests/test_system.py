@@ -217,7 +217,7 @@ def test_predict():
 def compare_models(new, previous, loose=False, skip_last_coeff=False):
     rel = 7e-1 if not loose else 25e-2
     assert list(new.coeff_names) == list(previous.coeff_names)
-    if skip_last_coeff: # One method produces different sd value
+    if skip_last_coeff:  # One method produces different sd value
         new.coeff_ = new.coeff_[:11]
         new.zvalues = new.zvalues[:11]
         previous.coeff_ = previous.coeff_[:11]
