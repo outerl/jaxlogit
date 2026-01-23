@@ -184,7 +184,9 @@ class MixedLogit(ChoiceModel):
             config.avail,
         )
 
-        self._validate_inputs(X, y, alts, varnames, config.weights, config.batch_size, config.optim_method, predict_mode=predict_mode)
+        self._validate_inputs(
+            X, y, alts, varnames, config.weights, config.batch_size, config.optim_method, predict_mode=predict_mode
+        )
 
         self._pre_fit(alts, varnames, config.maxiter)
 
