@@ -101,7 +101,7 @@ class ChoiceModel(ABC):  # noqa: B024
             4: "saddle point reached",
             5: "max line search iters reached",
             -1: "undefined",
-            0: "unknown",
+            0: "Operation terminated successfully",
         }
         self.estimation_message = status_meaning[int(optim_res.status)]  # TODO: fix
         self.coeff_names = coeff_names
