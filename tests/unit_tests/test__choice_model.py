@@ -130,24 +130,24 @@ def test__validate_inputs():
     with pytest.raises(
         ValueError, match=r"The length of varnames must match the number of columns in X"
     ):  # match between columns in X and varnames
-        validate(X, y, alts, varnames=["a"], weights=None)
+        validate(X, y, alts, varnames=["a"], weights=None, batch_size=None, method="BFGS-scipy")
 
     with pytest.raises(ValueError, match=r"The parameter alternatives is required"):
-        validate(X, y, None, varnames=["a"], weights=None)
+        validate(X, y, None, varnames=["a"], weights=None, batch_size=None, method="BFGS-scipy")
 
     with pytest.raises(ValueError, match=r"The parameter varnames is required"):
-        validate(X, y, alts, None, weights=None)
+        validate(X, y, alts, None, weights=None, batch_size=None, method="BFGS-scipy")
 
     with pytest.raises(ValueError, match=r"X must be an array of two dimensions in long format"):  # X dimensions
-        validate(np.array([]), y, alts, varnames=["a", "b"], weights=None)
+        validate(np.array([]), y, alts, varnames=["a", "b"], weights=None, batch_size=None, method="BFGS-scipy")
 
     with pytest.raises(ValueError, match=r"y must be an array of one dimension in long format"):  # y dimensions
-        validate(X, np.array(0), alts, varnames=["a", "b"], weights=None, predict_mode=False)
+        validate(X, np.array(0), alts, varnames=["a", "b"], weights=None, predict_mode=False, batch_size=None, method="BFGS-scipy")
 
     with pytest.raises(ValueError, match=r"The length of weights must be divisble by the first two dimensions of X"):
-        validate(X, np.array([1, 2]), alts, varnames=["a", "b"], weights=np.ones(7))
+        validate(X, np.array([1, 2]), alts, varnames=["a", "b"], weights=np.ones(7), batch_size=None, method="BFGS-scipy")
 
-    validate(X, y, alts, varnames, np.ones(6))
+    validate(X, y, alts, varnames, np.ones(6), batch_size=None, method="BFGS-scipy")
 
 
 def test__format_choice_var():
