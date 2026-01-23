@@ -226,9 +226,9 @@ print(results)
 # # Compare parameters:
 
 # %%
-print("{:>13} {:>13} {:>13} {:>13} {:>13}".format("Estimate", "Jaxlogit-scipy", "Jaxlogit-jax", "xlogit", "biogeme"))
-print("-" * 58)
-fmt = "{:13} {:13.7f} {:13.7f} {:13.7f} {:13.7f}"
+print("{:>9} {:>20} {:>15} {:>13} {:>13}".format("Estimate", "Jaxlogit-scipy", "Jaxlogit-jax", "Xlogit", "Biogeme"))
+print("-" * 76)
+fmt = "{:9} {:18.7f} {:16.7f} {:15.7f} {:13.7f}"
 biogeme_values = results.get_beta_values()
 coeff_names = {'pf': 'pf_mean', 'sd.pf': 'pf_sd', 'cl': 'cl_mean', 'sd.cl': 'cl_sd', 'loc': 'loc_mean', 'sd.loc': 'loc_sd', 'wk': 'wk_mean', 'sd.wk': 'wk_sd', 'tod': 'tod_mean', 'sd.tod': 'tod_sd', 'seas': 'seas_mean', 'sd.seas': 'seas_sd'}
 for i in range(len(model_jax.coeff_)):
@@ -238,7 +238,7 @@ for i in range(len(model_jax.coeff_)):
                      model_jax.coeff_[i], 
                      model_x.coeff_[i],
                      biogeme_values[coeff_names[name]]))
-print("-" * 58)
+print("-" * 76)
 
 # %% [markdown]
 # # Predict
