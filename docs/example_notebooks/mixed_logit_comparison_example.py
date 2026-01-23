@@ -41,7 +41,6 @@ jax.config.update("jax_enable_x64", True)
 # Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 700 or more draws with this data set.
 
 # %%
-df = pd.read_csv(pathlib.Path.cwd() / "electricity_long.csv")
 varnames = ['pf', 'cl', 'loc', 'wk', 'tod', 'seas']
 n_draws = 600
 
@@ -49,7 +48,7 @@ n_draws = 600
 # Reshape the data so it can be passed to test_train_split in a wide format. Additionally, xlogit and jaxlogit require long format while biogeme requires a wide format.
 
 # %%
-df_long = pd.read_csv(pathlib.Path.cwd() / "electricity_long.csv")
+df_long = pd.read_csv(pathlib.Path.cwd().parent.parent / "examples" / "electricity_long.csv")
 choice_df = df_long.loc[df_long['choice'] == 1, ['id', 'chid', 'alt']]
 choice_df = choice_df.rename(columns={'alt': 'choice'})
 df_wide = df_long.pivot(index=['id', 'chid'], columns='alt', values=varnames)
