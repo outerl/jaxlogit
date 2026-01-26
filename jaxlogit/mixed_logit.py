@@ -240,11 +240,8 @@ class MixedLogit(ChoiceModel):
         varnames,
         alts,
         ids,
-        randvars,  # TODO: check if this works for zero randvars
+        randvars,
         config: ConfigData,
-        # optim_method="trust-region",  # "trust-region", "L-BFGS-B", "BFGS"
-        # force_positive_chol_diag=True,  # use softplus for the cholesky diagonal elements
-        # hessian_by_row=True,  # calculate the hessian row by row in a for loop to save memory at the expense of runtime
         verbose=1,
     ):
         """Fit Mixed Logit models.
