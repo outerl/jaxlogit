@@ -1,6 +1,5 @@
 name: Unit tests on all platforms
 
-# TODO: change from push to pull request
 on: [push]
 
 jobs:
