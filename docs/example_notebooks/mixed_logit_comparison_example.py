@@ -298,12 +298,12 @@ probs = biogeme_sim.simulate(results.get_beta_values())
 
 # %%
 print("{:>9} {:>9} {:>9} {:>9}".format("Jaxlogit-scipy", "Jaxlogit-jax", "xlogit", "Biogeme"))
-print("-" * 31)
+print("-" * 48)
 fmt = "{:9f} {:9f} {:9f} {:9f}"
 print(fmt.format(sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_j_scipy.shape[0], -1)), prob_j_scipy),
                  sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_j_jax.shape[0], -1)), prob_j_jax),
                  sklearn.metrics.brier_score_loss(np.reshape(y_test, (prob_xx.shape[0], -1)), prob_xx),
                  sklearn.metrics.brier_score_loss(df_wide_test['choice'], probs)))
-print("-" * 31)
+print("-" * 48)
 
 
