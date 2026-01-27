@@ -86,8 +86,9 @@ class MixedLogit(ChoiceModel):
         if config.avail is not None and config.avail.shape != (N,):
             config.avail = config.avail.reshape(N, J)
 
-        if config.weights is not None:  # TODO Reshape weights to match input data
-            # weights = weights.reshape(N, J)[:, 0]
+        if config.weights is not None:
+            if config.weights.shape != (N,):
+                config.weights = config.weights.reshape(N, J)[:, 0]
             if config.panels is not None:
                 panel_change_idx = np.concatenate(([0], np.where(config.panels[:-1] != config.panels[1:])[0] + 1))
                 config.weights = config.weights[panel_change_idx]
