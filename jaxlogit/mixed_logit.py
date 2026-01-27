@@ -70,7 +70,10 @@ class MixedLogit(ChoiceModel):
 
         if config.panels is not None:
             # Convert panel ids to indexes
-            panels = config.panels.reshape(N, J)[:, 0]
+            if config.panels.shape == (N,):
+                panels = config.panels.shape
+            else:
+                panels = config.panels.reshape(N, J)[:, 0]
             panels_idx = np.empty(N)
             for i, u in enumerate(np.unique(panels)):
                 panels_idx[np.where(panels == u)] = i
@@ -80,10 +83,10 @@ class MixedLogit(ChoiceModel):
         X = X.reshape(N, J, K)
         y = y.reshape(N, J, 1) if not predict_mode else None
 
-        if config.avail is not None:
+        if config.avail is not None and config.avail.shape != (N,):
             config.avail = config.avail.reshape(N, J)
 
-        if config.weights is not None:  # Reshape weights to match input data
+        if config.weights is not None:  # TODO Reshape weights to match input data
             # weights = weights.reshape(N, J)[:, 0]
             if config.panels is not None:
                 panel_change_idx = np.concatenate(([0], np.where(config.panels[:-1] != config.panels[1:])[0] + 1))
