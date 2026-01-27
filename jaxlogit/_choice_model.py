@@ -178,7 +178,7 @@ class ChoiceModel(ABC):  # noqa: B024
         if len(varnames) != X.shape[1]:
             raise ValueError("The length of varnames must match the number of columns in X")
         if weights is not None:
-            if (X.shape[0] * X.shape[1]) % weights.size and not(setup_completed):
+            if (X.shape[0] * X.shape[1]) % weights.size and not (setup_completed):
                 raise ValueError("The length of weights must be divisble by the first two dimensions of X")
 
     def summary(self):

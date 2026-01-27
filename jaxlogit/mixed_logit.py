@@ -86,7 +86,7 @@ class MixedLogit(ChoiceModel):
         if config.avail is not None:
             config.avail = config.avail.reshape(N, J)
 
-        if config.weights is not None and not(config.setup_completed):
+        if config.weights is not None and not (config.setup_completed):
             config.weights = config.weights.reshape(N, J)[:, 0]
             if config.panels is not None:
                 panel_change_idx = np.concatenate(([0], np.where(config.panels[:-1] != config.panels[1:])[0] + 1))
@@ -187,7 +187,9 @@ class MixedLogit(ChoiceModel):
             config.avail,
         )
 
-        self._validate_inputs(X, y, alts, varnames, config.weights, predict_mode=predict_mode, setup_completed=config.setup_completed)
+        self._validate_inputs(
+            X, y, alts, varnames, config.weights, predict_mode=predict_mode, setup_completed=config.setup_completed
+        )
 
         self._pre_fit(alts, varnames, config.maxiter)
 
