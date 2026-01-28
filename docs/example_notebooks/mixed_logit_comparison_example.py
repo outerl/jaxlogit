@@ -153,7 +153,7 @@ config = ConfigData(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B-scipy",
+    optim_method="L-BFGS-scipy",
 )
 model_jax_scipy.fit(
     X=X_train,
@@ -251,7 +251,7 @@ config = ConfigData(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B-scipy",
+    optim_method="L-BFGS-scipy",
 )
 config.init_coeff = init_coeff_scipy
 prob_j_scipy = model.predict(X_test, varnames, alts_test, ids_test, randvars, config)
