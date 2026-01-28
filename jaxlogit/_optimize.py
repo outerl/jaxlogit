@@ -56,7 +56,7 @@ def _minimize(loglik_fn, x, args, method, tol, options, jit_loglik=True):
             tol=tol,
             options=options,
         )
-    elif method == "L-BFGS-B-scipy":
+    elif method == "L-BFGS-scipy":
         if jit_loglik:
             neg_loglik_and_grad = jax.jit(
                 jax.value_and_grad(loglik_fn, argnums=0), static_argnames=STATIC_LOGLIKE_ARGNAMES
