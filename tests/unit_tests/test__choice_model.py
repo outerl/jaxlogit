@@ -142,10 +142,21 @@ def test__validate_inputs():
         validate(np.array([]), y, alts, varnames=["a", "b"], weights=None, batch_size=None, method="BFGS-scipy")
 
     with pytest.raises(ValueError, match=r"y must be an array of one dimension in long format"):  # y dimensions
-        validate(X, np.array(0), alts, varnames=["a", "b"], weights=None, predict_mode=False, batch_size=None, method="BFGS-scipy")
+        validate(
+            X,
+            np.array(0),
+            alts,
+            varnames=["a", "b"],
+            weights=None,
+            predict_mode=False,
+            batch_size=None,
+            method="BFGS-scipy",
+        )
 
     with pytest.raises(ValueError, match=r"The length of weights must be divisble by the first two dimensions of X"):
-        validate(X, np.array([1, 2]), alts, varnames=["a", "b"], weights=np.ones(7), batch_size=None, method="BFGS-scipy")
+        validate(
+            X, np.array([1, 2]), alts, varnames=["a", "b"], weights=np.ones(7), batch_size=None, method="BFGS-scipy"
+        )
 
     validate(X, y, alts, varnames, np.ones(6), batch_size=None, method="BFGS-scipy")
 

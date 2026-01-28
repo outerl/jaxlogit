@@ -176,7 +176,9 @@ class ChoiceModel(ABC):  # noqa: B024
             else:
                 raise ValueError("inconsistent 'y' values. Make sure the data has one choice per sample")
 
-    def _validate_inputs(self, X, y, alts, varnames, weights, batch_size, method, predict_mode=False, setup_completed=False):
+    def _validate_inputs(
+        self, X, y, alts, varnames, weights, batch_size, method, predict_mode=False, setup_completed=False
+    ):
         """Validate potential mistakes in the input data."""
         if varnames is None:
             raise ValueError("The parameter varnames is required")
