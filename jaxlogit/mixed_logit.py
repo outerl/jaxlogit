@@ -69,9 +69,7 @@ class MixedLogit(ChoiceModel):
         )
 
         if config.panels is not None:
-            if config.panels.shape == (N,):
-                panels = config.panels.shape
-            else:
+            if config.panels.shape != (N,):
                 # Convert panel ids to indexes
                 panels = config.panels.reshape(N, J)[:, 0]
                 panels_idx = np.empty(N)
