@@ -8,8 +8,10 @@
 # ---
 
 # %% [markdown] 
-# # Scikit learn interface and Cross Validation
+# # Scikit-learn interface and Cross Validation
 # Uses the swissmetro data. Based on previous example for this dataset, which is based on the xlogit example [Mixed Logit](https://xlogit.readthedocs.io/en/latest/notebooks/mixed_logit_model.html).
+
+# Note that this wrapper can use scikit-learn's tools such as cross-validation as in this example, but it is not a proper estimator by [scikit-learn's requirements](https://scikit-learn.org/stable/developers/develop.html), and it does not pass sklearn.utils.estimator_checks.check_estimator. This is because information about the variables and the alternatives needs to be provided in the pandas dataframe and as data to the estimator, where as the check validation tool for scikit-learn only passes in generated numpy arrays of floats for the input data. The number of alternatives and variables could be inferred, but sometimes would be ambiguous. 
 # %%
 import pandas as pd
 import numpy as np

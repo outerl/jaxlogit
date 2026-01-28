@@ -69,12 +69,13 @@ class MixedLogit(ChoiceModel):
         )
 
         if config.panels is not None:
-            # Convert panel ids to indexes
-            panels = config.panels.reshape(N, J)[:, 0]
-            panels_idx = np.empty(N)
-            for i, u in enumerate(np.unique(panels)):
-                panels_idx[np.where(panels == u)] = i
-            config.panels = panels_idx.astype(int)
+            if config.panels.shape != (N,):
+                # Convert panel ids to indexes
+                panels = config.panels.reshape(N, J)[:, 0]
+                panels_idx = np.empty(N)
+                for i, u in enumerate(np.unique(panels)):
+                    panels_idx[np.where(panels == u)] = i
+                config.panels = panels_idx.astype(int)
 
         # Reshape arrays in the format required for the rest of the estimation
         X = X.reshape(N, J, K)
@@ -83,8 +84,8 @@ class MixedLogit(ChoiceModel):
         if config.avail is not None:
             config.avail = config.avail.reshape(N, J)
 
-        if config.weights is not None:  # Reshape weights to match input data
-            # weights = weights.reshape(N, J)[:, 0]
+        if config.weights is not None and not (config.setup_completed):
+            config.weights = config.weights.reshape(N, J)[:, 0]
             if config.panels is not None:
                 panel_change_idx = np.concatenate(([0], np.where(config.panels[:-1] != config.panels[1:])[0] + 1))
                 config.weights = config.weights[panel_change_idx]
@@ -185,7 +186,9 @@ class MixedLogit(ChoiceModel):
         )
 
         self._validate_inputs(
+            
             X, y, alts, varnames, config.weights, config.batch_size, config.optim_method, predict_mode=predict_mode
+        , setup_completed=config.setup_completed
         )
 
         self._pre_fit(alts, varnames, config.maxiter)
@@ -200,6 +203,7 @@ class MixedLogit(ChoiceModel):
             Xnames,
             coef_names,
         ) = self._setup_input_data(X, y, varnames, alts, ids, randvars, config, predict_mode=predict_mode)
+        config.setup_completed = True
 
         parameter_info = ParametersSetup(
             self._rvdist,

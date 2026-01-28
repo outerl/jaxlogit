@@ -71,6 +71,8 @@ class ConfigData:
         this will stay within memory limits.
     batch_size : int, optional
         Size of batches used to avoid GPU memory overflow.
+    setup_completed: bool, default=False
+        Whether the setup has already been completed
 
     """
 
@@ -93,3 +95,4 @@ class ConfigData:
     hessian_by_row: bool = True
     finite_diff_hessian: bool = False
     batch_size: int | None = None
+    setup_completed: bool = False
