@@ -153,7 +153,7 @@ def setup_batching_example(method):
     return model
 
 
-@pytest.mark.parametrize("method", ["L-BFGS-jax", "BFGS-jax", "L-BFGS-B-scipy", "BFGS-scipy"])
+@pytest.mark.parametrize("method", ["L-BFGS-jax", "BFGS-jax", "L-BFGS-scipy", "BFGS-scipy"])
 @pytest.mark.parametrize(
     "example,file",
     [
@@ -173,7 +173,7 @@ def test_previous_results(example: callable, file: str, method: str):
 
 
 def test_json():
-    before = estimate_model_parameters("L-BFGS-B-scipy")
+    before = estimate_model_parameters("L-BFGS-scipy")
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "w") as f:
         json.dump(before, f, indent=4, cls=MixedLogitEncoder)
     with open(pathlib.Path(__file__).parent / "test_data" / "test_json.json", "r") as f:
@@ -195,7 +195,7 @@ def test_predict():
         panels=df["id"],
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=539,
-        optim_method="L-BFGS-B-scipy",
+        optim_method="L-BFGS-scipy",
     )
     config.init_coeff = model.coeff_
     prob = model.predict(

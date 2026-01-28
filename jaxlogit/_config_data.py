@@ -54,7 +54,7 @@ class ConfigData:
     set_vars : dict, optional
         Specified variable names (keys) of variables to be set to the given
         value (values).
-    optim_method : {'BFGS-scipy', 'L-BFGS-B-scipy', 'L-BFGS-jax', 'BFGS-jax'}, default='L-BFGS-B-scipy'
+    optim_method : {'BFGS-scipy', 'L-BFGS-scipy', 'L-BFGS-jax', 'BFGS-jax'}, default='L-BFGS-scipy'
         Optimization method to use for model estimation.
     skip_std_errs : bool, default=False
         Whether estimation of standard errors should be skipped.
@@ -86,7 +86,7 @@ class ConfigData:
     tol_opts: dict | None = None
     num_hess: bool = False
     set_vars: dict[str, float] | None = None
-    optim_method: str = "L-BFGS-B-scipy"
+    optim_method: str = "L-BFGS-scipy"
     skip_std_errs: bool = False
     include_correlations: bool = False
     force_positive_chol_diag: bool = True

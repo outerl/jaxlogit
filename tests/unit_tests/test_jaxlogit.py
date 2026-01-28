@@ -53,7 +53,7 @@ def test_no_random_variables_draws(simple_data):
         panels=panels,
         weights=weights,
         n_draws=3,
-        optim_method="L-BFGS-B-scipy",
+        optim_method="L-BFGS-scipy",
         init_coeff=None,
         skip_std_errs=True,
     )
@@ -116,7 +116,7 @@ def test_bad_random_variables(simple_data):
         panels=panels,
         weights=weights,
         n_draws=3,
-        optim_method="L-BFGS-B-scipy",
+        optim_method="L-BFGS-scipy",
         init_coeff=None,
         skip_std_errs=True,
     )
@@ -153,7 +153,7 @@ def test_mixed_logit_fit_different_variables(simple_data):
                 weights=weights,
                 n_draws=3,
                 set_vars=set_vars,
-                optim_method="L-BFGS-B-scipy",
+                optim_method="L-BFGS-scipy",
                 init_coeff=None,
                 include_correlations=include_correlations,
                 skip_std_errs=True,
@@ -191,7 +191,7 @@ def test_mixed_logit_fit_no_panels_weights(simple_data):
     set_vars = {}
 
     no_weights_or_panel_config = ConfigData(
-        avail=avail, n_draws=3, set_vars=set_vars, optim_method="L-BFGS-B-scipy", init_coeff=None, skip_std_errs=False
+        avail=avail, n_draws=3, set_vars=set_vars, optim_method="L-BFGS-scipy", init_coeff=None, skip_std_errs=False
     )
     result = model.fit(X, y, varnames, alts, ids, randvars, no_weights_or_panel_config)
     assert result is not None
@@ -210,7 +210,7 @@ def test_mixed_logit_fit_set_variables(simple_data):
         weights=weights,
         n_draws=3,
         set_vars=set_vars,
-        optim_method="L-BFGS-B-scipy",
+        optim_method="L-BFGS-scipy",
         init_coeff=None,
         skip_std_errs=True,
     )

@@ -32,7 +32,7 @@ def setup_minimize():
         n_draws=n_draws,
         skip_std_errs=True,  # skip standard errors to speed up the example
         batch_size=None,
-        optim_method="L-BFGS-B-scipy",
+        optim_method="L-BFGS-scipy",
     )
 
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
