@@ -26,3 +26,4 @@ def test_nesting_accepted():
         model._make_nests({'a': ['b', 'c'], 'c': ['c']}, ['a', 'b', 'c'])
     model._make_nests({'a': ['b', 'c'], 'd': 'd'}, ['a', 'b', 'c', 'd']) # Test values without list around them
     assert {'a': ['b', 'c'], 'd': ['d'], 'a': ['a']} == model._make_nests({'a': ['b', 'c']}, ['a', 'b', 'c', 'd']) # Test variables not initially in nests get their own
+    assert model._make_nests(None, []) is None
