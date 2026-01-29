@@ -459,7 +459,7 @@ class MixedLogit(ChoiceModel):
 
     def predict(self, X, varnames, alts, ids, randvars, config: ConfigData):
         assert config.init_coeff is not None
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info,_) = self.data_prep(
             X,
             None,
             varnames,
@@ -467,6 +467,7 @@ class MixedLogit(ChoiceModel):
             ids,
             randvars,
             config,
+            None,
             predict_mode=True,
         )
 
