@@ -27,6 +27,7 @@ The data must be in long format. Wide format data can be transformed into long f
 * ``panels``: 1-D array of ids for panel formation, where each choice situation has a panel for each variable 
 * ``set_vars``: Dictionary specifying some variables and the values that they are to be set
 * ``include_correlations``: Boolean whether or not to consider correlation between variables
+* ``optim_method``: String representing with optimisation method to use. Options are ``"L-BFGS-scipy"``, ``"BFGS-scipy"``, ``"L-BFGS-jax"``, and ``"BFGS-jax"``. Scipy uses the standard scipy library and jax uses jax's scipy library, which is significantly faster (may not work with batching) but may not be maintained and potentially discontinued without notice.
 
 
 ```python
@@ -77,6 +78,7 @@ config = ConfigData(
     panels=df["ID"],
     set_vars=set_vars,
     include_correlations=True,  # Enable correlation between random parameters
+    optim_method="L-BFGS-scipy"
 )
 
 
@@ -126,3 +128,13 @@ If out of memory, the data can be batched as well.
 Currently available on test PyPI `pip install -i https://test.pypi.org/simple/ jaxlogit`.
 
 Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
+
+## Benchmark
+As shown in the plot below, jaxlogit with batching uses significantly less memory than xlogit.
+![Graph comparing memory usage of jaxlogit and xlogit](examples/graphs/memory_comparison_cropped.png)
+![Graph comparing time of jaxlogit, xlogit, and biogeme](examples/graphs/fit_estimation_time.png)
+The default method is 'L-BFGS-B' or 'L-BFGS'. Where a b is appended to the label, the 'BFGS' method was used.
+
+The graph of memory shows that using the batching  reduces memory usage below that of xlogit and other types of jaxlogit. Off the edge of this graph is a spike in biogeme's memory usage, up to 30,000MB.
+
+In the timing graph, it can be seen that batching does not have a significant impact on time taken. Additionally, the jaxlogit performs much faster when using the experimental jax methods. The time for standard scipy method and xlogit are quite comparable. Biogeme is slower than xlogit and any form of jaxlogit.
