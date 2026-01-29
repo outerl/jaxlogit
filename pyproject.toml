@@ -37,7 +37,7 @@ Documentation = "https://outerl.github.io/jaxlogit/"
 [dependency-groups]
 
 [project.optional-dependencies]
-examples = ['xlogit', 'scikit-learn']
+examples = ['xlogit', 'scikit-learn', 'biogeme']
 
 linting = [
     'ruff==0.9.3',
@@ -62,7 +62,8 @@ docs = [
     'nbsphinx',
     'jupytext',
     'ipykernel',
-    'biogeme',
+    'biogeme >= 3.3.0',
+    'xlogit',
     'scikit-learn',
 ]
 dev = ['jaxlogit[linting, devtools, tests]']

@@ -186,7 +186,15 @@ class MixedLogit(ChoiceModel):
         )
 
         self._validate_inputs(
-            X, y, alts, varnames, config.weights, predict_mode=predict_mode, setup_completed=config.setup_completed
+            X,
+            y,
+            alts,
+            varnames,
+            config.weights,
+            config.batch_size,
+            config.optim_method,
+            predict_mode=predict_mode,
+            setup_completed=config.setup_completed,
         )
 
         self._pre_fit(alts, varnames, config.maxiter)
@@ -242,11 +250,8 @@ class MixedLogit(ChoiceModel):
         varnames,
         alts,
         ids,
-        randvars,  # TODO: check if this works for zero randvars
+        randvars,
         config: ConfigData,
-        # optim_method="trust-region",  # "trust-region", "L-BFGS-B", "BFGS"
-        # force_positive_chol_diag=True,  # use softplus for the cholesky diagonal elements
-        # hessian_by_row=True,  # calculate the hessian row by row in a for loop to save memory at the expense of runtime
         verbose=1,
     ):
         """Fit Mixed Logit models.
@@ -271,7 +276,7 @@ class MixedLogit(ChoiceModel):
             - ``'n'``: normal
             - ``'ln'``: lognormal
             - ``'t'``: triangular
-            - ``'tn'``: truncated normal
+            - ``'n_trunc'``: truncated normal
 
         verbose : int, default=1
             Verbosity of messages to show during estimation.
@@ -344,17 +349,19 @@ class MixedLogit(ChoiceModel):
             _logger.error("Optimization failed, returning None.")
             return None
 
-        _logger.info(
-            f"Optimization finished, success = {optim_res['success']}, final loglike = {-optim_res['fun']:.2f}"
-            + f", final gradient max = {optim_res['jac'].max():.2e}, norm = {jnp.linalg.norm(optim_res['jac']):.2e}."
-        )
+        # _logger.info(
+        #     f"Optimization finished, success = {optim_res.success}, final loglike = {-optim_res.fun:.2f}"
+        #     + f", final gradient max = {optim_res.jac.max():.2e}, norm = {jnp.linalg.norm(optim_res.jac):.2e}."
+        # )
 
+        grad_n = None
+        h_inv = optim_res.hess_inv
         if config.skip_std_errs:
             _logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
         else:
             _logger.info("Calculating gradient of individual log-likelihood contributions")
             grad = jax.jacfwd(loglike_individual)
-            optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
+            grad_n = grad(jnp.array(optim_res.x), *fargs[:-1])
 
             _logger.info(
                 f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
@@ -362,7 +369,7 @@ class MixedLogit(ChoiceModel):
 
             H = hessian(
                 neg_loglike,
-                jnp.array(optim_res["x"]),
+                jnp.array(optim_res.x),
                 config.hessian_by_row,
                 config.finite_diff_hessian,
                 fargs,
@@ -379,10 +386,20 @@ class MixedLogit(ChoiceModel):
             else:
                 h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
 
-            optim_res["hess_inv"] = h_inv
-            # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res["grad_n"].T, optim_res["grad_n"])) as fallback?
+                h_inv = h_inv
+            # TODO: narrow down to actual error here
+            # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res.grad_n.T, optim_res.grad_n)) as fallback?
 
-        self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
+        self._post_fit(
+            optim_res,
+            coef_names,
+            Xdf.shape[0],
+            parameter_info.mask,
+            config.set_vars,
+            config.skip_std_errs,
+            grad_n=grad_n,
+            hess_inv=h_inv,
+        )
         return optim_res
 
     def _setup_randvars_info(self, randvars, Xnames):
@@ -421,8 +438,8 @@ class MixedLogit(ChoiceModel):
             raise ValueError("The 'randvars' parameter is required for Mixed Logit estimation")
         if not set(randvars.keys()).issubset(Xnames):
             raise ValueError("Some variable names in 'randvars' were not found in the list of variable names")
-        if not set(randvars.values()).issubset(["n", "ln", "t", "tn", "n_trunc", "u"]):
-            raise ValueError("Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, tn")
+        if not set(randvars.values()).issubset(["n", "ln", "t", "n_trunc", "u"]):
+            raise ValueError("Wrong mixing distribution in 'randvars'. Accepted distrubtions are n, ln, t, u, n_trunc")
 
     def summary(self):
         """Show estimation results in console."""
@@ -541,7 +558,12 @@ def neg_loglike(
     draws,
     parameter_info: ParametersSetup,
     batch_size,
+    args=None,
 ):
+    if args is not None:
+        (Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info, batch_size) = (
+            args
+        )
     loglik_individ = loglike_individual(
         betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info
     )

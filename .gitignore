@@ -35,3 +35,4 @@ examples/benchmark/Rprof.out
 biogeme.toml
 
 venv/
+tests/system_tests/test_data/test_json.json

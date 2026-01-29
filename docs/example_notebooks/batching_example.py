@@ -60,7 +60,7 @@ config = ConfigData(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=batch_size,
-    optim_method="L-BFGS-B",  # "L-BFGS-B", "BFGS"lver
+    optim_method="L-BFGS-scipy",  # "L-BFGS-B", "BFGS"lver
     maxiter=maxiter,
 )
 
@@ -85,7 +85,7 @@ config = ConfigData(
     n_draws=n_draws,
     skip_std_errs=True,  # skip standard errors to speed up the example
     batch_size=None,
-    optim_method="L-BFGS-B",
+    optim_method="L-BFGS-scipy",
     maxiter=maxiter,
 )
 
