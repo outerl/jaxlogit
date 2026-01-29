@@ -152,6 +152,26 @@ class MixedLogit(ChoiceModel):
         _logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
 
         return draws
+    
+    def _make_nests(self, nests, varnames):
+        if nests is None:
+            return None
+        vars = []
+        for key in nests.keys():
+            if type(nests[key]) == str:
+                nests[key] = [nests[key]]
+            for var in nests[key]:
+                if var in vars:
+                    raise ValueError(f'Variable "{var}" appears in two nests')
+                if var not in varnames:
+                    raise ValueError(f'Variable "{var}" not in varnames')
+                vars.append(var)
+        for var in varnames:
+            if var not in vars:
+                nests[var] = [var]
+            vars.append(var)
+        return nests
+        
 
     def data_prep(
         self,
@@ -162,6 +182,7 @@ class MixedLogit(ChoiceModel):
         ids,
         randvars,
         config: ConfigData,
+        nests,
         predict_mode=False,
     ):
         # Handle array-like inputs by converting everything to numpy arrays
@@ -184,6 +205,8 @@ class MixedLogit(ChoiceModel):
             config.panels,
             config.avail,
         )
+
+        full_nests = self._make_nests(nests, varnames)
 
         self._validate_inputs(
             X, y, alts, varnames, config.weights, predict_mode=predict_mode, setup_completed=config.setup_completed
@@ -233,7 +256,7 @@ class MixedLogit(ChoiceModel):
         Xdf = Xd[:, :, ~rvidx]  # Data for fixed (non-random) parameters
         Xdr = Xd[:, :, rvidx]  # Data for random parameters
 
-        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info)
+        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info, full_nests)
 
     def fit(
         self,
@@ -244,10 +267,8 @@ class MixedLogit(ChoiceModel):
         ids,
         randvars,  # TODO: check if this works for zero randvars
         config: ConfigData,
-        # optim_method="trust-region",  # "trust-region", "L-BFGS-B", "BFGS"
-        # force_positive_chol_diag=True,  # use softplus for the cholesky diagonal elements
-        # hessian_by_row=True,  # calculate the hessian row by row in a for loop to save memory at the expense of runtime
         verbose=1,
+        nests=None
     ):
         """Fit Mixed Logit models.
 
@@ -280,13 +301,19 @@ class MixedLogit(ChoiceModel):
             - 1: Some messages
             - 2: All messages
 
+        nests : dict
+            Names (keys) of nests and a list of the names of their variables (values). Eg:
+            {'public transport': ['bus', 'train']}
+            Three-level (not implemented)
+            {'public transport': ['train', 'bus'], 'bus': ['red bus', 'blue bus']}
+
         Returns
         -------
         result
             The estimated model parameters result.
         """
 
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info, nests_full) = self.data_prep(
             X,
             y,
             varnames,
@@ -294,6 +321,7 @@ class MixedLogit(ChoiceModel):
             ids,
             randvars,
             config,
+            nests,
         )
 
         fargs = (
