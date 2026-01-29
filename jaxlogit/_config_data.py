@@ -54,7 +54,7 @@ class ConfigData:
     set_vars : dict, optional
         Specified variable names (keys) of variables to be set to the given
         value (values).
-    optim_method : {'trust-region', 'BFGS', 'L-BFGS-B'}, default='L-BFGS-B'
+    optim_method : {'BFGS-scipy', 'L-BFGS-scipy', 'L-BFGS-jax', 'BFGS-jax'}, default='L-BFGS-scipy'
         Optimization method to use for model estimation.
     skip_std_errs : bool, default=False
         Whether estimation of standard errors should be skipped.
@@ -71,6 +71,8 @@ class ConfigData:
         this will stay within memory limits.
     batch_size : int, optional
         Size of batches used to avoid GPU memory overflow.
+    setup_completed: bool, default=False
+        Whether the setup has already been completed
 
     """
 
@@ -86,10 +88,11 @@ class ConfigData:
     tol_opts: dict | None = None
     num_hess: bool = False
     set_vars: dict[str, float] | None = None
-    optim_method: str = "L-BFGS-B"
+    optim_method: str = "L-BFGS-scipy"
     skip_std_errs: bool = False
     include_correlations: bool = False
     force_positive_chol_diag: bool = True
     hessian_by_row: bool = True
     finite_diff_hessian: bool = False
     batch_size: int | None = None
+    setup_completed: bool = False

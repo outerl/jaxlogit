@@ -69,12 +69,13 @@ class MixedLogit(ChoiceModel):
         )
 
         if config.panels is not None:
-            # Convert panel ids to indexes
-            panels = config.panels.reshape(N, J)[:, 0]
-            panels_idx = np.empty(N)
-            for i, u in enumerate(np.unique(panels)):
-                panels_idx[np.where(panels == u)] = i
-            config.panels = panels_idx.astype(int)
+            if config.panels.shape != (N,):
+                # Convert panel ids to indexes
+                panels = config.panels.reshape(N, J)[:, 0]
+                panels_idx = np.empty(N)
+                for i, u in enumerate(np.unique(panels)):
+                    panels_idx[np.where(panels == u)] = i
+                config.panels = panels_idx.astype(int)
 
         # Reshape arrays in the format required for the rest of the estimation
         X = X.reshape(N, J, K)
@@ -83,8 +84,8 @@ class MixedLogit(ChoiceModel):
         if config.avail is not None:
             config.avail = config.avail.reshape(N, J)
 
-        if config.weights is not None:  # Reshape weights to match input data
-            # weights = weights.reshape(N, J)[:, 0]
+        if config.weights is not None and not (config.setup_completed):
+            config.weights = config.weights.reshape(N, J)[:, 0]
             if config.panels is not None:
                 panel_change_idx = np.concatenate(([0], np.where(config.panels[:-1] != config.panels[1:])[0] + 1))
                 config.weights = config.weights[panel_change_idx]
@@ -184,7 +185,17 @@ class MixedLogit(ChoiceModel):
             config.avail,
         )
 
-        self._validate_inputs(X, y, alts, varnames, config.weights, predict_mode=predict_mode)
+        self._validate_inputs(
+            X,
+            y,
+            alts,
+            varnames,
+            config.weights,
+            config.batch_size,
+            config.optim_method,
+            predict_mode=predict_mode,
+            setup_completed=config.setup_completed,
+        )
 
         self._pre_fit(alts, varnames, config.maxiter)
 
@@ -198,6 +209,7 @@ class MixedLogit(ChoiceModel):
             Xnames,
             coef_names,
         ) = self._setup_input_data(X, y, varnames, alts, ids, randvars, config, predict_mode=predict_mode)
+        config.setup_completed = True
 
         parameter_info = ParametersSetup(
             self._rvdist,
@@ -238,11 +250,8 @@ class MixedLogit(ChoiceModel):
         varnames,
         alts,
         ids,
-        randvars,  # TODO: check if this works for zero randvars
+        randvars,
         config: ConfigData,
-        # optim_method="trust-region",  # "trust-region", "L-BFGS-B", "BFGS"
-        # force_positive_chol_diag=True,  # use softplus for the cholesky diagonal elements
-        # hessian_by_row=True,  # calculate the hessian row by row in a for loop to save memory at the expense of runtime
         verbose=1,
     ):
         """Fit Mixed Logit models.
@@ -340,45 +349,57 @@ class MixedLogit(ChoiceModel):
             _logger.error("Optimization failed, returning None.")
             return None
 
-        _logger.info(
-            f"Optimization finished, success = {optim_res['success']}, final loglike = {-optim_res['fun']:.2f}"
-            + f", final gradient max = {optim_res['jac'].max():.2e}, norm = {jnp.linalg.norm(optim_res['jac']):.2e}."
-        )
+        # _logger.info(
+        #     f"Optimization finished, success = {optim_res.success}, final loglike = {-optim_res.fun:.2f}"
+        #     + f", final gradient max = {optim_res.jac.max():.2e}, norm = {jnp.linalg.norm(optim_res.jac):.2e}."
+        # )
 
+        grad_n = None
+        h_inv = optim_res.hess_inv
         if config.skip_std_errs:
             _logger.info("Skipping H_inv and grad_n calculation due to skip_std_errs=True")
         else:
             _logger.info("Calculating gradient of individual log-likelihood contributions")
             grad = jax.jacfwd(loglike_individual)
-            optim_res["grad_n"] = grad(jnp.array(optim_res["x"]), *fargs[:-1])
+            grad_n = grad(jnp.array(optim_res.x), *fargs[:-1])
 
-            try:
-                _logger.info(
-                    f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
-                )
-                H = hessian(
-                    neg_loglike, jnp.array(optim_res["x"]), config.hessian_by_row, config.finite_diff_hessian, *fargs
-                )
+            _logger.info(
+                f"Calculating Hessian, by row={config.hessian_by_row}, finite diff={config.finite_diff_hessian}"
+            )
 
-                _logger.info("Inverting Hessian")
-                # remove masked parameters to make it invertible
-                if parameter_info.mask is not None:
-                    mask_for_hessian = jnp.array([x for x in range(0, H.shape[0]) if x not in parameter_info.mask])
-                    h_free = H[jnp.ix_(mask_for_hessian, mask_for_hessian)]
-                    h_inv_nonfixed = jax.lax.stop_gradient(jnp.linalg.inv(h_free))
-                    h_inv = jnp.zeros_like(H)
-                    h_inv = h_inv.at[jnp.ix_(mask_for_hessian, mask_for_hessian)].set(h_inv_nonfixed)
-                else:
-                    h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
+            H = hessian(
+                neg_loglike,
+                jnp.array(optim_res.x),
+                config.hessian_by_row,
+                config.finite_diff_hessian,
+                fargs,
+            )
 
-                optim_res["hess_inv"] = h_inv
+            _logger.info("Inverting Hessian")
+            # remove masked parameters to make it invertible
+            if parameter_info.mask is not None:
+                mask_for_hessian = jnp.array([x for x in range(0, H.shape[0]) if x not in parameter_info.mask])
+                h_free = H[jnp.ix_(mask_for_hessian, mask_for_hessian)]
+                h_inv_nonfixed = jax.lax.stop_gradient(jnp.linalg.inv(h_free))
+                h_inv = jnp.zeros_like(H)
+                h_inv = h_inv.at[jnp.ix_(mask_for_hessian, mask_for_hessian)].set(h_inv_nonfixed)
+            else:
+                h_inv = jax.lax.stop_gradient(jnp.linalg.inv(H))
+
+                h_inv = h_inv
             # TODO: narrow down to actual error here
-            # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res["grad_n"].T, optim_res["grad_n"])) as fallback?
-            except Exception as e:
-                _logger.error(f"Numerical Hessian calculation failed with {e} - parameters might not be identified")
-                optim_res["hess_inv"] = jnp.eye(len(optim_res["x"]))
+            # TODO: Do we want to use Hinv = jnp.linalg.pinv(np.dot(optim_res.grad_n.T, optim_res.grad_n)) as fallback?
 
-        self._post_fit(optim_res, coef_names, Xdf.shape[0], parameter_info.mask, config.set_vars, config.skip_std_errs)
+        self._post_fit(
+            optim_res,
+            coef_names,
+            Xdf.shape[0],
+            parameter_info.mask,
+            config.set_vars,
+            config.skip_std_errs,
+            grad_n=grad_n,
+            hess_inv=h_inv,
+        )
         return optim_res
 
     def _setup_randvars_info(self, randvars, Xnames):
@@ -537,7 +558,12 @@ def neg_loglike(
     draws,
     parameter_info: ParametersSetup,
     batch_size,
+    args=None,
 ):
+    if args is not None:
+        (Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info, batch_size) = (
+            args
+        )
     loglik_individ = loglike_individual(
         betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info
     )
@@ -691,7 +717,10 @@ def loglike_individual(
                 UTIL_MAX,
             )
         )
-    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / draws.shape[2], LOG_PROB_MIN, jnp.inf))
+    num_draws = max(1, draws.shape[2])
+    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / num_draws, LOG_PROB_MIN, jnp.inf))
+
+    # loglik = jnp.log(jnp.clip(proba_n.sum(axis=1) / draws.shape[2], LOG_PROB_MIN, jnp.inf))
 
     if weights is not None:
         loglik = loglik * weights
@@ -718,7 +747,8 @@ def probability_individual(
     else:
         UTIL_MAX = 87
 
-    R = draws.shape[2]
+    R = max(1, draws.shape[2])
+    # R = draws.shape[2]
 
     # mask for asserted parameters.
     if parameter_info.mask is not None:
