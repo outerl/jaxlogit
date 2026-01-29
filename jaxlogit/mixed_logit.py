@@ -152,13 +152,13 @@ class MixedLogit(ChoiceModel):
         _logger.debug(f"Draw generation done, shape of draws: {draws.shape}, number of draws: {config.n_draws}")
 
         return draws
-    
+
     def _make_nests(self, nests, varnames):
         if nests is None:
             return None
         vars = []
         for key in nests.keys():
-            if type(nests[key]) == str:
+            if nests[key] is str:
                 nests[key] = [nests[key]]
             for var in nests[key]:
                 if var in vars:
@@ -171,7 +171,6 @@ class MixedLogit(ChoiceModel):
                 nests[var] = [var]
             vars.append(var)
         return nests
-        
 
     def data_prep(
         self,
@@ -268,7 +267,7 @@ class MixedLogit(ChoiceModel):
         randvars,  # TODO: check if this works for zero randvars
         config: ConfigData,
         verbose=1,
-        nests=None
+        nests=None,
     ):
         """Fit Mixed Logit models.
 
@@ -313,15 +312,17 @@ class MixedLogit(ChoiceModel):
             The estimated model parameters result.
         """
 
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info, nests_full) = self.data_prep(
-            X,
-            y,
-            varnames,
-            alts,
-            ids,
-            randvars,
-            config,
-            nests,
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info, nests_full) = (
+            self.data_prep(
+                X,
+                y,
+                varnames,
+                alts,
+                ids,
+                randvars,
+                config,
+                nests,
+            )
         )
 
         fargs = (
