@@ -283,16 +283,14 @@ class MixedLogit(ChoiceModel):
             The estimated model parameters result.
         """
 
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = (
-            self.data_prep(
-                X,
-                y,
-                varnames,
-                alts,
-                ids,
-                randvars,
-                config,
-            )
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
+            X,
+            y,
+            varnames,
+            alts,
+            ids,
+            randvars,
+            config,
         )
 
         fargs = (

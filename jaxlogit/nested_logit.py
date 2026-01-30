@@ -311,17 +311,15 @@ class NestedLogit(ChoiceModel):
             The estimated model parameters result.
         """
         # TODO: 3+ levels of nests
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info, nests_full) = (
-            self.data_prep(
-                X,
-                y,
-                varnames,
-                alts,
-                ids,
-                randvars,
-                config,
-                nests,
-            )
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info, nests_full) = self.data_prep(
+            X,
+            y,
+            varnames,
+            alts,
+            ids,
+            randvars,
+            config,
+            nests,
         )
 
         fargs = (
@@ -454,11 +452,11 @@ class NestedLogit(ChoiceModel):
 
     def summary(self):
         """Show estimation results in console."""
-        super(MixedLogit, self).summary()
+        super(NestedLogit, self).summary()
 
     def predict(self, X, varnames, alts, ids, randvars, config: ConfigData):
         assert config.init_coeff is not None
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info,_) = self.data_prep(
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info, _) = self.data_prep(
             X,
             None,
             varnames,
@@ -556,6 +554,7 @@ def _transform_rand_betas(betas, force_positive_chol_diag, draws, parameter_info
 
     return betas_random
 
+
 def neg_loglike_nest(
     betas,
     Xdf,
@@ -568,7 +567,7 @@ def neg_loglike_nest(
     draws,
     parameter_info: ParametersSetup,
     batch_size,
-    nests, 
+    nests,
 ):
     """Compute the log-likelihood.
 
