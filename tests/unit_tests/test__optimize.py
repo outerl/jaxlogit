@@ -35,7 +35,7 @@ def setup_minimize():
         optim_method="L-BFGS-B",
     )
 
-    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info, _) = model.data_prep(
+    (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
         X,
         y,
         varnames,
@@ -43,7 +43,6 @@ def setup_minimize():
         ids,
         randvars,
         config,
-        None,
     )
 
     fargs = (

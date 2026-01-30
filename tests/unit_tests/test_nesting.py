@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from jaxlogit.mixed_logit import MixedLogit
+from jaxlogit.nested_logit import NestedLogit
 
 
 # Setup data used for tests
@@ -15,8 +15,8 @@ N, J, K, R = 3, 2, 2, 5
 
 
 def test_nesting_accepted():
-    model = MixedLogit()
-    with pytest.raises(ValueError, match=r'Variable "c" not in varnames'):
+    model = NestedLogit()
+    with pytest.raises(ValueError, match=r'Variable "c" not in alts'):
         model._make_nests({"a": ["b", "c"]}, ["a", "b"])
     with pytest.raises(ValueError, match=r'Variable "c" appears in two nests'):
         model._make_nests({"a": ["b", "c"], "c": ["c"]}, ["a", "b", "c"])

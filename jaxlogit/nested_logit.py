@@ -22,11 +22,11 @@ Notations
 """
 
 
-class MixedLogit(ChoiceModel):
+class NestedLogit(ChoiceModel):
     """Class for estimation of Mixed Logit Models."""
 
     def __init__(self):
-        super(MixedLogit, self).__init__()
+        super(NestedLogit, self).__init__()
         self._rvidx = None  # Index of random variables (True when random var)
         self._rvdist = None  # List of mixing distributions of rand vars
 
@@ -55,6 +55,7 @@ class MixedLogit(ChoiceModel):
         N, J, K = X.shape[0], X.shape[1], X.shape[2]
 
         # TODO TN: normal and lognormals only
+        # TODO: is this relevant for nested logit?
         num_normal_based_params = len(jnp.where(self._rvidx_normal_bases)[0])
         num_truncnorm_based_params = len(jnp.where(self._rvidx_truncnorm_based)[0])
         num_random_params = len(randvars)
@@ -153,6 +154,25 @@ class MixedLogit(ChoiceModel):
 
         return draws
 
+    def _make_nests(self, nests, alts):
+        if nests is None:
+            return None
+        vars = []
+        for key in nests.keys():
+            if nests[key] is str:
+                nests[key] = [nests[key]]
+            for var in nests[key]:
+                if var in vars:
+                    raise ValueError(f'Variable "{var}" appears in two nests')
+                if var not in alts:
+                    raise ValueError(f'Variable "{var}" not in alts')
+                vars.append(var)
+        for var in alts:
+            if var not in vars:
+                nests[var] = [var]
+            vars.append(var)
+        return nests
+
     def data_prep(
         self,
         X,
@@ -162,6 +182,7 @@ class MixedLogit(ChoiceModel):
         ids,
         randvars,
         config: ConfigData,
+        nests,
         predict_mode=False,
     ):
         # Handle array-like inputs by converting everything to numpy arrays
@@ -184,6 +205,8 @@ class MixedLogit(ChoiceModel):
             config.panels,
             config.avail,
         )
+
+        full_nests = self._make_nests(nests, alts)
 
         self._validate_inputs(
             X, y, alts, varnames, config.weights, predict_mode=predict_mode, setup_completed=config.setup_completed
@@ -213,8 +236,6 @@ class MixedLogit(ChoiceModel):
             config,
         )
 
-        draws = self.setup_draws_from_config(X.shape[0], config)
-
         # panels are 0-based and contiguous by construction, so we can use the maximum value to determine the number
         # of panels. We provide this number explicitly to the log-likelihood function for jit compilation of
         # segment_sum (product of probabilities over panels)
@@ -233,7 +254,7 @@ class MixedLogit(ChoiceModel):
         Xdf = Xd[:, :, ~rvidx]  # Data for fixed (non-random) parameters
         Xdr = Xd[:, :, rvidx]  # Data for random parameters
 
-        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info)
+        return (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info, full_nests)
 
     def fit(
         self,
@@ -243,6 +264,7 @@ class MixedLogit(ChoiceModel):
         alts,
         ids,
         randvars,  # TODO: check if this works for zero randvars
+        nests,
         config: ConfigData,
         verbose=1,
     ):
@@ -277,13 +299,19 @@ class MixedLogit(ChoiceModel):
             - 1: Some messages
             - 2: All messages
 
+        nests : dict
+            Names (keys) of nests and a list of the names of their variables (values). Eg:
+            {'public transport': ['bus', 'train']}
+            Three-level (not implemented)
+            {'public transport': ['train', 'bus'], 'bus': ['red bus', 'blue bus']}
+
         Returns
         -------
         result
             The estimated model parameters result.
         """
-
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = (
+        # TODO: 3+ levels of nests
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, parameter_info, nests_full) = (
             self.data_prep(
                 X,
                 y,
@@ -292,6 +320,7 @@ class MixedLogit(ChoiceModel):
                 ids,
                 randvars,
                 config,
+                nests,
             )
         )
 
@@ -303,9 +332,9 @@ class MixedLogit(ChoiceModel):
             avail,
             num_panels,
             config.force_positive_chol_diag,
-            draws,
             parameter_info,
             config.batch_size,
+            nests_full,
         )
 
         if parameter_info.idx_ln_dist.shape[0] > 0:
@@ -325,7 +354,7 @@ class MixedLogit(ChoiceModel):
         if config.tol_opts is not None:
             tol.update(config.tol_opts)
 
-        fct_to_optimize = neg_loglike if config.batch_size is None else neg_loglike_grad_batched
+        fct_to_optimize = neg_loglike_nest
 
         optim_res = _minimize(
             fct_to_optimize,
@@ -429,7 +458,7 @@ class MixedLogit(ChoiceModel):
 
     def predict(self, X, varnames, alts, ids, randvars, config: ConfigData):
         assert config.init_coeff is not None
-        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = self.data_prep(
+        (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info,_) = self.data_prep(
             X,
             None,
             varnames,
@@ -437,6 +466,7 @@ class MixedLogit(ChoiceModel):
             ids,
             randvars,
             config,
+            None,
             predict_mode=True,
         )
 
@@ -526,6 +556,77 @@ def _transform_rand_betas(betas, force_positive_chol_diag, draws, parameter_info
 
     return betas_random
 
+def neg_loglike_nest(
+    betas,
+    Xdf,
+    Xdr,
+    panels,
+    weights,
+    avail,
+    num_panels,
+    force_positive_chol_diag,
+    draws,
+    parameter_info: ParametersSetup,
+    batch_size,
+    nests, 
+):
+    """Compute the log-likelihood.
+
+    Fixed and random parameters are handled separately to speed up the estimation and the results are concatenated.
+    """
+
+    if jax.config.jax_enable_x64:
+        UTIL_MAX = 700  # ONLY IF 64bit precision is used
+        LOG_PROB_MIN = 1e-300
+    else:
+        UTIL_MAX = 87
+        LOG_PROB_MIN = 1e-30
+
+    # mask for asserted parameters.
+    if parameter_info.mask is not None:
+        betas = betas.at[parameter_info.mask].set(parameter_info.values_for_mask)
+
+    # Utility for fixed parameters
+    Bf = betas[parameter_info.non_random_idx]  # Fixed betas
+    Vdf = jnp.einsum("njk,k -> nj", Xdf, Bf)  # (N, J-1)
+
+    # Utility for random parameters
+    if parameter_info.random_idx.size != 0:
+        Br = _transform_rand_betas(
+            betas, force_positive_chol_diag, draws, parameter_info
+        )  # Br shape: (num_obs, num_rand_vars, num_draws)
+        parameterised_random_variable_contribution = jnp.einsum("njk,nkr -> njr", Xdr, Br)
+    else:
+        parameterised_random_variable_contribution = jnp.zeros_like(Vdf[:, :, None])
+
+    # Vdr shape: (N,J-1,R)
+    Vd = Vdf[:, :, None] + parameterised_random_variable_contribution
+    eVd = jnp.exp(jnp.clip(Vd, -UTIL_MAX, UTIL_MAX))
+    eVd = eVd if avail is None else eVd * avail[:, :, None]
+    proba_n = 1 / (1 + eVd.sum(axis=1))  # (N,R)
+
+    if panels is not None:
+        # # no grads for segment_prod for non-unique panels. need to use sum of logs and then exp as workaround
+        # proba_ = jax.ops.segment_prod(proba_n, panels, num_segments=num_panels)
+        proba_n = jnp.exp(
+            jnp.clip(
+                jax.ops.segment_sum(
+                    jnp.log(jnp.clip(proba_n, LOG_PROB_MIN, jnp.inf)),
+                    panels,
+                    num_segments=num_panels,
+                ),
+                -UTIL_MAX,
+                UTIL_MAX,
+            )
+        )
+
+    loglik = jnp.log(jnp.clip(proba_n.sum(axis=1), LOG_PROB_MIN, jnp.inf))
+
+    if weights is not None:
+        loglik = loglik * weights
+
+    return -loglik.sum()
+
 
 ### TODO: re-write for JAX, make whole class derive from pytree, etc. Until then, this is a separate method.
 def neg_loglike(
@@ -540,6 +641,7 @@ def neg_loglike(
     draws,
     parameter_info: ParametersSetup,
     batch_size,
+    _,
 ):
     loglik_individ = loglike_individual(
         betas, Xdf, Xdr, panels, weights, avail, num_panels, force_positive_chol_diag, draws, parameter_info
@@ -561,6 +663,7 @@ def neg_loglike_grad_batched(
     draws,
     parameter_info: ParametersSetup,
     batch_size,
+    _,
 ):
     if panels is None:
         # Simple case: no panels, just batch observations
