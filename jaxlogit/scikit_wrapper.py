@@ -163,7 +163,8 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
             batch_size=self.batch_size,
         )
 
-    def predict(self, X, y=None):
+    def predict(self, X):
+        """Generate probabilities of each alternative for each choice situation in X."""
         if self.coeff_ is None:
             raise NotFittedError
 
@@ -211,11 +212,6 @@ class MixedLogitEstimator(ClassifierMixin, BaseEstimator):
             Input data for explanatory variables in long format with alternative and ids in line.
         y : array-like of shape (n_samples*n_alts,)
             Chosen alternatives or one-hot encoded representation of the choices.
-        # alts : array-like of shape (n_samples*n_alts,), required
-        #     Alternative values in long format.
-        # ids : array-like of shape (n_samples*n_alts,), required
-        #     Identifiers for the samples in long format.
-
 
         Returns
         -------

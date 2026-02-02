@@ -10,3 +10,4 @@ API Reference
 
    jaxlogit._config_data.ConfigData
    jaxlogit.utils.wide_to_long
+   jaxlogit.scikit_wrapper.MixedLogitEstimator
