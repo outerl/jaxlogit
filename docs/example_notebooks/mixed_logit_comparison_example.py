@@ -36,8 +36,6 @@ logger.setLevel(blog.INFO)
 #  64bit precision
 jax.config.update("jax_enable_x64", True)
 # %% [markdown]
-# # Get the full electricity dataset
-# 
 # Use for jaxlogit and xlogit. Adjustusting n_draws can improve accuracy, but Biogeme cannot handle 700 or more draws with this data set.
 
 # %%
@@ -143,7 +141,7 @@ V = {
 }
 
 # %% [markdown]
-# # Make the models
+# ## Make the models
 # Jaxlogit:
 
 # %%
@@ -223,7 +221,7 @@ results = the_biogeme.estimate()
 print(results)
 
 # %% [markdown]
-# # Compare parameters:
+# ## Compare parameters:
 
 # %%
 print("{:>9} {:>20} {:>15} {:>13} {:>13}".format("Estimate", "Jaxlogit-scipy", "Jaxlogit-jax", "Xlogit", "Biogeme"))
@@ -241,7 +239,7 @@ for i in range(len(model_jax.coeff_)):
 print("-" * 76)
 
 # %% [markdown]
-# # Predict
+# ## Predict
 # jaxlogit:
 
 # %%
