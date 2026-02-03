@@ -1,5 +1,5 @@
 # %% [markdown]
-# # Summary of time taken and brier scores for jaxlogit, xlogit, and biogeme
+# # Comparison of time taken and brier scores for jaxlogit, xlogit, and biogeme
 # Where the estimation is using draws = 500 (suboptimal but highest without running out of memory in biogeme), and training and test data is separated.
 # 
 # | | jaxlogit-scipy | jaxlogit-jax | xlogit | biogeme |
