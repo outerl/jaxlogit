@@ -1,6 +1,5 @@
 # Jaxlogit
 MSLE estimation of linear-in-parameters mixed logit models. This package is based on [xlogit](https://github.com/arteagac/xlogit), with the core computational engine replaced by [jax](https://github.com/jax-ml/jax). Additionally, the documentation structure and many examples are adapted from `xlogit`'s documentation.
-This package is work-in-progress and the API might change without notice. 
 
 
 ## Why use Jaxlogit?
@@ -125,7 +124,7 @@ If out of memory, the data can be batched as well.
 
 ## Quick Install
 
-Currently available on test PyPI `pip install -i https://test.pypi.org/simple/ jaxlogit`.
+Install jaxlogit using ``pip``: ``pip install jaxlogit``.
 
 Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
 
