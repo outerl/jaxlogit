@@ -248,7 +248,7 @@ def test_loglike_individual_and_total(simple_data):
         include_correlations=False,
     )
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
-        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config, None
+        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config
     )
 
     ll_indiv = loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info)
@@ -287,7 +287,7 @@ def test_no_random_variables_loglikes(simple_data):
         include_correlations=False,
     )
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
-        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config, None
+        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config
     )
 
     ll_indiv = loglike_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info)
@@ -322,7 +322,7 @@ def test_probability_individual(simple_data):
         include_correlations=False,
     )
     (betas, Xdf, Xdr, panels, weights, avail, num_panels, coef_names, draws, parameter_info) = model.data_prep(
-        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config, None
+        df[varnames], df["choice"], varnames, df["alt"], df["custom_id"], randvars, config
     )
 
     probs = probability_individual(betas, Xdf, Xdr, panels, weights, avail, num_panels, False, draws, parameter_info)
