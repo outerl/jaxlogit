@@ -1,6 +1,6 @@
 name: Release
 
-on: [push, pull_request]
+on: [push, pull_request, release, workflow_dispatch]
 
 jobs:
   make_sdist:
