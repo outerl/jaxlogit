@@ -131,8 +131,8 @@ Alternatively, clone the [repo](https://github.com/outerl/jaxlogit).
 
 ## Benchmark
 As shown in the plot below, jaxlogit with batching uses significantly less memory than xlogit.
-![Graph comparing memory usage of jaxlogit and xlogit](examples/graphs/memory_comparison_cropped.png)
-![Graph comparing time of jaxlogit, xlogit, and biogeme](examples/graphs/fit_estimation_time.png)
+![Graph comparing memory usage of jaxlogit and xlogit](https://github.com/outerl/jaxlogit/blob/main/examples/graphs/memory_comparison_cropped.png?raw=true)
+![Graph comparing time of jaxlogit, xlogit, and biogeme](https://github.com/outerl/jaxlogit/blob/main/examples/graphs/fit_estimation_time.png?raw=true)
 The default method is 'L-BFGS-B' or 'L-BFGS'. Where a b is appended to the label, the 'BFGS' method was used.
 
 The graph of memory shows that using the batching  reduces memory usage below that of xlogit and other types of jaxlogit. Off the edge of this graph is a spike in biogeme's memory usage, up to 30,000MB.
